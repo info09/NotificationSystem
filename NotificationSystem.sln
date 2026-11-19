@@ -2,12 +2,207 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B7A1F8E2-1C3D-4E5F-9A6B-2C3D4E5F6A7B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notification", "Notification", "{D9C3F004-3E5F-6071-BC8D-4E5F60718293}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TemplateConfiguration", "TemplateConfiguration", "{EAD40115-4F60-7182-CD9E-5F60718293A4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IntegrationMessaging", "IntegrationMessaging", "{FBE51226-5071-8293-DEAF-60718293A4B5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Delivery", "Delivery", "{0CF62337-6182-93A4-EFB0-718293A4B5C6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Administration", "Administration", "{1D073448-7293-A4B5-F0C1-8293A4B5C6D7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IdentityAccess", "IdentityAccess", "{2E184559-83A4-B5C6-01D2-93A4B5C6D7E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Domain", "src\Modules\Notification\Domain\Notification.Domain.csproj", "{A1010001-0001-4001-8001-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Application", "src\Modules\Notification\Application\Notification.Application.csproj", "{A1010002-0001-4001-8001-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Infrastructure", "src\Modules\Notification\Infrastructure\Notification.Infrastructure.csproj", "{A1010003-0001-4001-8001-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Presentation", "src\Modules\Notification\Presentation\Notification.Presentation.csproj", "{A1010004-0001-4001-8001-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemplateConfiguration.Domain", "src\Modules\TemplateConfiguration\Domain\TemplateConfiguration.Domain.csproj", "{A1020001-0002-4002-8002-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemplateConfiguration.Application", "src\Modules\TemplateConfiguration\Application\TemplateConfiguration.Application.csproj", "{A1020002-0002-4002-8002-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemplateConfiguration.Infrastructure", "src\Modules\TemplateConfiguration\Infrastructure\TemplateConfiguration.Infrastructure.csproj", "{A1020003-0002-4002-8002-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TemplateConfiguration.Presentation", "src\Modules\TemplateConfiguration\Presentation\TemplateConfiguration.Presentation.csproj", "{A1020004-0002-4002-8002-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationMessaging.Domain", "src\Modules\IntegrationMessaging\Domain\IntegrationMessaging.Domain.csproj", "{A1030001-0003-4003-8003-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationMessaging.Application", "src\Modules\IntegrationMessaging\Application\IntegrationMessaging.Application.csproj", "{A1030002-0003-4003-8003-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationMessaging.Infrastructure", "src\Modules\IntegrationMessaging\Infrastructure\IntegrationMessaging.Infrastructure.csproj", "{A1030003-0003-4003-8003-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationMessaging.Presentation", "src\Modules\IntegrationMessaging\Presentation\IntegrationMessaging.Presentation.csproj", "{A1030004-0003-4003-8003-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delivery.Domain", "src\Modules\Delivery\Domain\Delivery.Domain.csproj", "{A1040001-0004-4004-8004-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delivery.Application", "src\Modules\Delivery\Application\Delivery.Application.csproj", "{A1040002-0004-4004-8004-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delivery.Infrastructure", "src\Modules\Delivery\Infrastructure\Delivery.Infrastructure.csproj", "{A1040003-0004-4004-8004-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Delivery.Presentation", "src\Modules\Delivery\Presentation\Delivery.Presentation.csproj", "{A1040004-0004-4004-8004-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Administration.Domain", "src\Modules\Administration\Domain\Administration.Domain.csproj", "{A1050001-0005-4005-8005-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Administration.Application", "src\Modules\Administration\Application\Administration.Application.csproj", "{A1050002-0005-4005-8005-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Administration.Infrastructure", "src\Modules\Administration\Infrastructure\Administration.Infrastructure.csproj", "{A1050003-0005-4005-8005-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Administration.Presentation", "src\Modules\Administration\Presentation\Administration.Presentation.csproj", "{A1050004-0005-4005-8005-000000000004}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAccess.Domain", "src\Modules\IdentityAccess\Domain\IdentityAccess.Domain.csproj", "{A1060001-0006-4006-8006-000000000001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAccess.Application", "src\Modules\IdentityAccess\Application\IdentityAccess.Application.csproj", "{A1060002-0006-4006-8006-000000000002}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAccess.Infrastructure", "src\Modules\IdentityAccess\Infrastructure\IdentityAccess.Infrastructure.csproj", "{A1060003-0006-4006-8006-000000000003}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAccess.Presentation", "src\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj", "{A1060004-0006-4006-8006-000000000004}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1010001-0001-4001-8001-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1010001-0001-4001-8001-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1010001-0001-4001-8001-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1010001-0001-4001-8001-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1010002-0001-4001-8001-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1010002-0001-4001-8001-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1010002-0001-4001-8001-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1010002-0001-4001-8001-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1010003-0001-4001-8001-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1010003-0001-4001-8001-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1010003-0001-4001-8001-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1010003-0001-4001-8001-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1010004-0001-4001-8001-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1010004-0001-4001-8001-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1010004-0001-4001-8001-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1010004-0001-4001-8001-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1020001-0002-4002-8002-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1020001-0002-4002-8002-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1020001-0002-4002-8002-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1020001-0002-4002-8002-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1020002-0002-4002-8002-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1020002-0002-4002-8002-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1020002-0002-4002-8002-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1020002-0002-4002-8002-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1020003-0002-4002-8002-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1020003-0002-4002-8002-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1020003-0002-4002-8002-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1020003-0002-4002-8002-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1020004-0002-4002-8002-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1020004-0002-4002-8002-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1020004-0002-4002-8002-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1020004-0002-4002-8002-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1030001-0003-4003-8003-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1030001-0003-4003-8003-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1030001-0003-4003-8003-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1030001-0003-4003-8003-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1030002-0003-4003-8003-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1030002-0003-4003-8003-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1030002-0003-4003-8003-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1030002-0003-4003-8003-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1030003-0003-4003-8003-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1030003-0003-4003-8003-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1030003-0003-4003-8003-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1030003-0003-4003-8003-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1030004-0003-4003-8003-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1030004-0003-4003-8003-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1030004-0003-4003-8003-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1030004-0003-4003-8003-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1040001-0004-4004-8004-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1040001-0004-4004-8004-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1040001-0004-4004-8004-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1040001-0004-4004-8004-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1040002-0004-4004-8004-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1040002-0004-4004-8004-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1040002-0004-4004-8004-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1040002-0004-4004-8004-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1040003-0004-4004-8004-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1040003-0004-4004-8004-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1040003-0004-4004-8004-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1040003-0004-4004-8004-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1040004-0004-4004-8004-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1040004-0004-4004-8004-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1040004-0004-4004-8004-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1040004-0004-4004-8004-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1050001-0005-4005-8005-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1050001-0005-4005-8005-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1050001-0005-4005-8005-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1050001-0005-4005-8005-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1050002-0005-4005-8005-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1050002-0005-4005-8005-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1050002-0005-4005-8005-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1050002-0005-4005-8005-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1050003-0005-4005-8005-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1050003-0005-4005-8005-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1050003-0005-4005-8005-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1050003-0005-4005-8005-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1050004-0005-4005-8005-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1050004-0005-4005-8005-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1050004-0005-4005-8005-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1050004-0005-4005-8005-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1060001-0006-4006-8006-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1060001-0006-4006-8006-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1060001-0006-4006-8006-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1060001-0006-4006-8006-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1060002-0006-4006-8006-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1060002-0006-4006-8006-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1060002-0006-4006-8006-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1060002-0006-4006-8006-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1060003-0006-4006-8006-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1060003-0006-4006-8006-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1060003-0006-4006-8006-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1060003-0006-4006-8006-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1060004-0006-4006-8006-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1060004-0006-4006-8006-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1060004-0006-4006-8006-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1060004-0006-4006-8006-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182} = {B7A1F8E2-1C3D-4E5F-9A6B-2C3D4E5F6A7B}
+		{D9C3F004-3E5F-6071-BC8D-4E5F60718293} = {C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}
+		{EAD40115-4F60-7182-CD9E-5F60718293A4} = {C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}
+		{FBE51226-5071-8293-DEAF-60718293A4B5} = {C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}
+		{0CF62337-6182-93A4-EFB0-718293A4B5C6} = {C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}
+		{1D073448-7293-A4B5-F0C1-8293A4B5C6D7} = {C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}
+		{2E184559-83A4-B5C6-01D2-93A4B5C6D7E8} = {C8B2E9F3-2D4E-5F60-AB7C-3D4E5F607182}
+		{A1010001-0001-4001-8001-000000000001} = {D9C3F004-3E5F-6071-BC8D-4E5F60718293}
+		{A1010002-0001-4001-8001-000000000002} = {D9C3F004-3E5F-6071-BC8D-4E5F60718293}
+		{A1010003-0001-4001-8001-000000000003} = {D9C3F004-3E5F-6071-BC8D-4E5F60718293}
+		{A1010004-0001-4001-8001-000000000004} = {D9C3F004-3E5F-6071-BC8D-4E5F60718293}
+		{A1020001-0002-4002-8002-000000000001} = {EAD40115-4F60-7182-CD9E-5F60718293A4}
+		{A1020002-0002-4002-8002-000000000002} = {EAD40115-4F60-7182-CD9E-5F60718293A4}
+		{A1020003-0002-4002-8002-000000000003} = {EAD40115-4F60-7182-CD9E-5F60718293A4}
+		{A1020004-0002-4002-8002-000000000004} = {EAD40115-4F60-7182-CD9E-5F60718293A4}
+		{A1030001-0003-4003-8003-000000000001} = {FBE51226-5071-8293-DEAF-60718293A4B5}
+		{A1030002-0003-4003-8003-000000000002} = {FBE51226-5071-8293-DEAF-60718293A4B5}
+		{A1030003-0003-4003-8003-000000000003} = {FBE51226-5071-8293-DEAF-60718293A4B5}
+		{A1030004-0003-4003-8003-000000000004} = {FBE51226-5071-8293-DEAF-60718293A4B5}
+		{A1040001-0004-4004-8004-000000000001} = {0CF62337-6182-93A4-EFB0-718293A4B5C6}
+		{A1040002-0004-4004-8004-000000000002} = {0CF62337-6182-93A4-EFB0-718293A4B5C6}
+		{A1040003-0004-4004-8004-000000000003} = {0CF62337-6182-93A4-EFB0-718293A4B5C6}
+		{A1040004-0004-4004-8004-000000000004} = {0CF62337-6182-93A4-EFB0-718293A4B5C6}
+		{A1050001-0005-4005-8005-000000000001} = {1D073448-7293-A4B5-F0C1-8293A4B5C6D7}
+		{A1050002-0005-4005-8005-000000000002} = {1D073448-7293-A4B5-F0C1-8293A4B5C6D7}
+		{A1050003-0005-4005-8005-000000000003} = {1D073448-7293-A4B5-F0C1-8293A4B5C6D7}
+		{A1050004-0005-4005-8005-000000000004} = {1D073448-7293-A4B5-F0C1-8293A4B5C6D7}
+		{A1060001-0006-4006-8006-000000000001} = {2E184559-83A4-B5C6-01D2-93A4B5C6D7E8}
+		{A1060002-0006-4006-8006-000000000002} = {2E184559-83A4-B5C6-01D2-93A4B5C6D7E8}
+		{A1060003-0006-4006-8006-000000000003} = {2E184559-83A4-B5C6-01D2-93A4B5C6D7E8}
+		{A1060004-0006-4006-8006-000000000004} = {2E184559-83A4-B5C6-01D2-93A4B5C6D7E8}
 	EndGlobalSection
 EndGlobal
