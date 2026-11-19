@@ -1,0 +1,104 @@
+# PRD — Notification System (Reliable Event-driven Notification Platform)
+
+> **Cập nhật:** Đã chốt các điểm làm rõ theo phản hồi của Đại ca (ưu tiên phương án tối ưu cho MVP cá nhân, 1 developer, Docker Compose). Các quyết định này là baseline để thiết kế/implement và có thể điều chỉnh trong ADR khi có dữ liệu thực tế.
+
+## 1. Context & Problem Statement
+Các hệ thống doanh nghiệp (Banking, E-commerce, Booking, ERP) phát sinh nhiều sự kiện nghiệp vụ cần thông báo cho người dùng: đăng ký tài khoản, giao dịch/thanh toán, cập nhật đơn hàng, nhắc lịch, hoặc thông báo từ quản trị viên tới nhóm người dùng.
+
+Nếu gửi thông báo trực tiếp trong luồng nghiệp vụ chính, hệ thống gặp các vấn đề thực tế:
+- **Độ trễ tăng:** API nghiệp vụ phải chờ phản hồi từ Email/SMS/Push provider, làm chậm trải nghiệm và giảm throughput.
+- **Lan truyền lỗi:** Sự cố ở dịch vụ gửi thông báo có thể làm thất bại hoặc treo luồng nghiệp vụ không liên quan.
+- **Mất/ trùng message:** Thiếu cơ chế đảm bảo vận chuyển và xử lý dẫn đến thông báo bị mất hoặc gửi lặp.
+- **Thiếu khả năng phục hồi:** Không có retry có kiểm soát, không có nơi cô lập message lỗi (DLQ), khó xử lý sự cố tạm thời.
+- **Khó quan sát và vận hành:** Không theo dõi được trạng thái gửi, lịch sử, lỗi và retry để điều tra.
+- **Khó mở rộng:** Lượng thông báo tăng đột biến gây nghẽn nếu không tách luồng tiếp nhận và xử lý.
+
+**Mục tiêu:** Xây dựng Notification System tập trung, tiếp nhận/xử lý/phân phối thông báo bất đồng bộ theo kiến trúc event-driven với Message Queue. Hệ thống ưu tiên chịu lỗi, hạn chế xử lý trùng (idempotent processing), hỗ trợ retry, DLQ và khả năng mở rộng worker độc lập. Database là nguồn dữ liệu chính (source of truth); Message Broker (RabbitMQ) đảm nhiệm vận chuyển message.
+
+**Hậu quả nếu không giải quyết:** Trải nghiệm người dùng và SLA nghiệp vụ bị ảnh hưởng, đội vận hành khó phát hiện/xử lý lỗi gửi thông báo, rủi ro mất hoặc gửi trùng thông báo tăng, và chi phí mở rộng hệ thống cao khi tải tăng.
+
+## 2. Đối tượng người dùng
+| Persona | Mô tả & hành vi chính | Mức độ am hiểu kỹ thuật | Ảnh hưởng đến UX/thiết kế |
+|---|---|---|---|
+| **System Administrator** | Quản lý cấu hình hệ thống, notification template, kênh gửi; theo dõi hoạt động tổng thể qua **Admin UI**. | Trung bình–Cao (hiểu hệ thống, hạ tầng cơ bản) | Cần Admin UI rõ ràng cho cấu hình (template/kênh), health/status, tra cứu lỗi; thao tác có kiểm soát và phân quyền. |
+| **Application Developer** | Tích hợp hệ thống nghiệp vụ với Notification System qua API hoặc Integration Event; cần contract rõ ràng, cơ chế idempotency và tài liệu. | Cao (backend/devops cơ bản) | Ưu tiên API spec rõ, schema event ổn định, mã lỗi/response nhất quán, tài liệu tích hợp và khả năng test local (Docker Compose). |
+| **Business Operator** | Theo dõi trạng thái gửi thông báo, rà soát thông báo thất bại, thực hiện gửi lại (resend/reprocess) khi cần qua **Admin UI** (theo quyền). | Thấp–Trung bình (nghiệp vụ/vận hành) | Cần màn hình tra cứu/lọc theo trạng thái/thời gian/kênh, xem lý do lỗi dễ hiểu, thao tác gửi lại an toàn (idempotent). |
+| **End User** | Người nhận thông báo qua Email hoặc In-app notification (MVP). Xem in-app qua ứng dụng/client tích hợp bằng **API pull/polling**. | Thấp (người dùng cuối) | Nội dung rõ ràng, hạn chế trùng lặp; in-app hỗ trợ danh sách, trạng thái chưa đọc/đã đọc và đánh dấu đã đọc (MVP). |
+
+## 3. Phạm vi (Scope)
+| Trong phạm vi (MVP) | Ngoài phạm vi (giai đoạn này) |
+|---|---|
+| Tạo và quản lý thông báo; hỗ trợ người nhận và nội dung; quản lý trạng thái `Pending`, `Processing`, `Sent`, `Failed`. | Triển khai Microservices ngay từ đầu (chọn Modular Monolith). |
+| **Cấu hình quản trị:** quản lý Notification Template và cấu hình kênh gửi (CRUD cơ bản) phục vụ vận hành MVP. | Sử dụng Kafka trong MVP (chọn RabbitMQ). |
+| **Admin UI** cho System Administrator/Business Operator: tra cứu thông báo/lịch sử, xem DLQ, resend/reprocess, quản lý template/cấu hình kênh theo phân quyền. | Triển khai Kubernetes hoặc orchestration phức tạp. |
+| Tích hợp RabbitMQ: Producer/Consumer, Exchange/Queue/Routing Key, message acknowledgement, xử lý bất đồng bộ. | Hệ thống Multi-tenant ở giai đoạn đầu. |
+| Kiến trúc event-driven: tiếp nhận Integration Event từ hệ thống nghiệp vụ, Event Publisher/Consumer, Transactional Outbox Pattern. | Phát triển ứng dụng Mobile riêng. |
+| Background processing với .NET BackgroundService; tách luồng tiếp nhận và gửi; xử lý nhiều message đồng thời có giới hạn cấu hình. | Tích hợp nhiều nhà cung cấp Email/SMS/Push cùng lúc. |
+| Retry tự động cho lỗi tạm thời, Exponential Backoff (**3 lần retry**), DLQ; xem và gửi lại message từ DLQ. | AI phân tích/tối ưu nội dung thông báo. |
+| Idempotency: `MessageId`/`IdempotencyKey`, Inbox Pattern, phát hiện/ngăn xử lý trùng, unique constraint đảm bảo toàn vẹn. | Hệ thống Campaign Marketing hoặc gửi Email Marketing hàng loạt. |
+| Multi-channel MVP: Email Notification, In-app Notification; abstraction để mở rộng SMS/Push sau. | Cam kết Exactly-once Delivery với dịch vụ bên ngoài (mục tiêu: At-least-once + Idempotent Processing). |
+| Monitoring & Logging: lịch sử gửi, trạng thái xử lý message, logging lỗi/retry, health check cho API/Database/RabbitMQ, observability cơ bản (OpenTelemetry). | Realtime in-app push (SignalR/WebSocket) trong MVP (dùng pull/polling). |
+| Ràng buộc kỹ thuật đã biết: .NET 10/ASP.NET Core Web API, Modular Monolith + Clean Architecture + DDD/CQRS khi phù hợp, PostgreSQL 16+, EF Core, Serilog, OpenTelemetry, Scalar, Docker/Docker Compose, xUnit/MSTest + integration/load testing. | Dashboard/alerting chuyên dụng (Grafana/Prometheus stack đầy đủ) trong MVP. |
+| Môi trường phát triển & chạy local bằng **Docker Compose**; có **CI/CD pipeline** (build/test). | HA/cluster production-grade đa vùng trong MVP. |
+
+## 4. Functional Requirements (FR)
+| Mã | Yêu cầu (hành vi quan sát được) |
+|---|---|
+| **FR-01** | **Tạo thông báo qua API:** Khi Application Developer/Service gửi yêu cầu tạo thông báo hợp lệ (người nhận, kênh `email`/`inapp`, nội dung hoặc `templateId` + dữ liệu render, `idempotencyKey` tùy chọn) qua API được bảo vệ bởi JWT Bearer, hệ thống xác thực dữ liệu và phân quyền, lưu bản ghi thông báo trạng thái `Pending`, ghi nhận idempotency, và trả về `notificationId` cùng trạng thái ban đầu (hoặc kết quả idempotent nếu trùng). |
+| **FR-02** | **Tiếp nhận Integration Event:** Khi hệ thống nghiệp vụ publish Integration Event hợp lệ, Event Consumer tiếp nhận event và tạo lệnh xử lý thông báo tương ứng; hệ thống ghi nhận kết quả tiếp nhận để truy vết theo `messageId`/`eventId`. MVP hỗ trợ tối thiểu các loại event nghiệp vụ mẫu (có thể mở rộng): `user.registered`, `payment.completed`, `order.status_changed`, `appointment.reminder` (mapping event → template/kênh qua cấu hình). |
+| **FR-03** | **Transactional Outbox:** Khi nghiệp vụ tạo dữ liệu/thông báo cần publish trong cùng ngữ cảnh giao dịch, hệ thống ghi bản ghi nghiệp vụ và outbox trong cùng transaction DB; publisher xử lý outbox và đánh dấu đã publish/hoàn tất theo trạng thái, đảm bảo không mất sự kiện do lỗi giữa DB và broker. |
+| **FR-04** | **Publish/Route message qua RabbitMQ:** Producer publish message tới exchange chuẩn của hệ thống với routing key theo kênh/loại; queue tiêu thụ tương ứng nhận message để worker xử lý. Topology MVP (tối ưu, có thể tinh chỉnh trong thiết kế chi tiết): exchange `notifications.topic` (topic), queue `notifications.email.q` (`notification.email.*`), `notifications.inapp.q` (`notification.inapp.*`), kèm DLQ tương ứng (`*.dlq`). |
+| **FR-05** | **Consume & Acknowledge:** Khi Consumer nhận message, hệ thống xử lý gửi/dispatch và chỉ `ack` sau khi hoàn tất bước xử lý an toàn theo thiết kế at-least-once + idempotent; lỗi theo chính sách được retry/DLQ, không mất im lặng. |
+| **FR-06** | **Quản lý trạng thái thông báo:** Hệ thống tự chuyển trạng thái `Pending` → `Processing` → `Sent` hoặc `Failed`; Admin/Operator (đã xác thực, đúng quyền) truy vấn trạng thái/chi tiết qua Admin UI hoặc API. MVP không cho sửa trạng thái thủ công tùy ý (chỉ cho phép thao tác nghiệp vụ như resend/reprocess theo quy tắc). |
+| **FR-07** | **Xử lý nền tách biệt & concurrency:** Tiếp nhận nhanh và đưa vào hàng đợi; gửi thông báo thực hiện bởi BackgroundService/worker với concurrency có giới hạn cấu hình. Mặc định MVP: tối đa **5** message đồng thời/worker instance (cấu hình được). |
+| **FR-08** | **Retry cho lỗi tạm thời:** Khi gửi thất bại do lỗi tạm thời (timeout, network, 5xx/provider unavailable), hệ thống retry tự động **3 lần** với exponential backoff + jitter (mặc định: 10s, 30s, 90s; cap 2 phút, có jitter), ghi nhận từng lần retry. Lỗi vĩnh viễn/không retryable (validation, địa chỉ không hợp lệ, 4xx không thể phục hồi) chuyển thẳng luồng thất bại/DLQ theo chính sách. |
+| **FR-09** | **Dead Letter Queue (DLQ):** Message vượt quá 3 lần retry hoặc lỗi không thể xử lý theo chính sách được chuyển vào DLQ; Admin/Operator xem thông tin lỗi và thực hiện resend/reprocess từ DLQ qua Admin UI (có kiểm soát quyền và ghi log thao tác). Resend tạo/đánh dấu luồng xử lý lại theo cơ chế idempotent. |
+| **FR-10** | **Idempotency & chống trùng lặp:** Hệ thống dùng `messageId` (event/message) làm khóa chống trùng xử lý chính trong Inbox; với API tạo trực tiếp dùng `idempotencyKey` (theo client/source) để chống tạo trùng yêu cầu. Ràng buộc unique tại DB đảm bảo không xử lý/gửi trùng ngoài ý muốn; bản ghi idempotency/inbox lưu tối thiểu **7 ngày** (cấu hình được). |
+| **FR-11** | **Gửi Email Notification:** Worker gửi email qua SMTP có cấu hình (dev dùng Mailpit/MailHog trong Docker Compose), hỗ trợ nội dung HTML và plain-text fallback; nội dung có thể render từ template (quản lý trong hệ thống) với dữ liệu đầu vào. Kết quả gửi/thất bại và lỗi được cập nhật vào lịch sử/trạng thái. |
+| **FR-12** | **Gửi In-app Notification:** Worker lưu bản ghi in-app cho người nhận; client truy xuất qua API pull/polling (danh sách, chi tiết, số chưa đọc). MVP hỗ trợ trạng thái **chưa đọc/đã đọc** và API đánh dấu đã đọc. |
+| **FR-13** | **Abstraction mở rộng kênh:** Kênh gửi (Email, In-app, và điểm mở rộng SMS/Push) thiết kế theo abstraction (strategy/factory/dispatcher) để thêm kênh mới không thay đổi luồng xử lý cốt lõi. |
+| **FR-14** | **Lịch sử & truy vết gửi thông báo:** Hệ thống ghi nhận lịch sử gửi/thử gửi (thời gian, kênh, trạng thái, lỗi, số lần retry, messageId/notificationId) cho tra cứu trên Admin UI/API; hỗ trợ lọc tối thiểu theo trạng thái, kênh, khoảng thời gian. Lưu trữ lịch sử mặc định **90 ngày** (cấu hình được). |
+| **FR-15** | **Logging & Health Check:** Hệ thống ghi structured log (Serilog) kèm correlation (`messageId`, `notificationId`, trace id) cho lỗi/retry; cung cấp health check `GET /health` (liveness) và `GET /health/ready` (readiness: API, DB, RabbitMQ). |
+| **FR-16** | **Cấu hình quản trị & Admin UI:** System Administrator quản lý Notification Template và cấu hình kênh gửi qua Admin UI (CRUD cơ bản, bật/tắt cấu hình). Admin/Operator sử dụng Admin UI để theo dõi hoạt động, tra cứu, xem DLQ và resend/reprocess theo phân quyền RBAC. |
+
+## 5. Non-Functional Requirements (NFR)
+| Mã | Yêu cầu | Tiêu chí/ghi chú (MVP tối ưu) |
+|---|---|---|
+| **NFR-01 (Hiệu năng)** | API tiếp nhận phải phản hồi nhanh, không chặn bởi gửi provider bên ngoài. | Mục tiêu MVP (local/dev, Docker Compose): p95 < **200ms**, p99 < **500ms** cho API tạo/tiếp nhận; throughput mục tiêu **50 req/s** sustained (benchmark dev); payload tối đa **256 KB**/request; end-to-end đến `Sent` p95: In-app < **5s**, Email < **30s** (không tính outage kéo dài của SMTP/provider). |
+| **NFR-02 (Độ tin cậy xử lý)** | **At-least-once delivery** nội bộ + **Idempotent Processing**; không exactly-once với dịch vụ ngoài. | Không mất message đã commit trong DB/outbox và được xử lý theo cơ chế ack/retry/DLQ; mục tiêu **0** mất bản ghi trạng thái trong DB (RPO=0 cho DB). Trùng xử lý không tạo side-effect gửi trùng nhờ idempotency/inbox. |
+| **NFR-03 (Khả năng mở rộng)** | Worker hỗ trợ horizontal scaling độc lập. | Có thể chạy nhiều worker instance tiêu thụ cùng queue (competing consumers); concurrency mặc định **5**/instance, cấu hình được; mục tiêu scale gần tuyến tính trong phạm vi tải MVP khi tăng worker (xác minh bằng load test). |
+| **NFR-04 (Khả năng chịu lỗi & phục hồi)** | Chịu lỗi tạm thời qua retry/backoff/DLQ. | Retry tối đa **3 lần**; lỗi quá ngưỡng vào DLQ để xử lý thủ công; MTTR mục tiêu < **30 phút** cho sự cố vận hành thông thường (restart service/broker, resend DLQ) trong môi trường dev/single-instance. |
+| **NFR-05 (Bảo mật — mức tối thiểu)** | Bảo vệ truy cập và dữ liệu thông báo. | Xác thực/ủy quyền bằng **JWT Bearer**; RBAC tối thiểu: `Admin` (cấu hình, DLQ/resend, toàn quyền vận hành), `Operator` (tra cứu, resend theo quyền), `IntegrationClient/Developer` (tạo/tiếp nhận thông báo). Bảo vệ endpoint quản trị/DLQ; TLS khi deploy ngoài local; secrets/SMTP credentials quản lý qua biến môi trường/secret store; che giấu/không log PII nhạy cảm (nội dung đầy đủ, token); ghi audit log cho thao tác quản trị/resend. At-rest encryption theo hạ tầng triển khai (khuyến nghị bật khi có môi trường cloud). |
+| **NFR-06 (Khả năng quan sát)** | Logging, truy vết, health check. | Structured log (Serilog), OpenTelemetry cơ bản cho traces/metrics của HTTP, EF Core, background processing/RabbitMQ (mức khả thi trong MVP); correlation id xuyên suốt; health checks `/health`, `/health/ready`. Không bắt buộc dashboard/alerting chuyên dụng trong MVP. |
+| **NFR-07 (Tính nhất quán dữ liệu)** | DB là source of truth; Outbox/Inbox đảm bảo nhất quán. | Cập nhật trạng thái/idempotency sử dụng giao dịch và kiểm soát đồng thời phù hợp (unique constraint, optimistic concurrency/row version khi cần) để tránh race condition và trạng thái mâu thuẫn. |
+| **NFR-08 (Khả năng bảo trì & kiểm thử)** | Tuân thủ Modular Monolith/Clean Architecture; có test tự động và load test. | Unit test cho domain/application; integration test cho luồng chính (API, Outbox, consume, retry, DLQ, idempotency, in-app/email dispatch abstraction) với Testcontainers/Docker; load test cơ bản (k6/NBomber). Mục tiêu coverage **~70%** cho core modules (định hướng), tiêu chí đạt: test luồng chính pass và benchmark đạt NFR-01 ở mức MVP. |
+| **NFR-09 (Tính sẵn sàng/Uptime)** | Sẵn sàng phù hợp mục tiêu MVP. | Mục tiêu **99%** cho môi trường dev/single-instance (best effort), chấp nhận bảo trì ngắn; chạy đơn instance trong MVP, hỗ trợ restart nhanh qua Docker Compose. RTO mục tiêu < **30 phút** cho khôi phục thủ công thông thường. |
+| **NFR-10 (Triển khai & môi trường)** | Chạy local bằng Docker Compose; ưu tiên chi phí thấp. | `docker-compose` khởi tạo API, worker, PostgreSQL, RabbitMQ, Mailpit; có **CI/CD pipeline** (build, test, lint/format cơ bản, build Docker image). Môi trường deploy ngoài local: tùy chọn cloud/free tier sau MVP (chưa bắt buộc), ưu tiên tái sử dụng cấu hình compose/env. |
+
+## 6. Success Metrics
+| Nhóm | Metric | Cách đo | Mục tiêu (MVP) |
+|---|---|---|---|
+| **Độ tin cậy gửi** | Tỷ lệ thông báo hợp lệ (không phải lỗi vĩnh viễn do dữ liệu/địa chỉ sai) đạt `Sent` | Thống kê từ DB lịch sử/trạng thái | ≥ **99%** (loại trừ lỗi vĩnh viễn đã phân loại) |
+| **Chống trùng lặp** | Số lần gửi trùng do xử lý lại message/idempotency vi phạm | Đối chiếu log/provider receipt với `messageId`/`idempotencyKey` | **0** trong kịch bản test và vận hành thông thường |
+| **Hiệu năng tiếp nhận** | Latency API tiếp nhận và throughput | Metrics/APM hoặc benchmark | p95 < **200ms**, p99 < **500ms**, ≥ **50 req/s** sustained (dev benchmark) |
+| **Hiệu năng xử lý** | Thời gian từ `Pending`/enqueue đến `Sent` (end-to-end) | Timestamp trạng thái trong DB/log | p95: In-app < **5s**, Email < **30s** (điều kiện SMTP/dev mail server bình thường) |
+| **Phục hồi lỗi** | Tỷ lệ lỗi tạm thời phục hồi sau retry; thông báo vào DLQ | Thống kê retry/DLQ | ≥ **95%** lỗi tạm thời phục hồi sau ≤3 retry; DLQ chỉ chứa case không phục hồi/đã vượt ngưỡng, có thể thao tác resend |
+| **Khả năng quan sát** | Tỷ lệ sự cố có thể truy vết nguyên nhân | Audit mẫu sự cố/incident giả lập | 100% sự cố luồng gửi trong phạm vi hệ thống truy vết được qua `notificationId`/`messageId`/trace trong ≤ **15 phút** |
+| **Khả năng mở rộng** | Tăng năng lực xử lý khi tăng worker | Load test trước/sau scale-out | Khi tăng từ 1 lên 2 worker, throughput xử lý tăng rõ rệt (mục tiêu ≥ **1.6x** trong kịch bản không nghẽn DB/provider) |
+| **Chất lượng kỹ thuật** | Hoàn thiện artefact và test chính | Checklist & CI result | Có PRD, architecture blueprint, DB design, sequence diagram, API spec, ADR; CI pass build+test; integration test cover outbox/inbox/retry/DLQ/idempotency |
+
+## 7. Quyết định đã chốt (thay cho Open Questions)
+1. **Hiệu năng:** p95 < 200ms, p99 < 500ms cho API tiếp nhận; ≥ 50 req/s sustained (dev); payload ≤ 256 KB; end-to-end p95 In-app < 5s, Email < 30s.
+2. **Độ tin cậy/SLA:** At-least-once + idempotent; RPO=0 cho DB; RTO < 30 phút (khôi phục thủ công, single-instance MVP); uptime mục tiêu 99% best effort.
+3. **Bảo mật & phân quyền:** **JWT Bearer** + RBAC (`Admin`, `Operator`, `IntegrationClient/Developer`); bảo vệ endpoint quản trị/DLQ/resend; TLS khi deploy ngoài local; secrets qua env/secret store; che giấu PII trong log; audit log thao tác quản trị.
+4. **Template & kênh:** **Có cấu hình** trong MVP — quản lý Notification Template và cấu hình kênh gửi (CRUD cơ bản) qua Admin UI/API quản trị.
+5. **Giao diện vận hành:** **Admin UI** cho System Administrator và Business Operator (theo phân quyền).
+6. **Integration Event & contract:** Envelope chuẩn gồm `messageId`, `eventId`, `eventType`, `occurredAt`, `source`, `idempotencyKey` (nếu có), `version`, `payload`; event mẫu MVP `user.registered`, `payment.completed`, `order.status_changed`, `appointment.reminder`; topology RabbitMQ: `notifications.topic` (topic) → `notifications.email.q` / `notifications.inapp.q` + DLQ tương ứng.
+7. **Retry policy:** **3 lần retry**, exponential backoff + jitter (mặc định 10s, 30s, 90s; cap 2 phút); phân loại lỗi retryable (timeout/network/5xx) vs non-retryable (validation/4xx không phục hồi).
+8. **Idempotency scope:** Khóa chính xử lý message là `messageId` (Inbox, unique); API tạo dùng `idempotencyKey` theo client/source; lưu dấu vết chống trùng tối thiểu 7 ngày (cấu hình được).
+9. **Email provider & nội dung:** SMTP cấu hình được (dev: Mailpit/MailHog trong Docker Compose); hỗ trợ HTML + plain-text fallback; template lưu/quản lý trong hệ thống và render bằng dữ liệu đầu vào.
+10. **In-app delivery:** Lưu DB, client truy xuất qua **API pull/polling**; MVP có trạng thái chưa đọc/đã đọc và đánh dấu đã đọc (không realtime push).
+11. **Quan sát & vận hành:** Serilog structured log + correlation IDs; OpenTelemetry cơ bản (traces/metrics khả thi cho HTTP, EF Core, worker/RabbitMQ); health `/health`, `/health/ready`; lưu lịch sử DB 90 ngày, log 14 ngày (mặc định, cấu hình được); không dashboard/alerting chuyên dụng trong MVP.
+12. **Kiểm thử & tiêu chí hoàn thành:** Unit + integration tests (Testcontainers/Docker) cho luồng chính (outbox/inbox/retry/DLQ/idempotency), load test cơ bản (k6/NBomber); coverage định hướng ~70% core; đạt: test chính pass, đáp ứng mục tiêu hiệu năng/metric MVP.
+13. **Triển khai & CI/CD:** **Docker Compose** cho local/dev; **CI/CD pipeline** (build, test, lint/format cơ bản, build Docker image). Deploy cloud/free tier ngoài local là tùy chọn hậu MVP.
+14. **Concurrency & thứ tự:** Mặc định **5 concurrent messages/worker instance** (cấu hình được), scale-out nhiều worker; optimistic concurrency/unique constraints; **không đảm bảo thứ tự toàn cục** trong MVP, ưu tiên idempotency/an toàn xử lý (có thể mở rộng partitioning theo key nếu cần sau).
