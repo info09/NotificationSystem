@@ -177,9 +177,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 0 — Hạ tầng, CI/CD & khung mã nguồn.
-- **Story đang làm:** **ST-P0-02** — Khởi tạo module backend theo Clean Architecture (`Domain/Application/Infrastructure/Presentation`) cho `Notification`, `TemplateConfiguration`, `IntegrationMessaging`, `Delivery`, `Administration`, `IdentityAccess` và `BuildingBlocks`.
-- **Story tiếp theo đề xuất:** **ST-P0-03** — Khởi tạo Hosts `Api`, `Worker` và scaffold `AdminUI` (Angular SPA) theo cấu trúc chuẩn; cấu hình tham chiếu/DI cơ bản.
-- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-02. ST-P0-01 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI không chạy được).
+- **Story đang làm:** **ST-P0-03** — Khởi tạo Hosts `Api`, `Worker` và scaffold `AdminUI` (Angular SPA) theo cấu trúc chuẩn; cấu hình tham chiếu/DI cơ bản.
+- **Story tiếp theo đề xuất:** **ST-P0-04** — Thiết lập `docker-compose` local/dev cho `postgres`, `rabbitmq`, `mailpit`, `api`, `worker`, `admin-ui` (skeleton chạy được, network/volumes cơ bản).
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-03. ST-P0-01, ST-P0-02 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI không chạy được).
 
 ## 4. Deferred Work
 
@@ -205,5 +205,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 |---|---|---|---|---|---|
 | 2026-04-03 | Phase 0 / ST-P0-01 | Tool `shell` (pwsh) lỗi runtime (`hostpolicy.dll` / `Microsoft.PowerShell.GlobalTool.Shim.runtimeconfig.json`), không chạy được lệnh `dotnet`/`cmd` để build và test. | Không xác minh được "skeleton build được" và không chạy/confirm pass 3 tầng test liên quan; không thể tick Done theo DoD. | Cần môi trường shell/.NET CLI hoạt động (sửa pwsh/dotnet host) hoặc chỉ định cách chạy build/test thay thế. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-02 | Blocker môi trường shell/CLI từ ST-P0-01 vẫn còn. | Không thể `dotnet` build/test để xác minh skeleton và không thể tick Done theo DoD. | Cần môi trường shell/.NET CLI hoạt động hoặc cách xác minh thay thế. | Open |
+| 2026-04-03 | Phase 0 / ST-P0-03 | Blocker môi trường shell/CLI vẫn còn; không có Node/Angular CLI khả dụng để xác minh scaffold build. | Không thể build/test Hosts và `AdminUI` scaffold, không thể tick Done theo DoD. | Cần môi trường shell/.NET/Node khả dụng hoặc cách xác minh thay thế. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
