@@ -176,10 +176,10 @@
   - [ ] **ST-P12-07** — Tổng hợp kết quả xác nhận FR/NFR/metric MVP, cập nhật hạn chế/rủi ro còn lại; **deploy production chỉ thực hiện khi có xác nhận rõ ràng từ người dùng trong cùng phiên**.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Chưa bắt đầu (Phase 0 — Hạ tầng, CI/CD & khung mã nguồn).
-- **Story đang làm:** Chưa có.
-- **Story tiếp theo đề xuất:** **ST-P0-01** — Khởi tạo cấu trúc thư mục/solution `src`, `tests`, `docker`, `docs`, `.github/workflows` theo `docs/conventions.md`.
-- **Cập nhật lần cuối:** 2026-04-03 — Chia checklist thành stories có mã `ST-P{phase}-{số}` trong `docs/status.md`.
+- **Phase đang làm:** Phase 0 — Hạ tầng, CI/CD & khung mã nguồn.
+- **Story đang làm:** **ST-P0-01** — Khởi tạo cấu trúc thư mục/solution `src`, `tests`, `docker`, `docs`, `.github/workflows` theo `docs/conventions.md`.
+- **Story tiếp theo đề xuất:** **ST-P0-02** — Khởi tạo module backend theo Clean Architecture (`Domain/Application/Infrastructure/Presentation`) cho `Notification`, `TemplateConfiguration`, `IntegrationMessaging`, `Delivery`, `Administration`, `IdentityAccess` và `BuildingBlocks`.
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-01 (chưa tick: chưa xác minh đủ 3 tầng test liên quan pass).
 
 ## 4. Deferred Work
 
@@ -203,6 +203,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 
 | Ngày | Phase/Story | Blocker/Risk | Tác động | Cần người dùng quyết định | Trạng thái |
 |---|---|---|---|---|---|
-| *(Chưa có)* | — | — | — | — | — |
+| 2026-04-03 | Phase 0 / ST-P0-01 | Tool `shell` (pwsh) lỗi runtime (`hostpolicy.dll` / `Microsoft.PowerShell.GlobalTool.Shim.runtimeconfig.json`), không chạy được lệnh `dotnet`/`cmd` để build và test. | Không xác minh được "skeleton build được" và không chạy/confirm pass 3 tầng test liên quan; không thể tick Done theo DoD. | Cần môi trường shell/.NET CLI hoạt động (sửa pwsh/dotnet host) hoặc chỉ định cách chạy build/test thay thế. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
