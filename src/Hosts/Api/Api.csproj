@@ -1,24 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
-    <PackageReference Include="Scalar.AspNetCore" Version="3.1.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.14.9" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
-    <ProjectReference Include="..\..\BuildingBlocks\SharedKernel\BuildingBlocks.SharedKernel.csproj" />
-    <ProjectReference Include="..\..\Modules\Administration\Presentation\Administration.Presentation.csproj" />
-    <ProjectReference Include="..\..\Modules\Delivery\Presentation\Delivery.Presentation.csproj" />
-    <ProjectReference Include="..\..\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
-    <ProjectReference Include="..\..\Modules\IntegrationMessaging\Presentation\IntegrationMessaging.Presentation.csproj" />
-    <ProjectReference Include="..\..\Modules\Notification\Presentation\Notification.Presentation.csproj" />
-    <ProjectReference Include="..\..\Modules\TemplateConfiguration\Presentation\TemplateConfiguration.Presentation.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
+		<ProjectReference Include="..\..\BuildingBlocks\SharedKernel\BuildingBlocks.SharedKernel.csproj" />
+		<ProjectReference Include="..\..\Modules\Administration\Presentation\Administration.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Delivery\Presentation\Delivery.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\IntegrationMessaging\Presentation\IntegrationMessaging.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\Notification\Presentation\Notification.Presentation.csproj" />
+		<ProjectReference Include="..\..\Modules\TemplateConfiguration\Presentation\TemplateConfiguration.Presentation.csproj" />
+	</ItemGroup>
 </Project>

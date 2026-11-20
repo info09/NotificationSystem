@@ -1,4 +1,3 @@
-using System.Globalization;
 using NotificationChannel = global::Notification.Domain.NotificationChannel;
 using NotificationStatus = global::Notification.Domain.NotificationStatus;
 
@@ -6,11 +5,7 @@ namespace Notification.Application.Notifications.GetNotifications;
 
 public sealed class GetNotificationsUseCase
 {
-    private const int DefaultPage = 1;
-    private const int DefaultPageSize = 20;
     private const int MaxPageSize = 100;
-
-    private static readonly string[] PrivilegedRoles = ["SystemAdministrator", "BusinessOperator"];
 
     private readonly INotificationRepository _notificationRepository;
 
@@ -45,7 +40,7 @@ public sealed class GetNotificationsUseCase
 
         if (!string.IsNullOrWhiteSpace(request.Channel))
         {
-            if (!TryParseChannel(request.Channel, out var channelValue))
+            if (!NotificationParsing.TryParseChannel(request.Channel, out var channelValue))
             {
                 errors["channel"] = ["Channel must be 'email' or 'inapp'."];
             }
@@ -57,7 +52,7 @@ public sealed class GetNotificationsUseCase
 
         if (!string.IsNullOrWhiteSpace(request.CreatedFrom))
         {
-            if (!TryParseUtcDateTime(request.CreatedFrom, out var fromValue))
+            if (!NotificationParsing.TryParseUtcDateTime(request.CreatedFrom, out var fromValue))
             {
                 errors["createdFrom"] = ["createdFrom must be a valid date/time."];
             }
@@ -69,7 +64,7 @@ public sealed class GetNotificationsUseCase
 
         if (!string.IsNullOrWhiteSpace(request.CreatedTo))
         {
-            if (!TryParseUtcDateTime(request.CreatedTo, out var toValue))
+            if (!NotificationParsing.TryParseUtcDateTime(request.CreatedTo, out var toValue))
             {
                 errors["createdTo"] = ["createdTo must be a valid date/time."];
             }
@@ -78,9 +73,6 @@ public sealed class GetNotificationsUseCase
                 parsedCreatedToUtc = toValue;
             }
         }
-
-        var page = request.Page == 0 ? DefaultPage : request.Page;
-        var pageSize = request.PageSize == 0 ? DefaultPageSize : request.PageSize;
 
         if (request.Page < 1)
         {
@@ -102,119 +94,24 @@ public sealed class GetNotificationsUseCase
             return NotificationAppResult<GetNotificationsResponseDto>.Validation(errors);
         }
 
-        var scopeRestriction = GetScopeRestriction(request.Caller);
-
-        try
-        {
-            var query = new GetNotificationsQuery(
-                parsedStatus,
-                parsedChannel,
-                parsedCreatedFromUtc,
-                parsedCreatedToUtc,
-                page,
-                pageSize,
-                scopeRestriction);
-
-            var result = await GetPagedAsync(query, cancellationToken);
-            var response = new GetNotificationsResponseDto(
-                result.Items.Select(MapToResponseItem).ToList(),
-                result.TotalCount,
-                result.Page,
-                result.PageSize);
-
-            return NotificationAppResult<GetNotificationsResponseDto>.Ok(response);
-        }
-        catch (ArgumentOutOfRangeException ex)
-        {
-            return NotificationAppResult<GetNotificationsResponseDto>.Validation(
-                new Dictionary<string, string[]>
-                {
-                    ["query"] = [ex.Message]
-                });
-        }
-    }
-
-    private async Task<PagedResult<NotificationDto>> GetPagedAsync(
-        GetNotificationsQuery query,
-        CancellationToken cancellationToken)
-    {
-        if (query.Page < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(query), "Page must be greater than or equal to 1.");
-        }
-
-        if (query.PageSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(query), "PageSize must be greater than or equal to 1.");
-        }
+        var scopeRestriction = NotificationAccess.GetScopeRestriction(request.Caller);
 
         var (items, totalCount) = await _notificationRepository.GetPagedAsync(
-            query.Status,
-            query.Channel,
-            query.CreatedFromUtc,
-            query.CreatedToUtc,
-            query.Page,
-            query.PageSize,
-            query.ScopeRestriction,
+            parsedStatus,
+            parsedChannel,
+            parsedCreatedFromUtc,
+            parsedCreatedToUtc,
+            request.Page,
+            request.PageSize,
+            scopeRestriction,
             cancellationToken);
 
-        return new PagedResult<NotificationDto>(
-            items.Select(NotificationMapper.MapToDto).ToList(),
+        var response = new GetNotificationsResponseDto(
+            items.Select(NotificationMapper.MapToItemResponse).ToList(),
             totalCount,
-            query.Page,
-            query.PageSize);
+            request.Page,
+            request.PageSize);
+
+        return NotificationAppResult<GetNotificationsResponseDto>.Ok(response);
     }
-
-    private static string? GetScopeRestriction(NotificationCallerContext? caller)
-    {
-        if (caller is not null && caller.Roles.Any(role => PrivilegedRoles.Contains(role, StringComparer.Ordinal)))
-        {
-            return null;
-        }
-
-        return caller?.Subject;
-    }
-
-    private static bool TryParseChannel(string channel, out NotificationChannel parsedChannel)
-    {
-        if (string.Equals(channel, "email", StringComparison.OrdinalIgnoreCase))
-        {
-            parsedChannel = NotificationChannel.Email;
-            return true;
-        }
-
-        if (string.Equals(channel, "inapp", StringComparison.OrdinalIgnoreCase))
-        {
-            parsedChannel = NotificationChannel.InApp;
-            return true;
-        }
-
-        parsedChannel = default;
-        return false;
-    }
-
-    private static bool TryParseUtcDateTime(string value, out DateTime utcDateTime)
-    {
-        if (DateTimeOffset.TryParse(
-            value,
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-            out var dateTimeOffset))
-        {
-            utcDateTime = dateTimeOffset.UtcDateTime;
-            return true;
-        }
-
-        utcDateTime = default;
-        return false;
-    }
-
-    private static NotificationItemResponseDto MapToResponseItem(NotificationDto notification) => new(
-        notification.Id,
-        notification.Recipient,
-        notification.Channel.ToString(),
-        notification.Status.ToString(),
-        notification.Content,
-        notification.NotificationTemplateId,
-        notification.CreatedAt);
 }

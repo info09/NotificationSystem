@@ -1,4 +1,3 @@
-using BuildingBlocks.SharedKernel.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,7 +5,6 @@ using Notification.Application.Notifications;
 using Notification.Application.Notifications.CreateNotification;
 using Notification.Application.Notifications.GetNotificationById;
 using Notification.Application.Notifications.GetNotifications;
-using DomainNotification = global::Notification.Domain.Notification;
 
 namespace Notification.Infrastructure.Persistence;
 
@@ -30,11 +28,7 @@ public static class NotificationPersistenceServiceCollectionExtensions
                 npgsqlOptions.MigrationsAssembly(typeof(NotificationDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "notification")));
 
-        services.AddScoped<NotificationRepository>();
-        services.AddScoped<INotificationRepository>(serviceProvider =>
-            serviceProvider.GetRequiredService<NotificationRepository>());
-        services.AddScoped<IRepository<DomainNotification>>(serviceProvider =>
-            serviceProvider.GetRequiredService<NotificationRepository>());
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         services.AddScoped<CreateNotificationUseCase>();
         services.AddScoped<GetNotificationByIdUseCase>();

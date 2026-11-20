@@ -1,9 +1,9 @@
-using BuildingBlocks.SharedKernel.Repository;
 using Notification.Application.Notifications;
 using Notification.Application.Notifications.CreateNotification;
 using System.Linq.Expressions;
 using DomainNotification = global::Notification.Domain.Notification;
 using NotificationChannel = global::Notification.Domain.NotificationChannel;
+using NotificationStatus = global::Notification.Domain.NotificationStatus;
 using Recipient = global::Notification.Domain.Recipient;
 
 namespace UnitTests.Notification.Application;
@@ -140,7 +140,7 @@ public sealed class CreateNotificationUseCaseTests
         Assert.Equal(NotificationChannel.InApp, repository.AddedNotification!.Channel);
     }
 
-    private sealed class FakeNotificationRepository : IRepository<DomainNotification>
+    private sealed class FakeNotificationRepository : INotificationRepository
     {
         private readonly IReadOnlyList<DomainNotification> _existingNotifications;
 
@@ -152,6 +152,20 @@ public sealed class CreateNotificationUseCaseTests
         public DomainNotification? AddedNotification { get; private set; }
 
         public int SaveChangesCallCount { get; private set; }
+
+        public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(
+            NotificationStatus? status,
+            NotificationChannel? channel,
+            DateTime? createdFromUtc,
+            DateTime? createdToUtc,
+            int page,
+            int pageSize,
+            string? scopeRestriction,
+            CancellationToken cancellationToken)
+            => throw new NotImplementedException();
+
+        public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken)
+            => throw new NotImplementedException();
 
         public Task<DomainNotification> AddAsync(DomainNotification entity, CancellationToken cancellationToken = default)
         {

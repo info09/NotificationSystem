@@ -1,4 +1,3 @@
-using BuildingBlocks.SharedKernel.Repository;
 using DomainNotification = global::Notification.Domain.Notification;
 using NotificationChannel = global::Notification.Domain.NotificationChannel;
 using Recipient = global::Notification.Domain.Recipient;
@@ -7,9 +6,9 @@ namespace Notification.Application.Notifications.CreateNotification;
 
 public sealed class CreateNotificationUseCase
 {
-    private readonly IRepository<DomainNotification> _notificationRepository;
+    private readonly INotificationRepository _notificationRepository;
 
-    public CreateNotificationUseCase(IRepository<DomainNotification> notificationRepository)
+    public CreateNotificationUseCase(INotificationRepository notificationRepository)
     {
         _notificationRepository = notificationRepository;
     }
@@ -44,7 +43,7 @@ public sealed class CreateNotificationUseCase
         {
             errors["channel"] = ["Channel is required."];
         }
-        else if (!TryParseChannel(request.Channel, out parsedChannel))
+        else if (!NotificationParsing.TryParseChannel(request.Channel, out parsedChannel))
         {
             errors["channel"] = ["Channel must be 'email' or 'inapp'."];
         }
@@ -151,23 +150,5 @@ public sealed class CreateNotificationUseCase
 
             throw;
         }
-    }
-
-    private static bool TryParseChannel(string channel, out NotificationChannel parsedChannel)
-    {
-        if (string.Equals(channel, "email", StringComparison.OrdinalIgnoreCase))
-        {
-            parsedChannel = NotificationChannel.Email;
-            return true;
-        }
-
-        if (string.Equals(channel, "inapp", StringComparison.OrdinalIgnoreCase))
-        {
-            parsedChannel = NotificationChannel.InApp;
-            return true;
-        }
-
-        parsedChannel = default;
-        return false;
     }
 }

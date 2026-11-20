@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using BuildingBlocks.SharedKernel.Constants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +6,7 @@ using Notification.Application.Notifications;
 using Notification.Application.Notifications.CreateNotification;
 using Notification.Application.Notifications.GetNotificationById;
 using Notification.Application.Notifications.GetNotifications;
+using System.Security.Claims;
 
 namespace Notification.Presentation;
 
