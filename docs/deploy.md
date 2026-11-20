@@ -47,7 +47,7 @@
   - **AdminUI (Angular):** `API_BASE_URL` (hoặc cấu hình environment build/runtime tương đương), allowed origin/CORS phía API (`CORS__AllowedOrigins`), `ADMIN_UI_BASE_URL` (hoặc biến tương đương) dùng để tạo link đặt lại mật khẩu trong email.
   - **SMTP/`EmailProvider`:** `SMTP__Host`, `SMTP__Port`, `SMTP__User`, `SMTP__Password` (nếu có), `SMTP__From`, `SMTP__EnableSsl` (local dùng Mailpit; staging/prod dùng provider thật). Bắt buộc cấu hình hợp lệ ở môi trường có bật luồng tự đặt lại mật khẩu.
   - **Quản lý user/credential (bổ sung):** thời hạn/TTL token đặt lại mật khẩu, thời hạn `JWT` cấp cho đăng nhập/`IntegrationClient`, và các tham số chính sách (rate limit/lockout/rotate) theo cấu hình ứng dụng (không hardcode; tên biến cụ thể chốt khi implement).
-  - **Observability:** `OTEL_*` (nếu bật OpenTelemetry), log level/Serilog sink config theo môi trường.
+  - **Observability/OpenTelemetry:** `OpenTelemetry__Enabled`, `OpenTelemetry__ServiceName` (tùy host), `OpenTelemetry__Tracing__Enabled`, `OpenTelemetry__Metrics__Enabled`, `OpenTelemetry__Exporter__Otlp__Endpoint`, `OpenTelemetry__Exporter__Otlp__Protocol` (`Grpc`/`HttpProtobuf`), `OpenTelemetry__Exporter__Console__Enabled` (dev/local), log level/Serilog sink config theo môi trường. Instrumentation cơ bản MVP: HTTP (`Api`), EF Core, worker runtime/host (`Worker`), và khả năng mở rộng cho RabbitMQ/messaging khi có client/consumer/publisher.
   - **CI/CD deploy (GitHub Actions):** secrets truy cập server/registry (SSH key hoặc cơ chế deploy được chọn), image tags/registry credentials nếu publish image; **chỉ cấu hình khi phương thức deploy được chốt**.
 
 ## 4. Quy trình build & CI/CD (GitHub Actions)

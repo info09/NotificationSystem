@@ -2,6 +2,7 @@ using Administration.Infrastructure.Persistence;
 using Api.HealthChecks;
 using BuildingBlocks.Observability.Correlation;
 using BuildingBlocks.Observability.Logging;
+using BuildingBlocks.Observability.OpenTelemetry;
 using Delivery.Infrastructure.Persistence;
 using IdentityAccess.Infrastructure.Persistence;
 using IdentityAccess.Presentation;
@@ -14,6 +15,7 @@ using TemplateConfiguration.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.UseStructuredLogging();
+builder.AddOpenTelemetryObservability(instrumentAspNetCore: true);
 
 builder.Services.AddIdentityAccessJwtBearerAuthentication(builder.Configuration);
 builder.Services.AddIdentityAccessRbacAuthorization();
