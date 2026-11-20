@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -13,6 +14,9 @@ public sealed class AuthenticationFlowE2ETests : IClassFixture<WebApplicationFac
     {
         _client = factory.WithWebHostBuilder(builder =>
         {
+            builder.UseSetting(
+                "ConnectionStrings:Database",
+                "Host=localhost;Port=5432;Database=notification_test;Username=postgres;Password=postgres");
             builder.UseSetting("JWT_ISSUER", "e2e-issuer");
             builder.UseSetting("JWT_AUDIENCE", "e2e-audience");
             builder.UseSetting("JWT_SIGNING_KEY", "e2e-test-signing-key-min-32-chars-000001");

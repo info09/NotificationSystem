@@ -195,7 +195,7 @@
 - **Phase đang làm:** Phase 2 — Nền tảng `Cơ sở dữ liệu`, `HealthCheck` & `Observability`.
 - **Story đang làm:** **ST-P2-01** — Thiết lập kết nối PostgreSQL, DbContext/EF Core và cấu trúc persistence theo module (Clean Architecture).
 - **Story tiếp theo đề xuất:** **ST-P2-02** — Thiết lập chiến lược migration EF Core, transaction cơ bản và quy trình áp dụng trong môi trường local/dev.
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận Phase 0 (ST-P0-01 → ST-P0-08) và Phase 1 (ST-P1-01 → ST-P1-06) đã hoàn thành (unit + integration + e2e liên quan đều pass). Chuyển sang Phase 2 / ST-P2-01.
+- **Cập nhật lần cuối:** 2026-04-03 — Đã implement ST-P2-01 (EF Core/Npgsql, DbContext & persistence DI theo module, cấu hình `ConnectionStrings:Database`, wiring `Api`/`Worker`, bổ sung/cập nhật test liên quan). Chưa tick Done do chưa có bằng chứng chạy pass unit + integration + e2e liên quan trong môi trường hiện tại.
 
 ## 4. Deferred Work
 
@@ -221,5 +221,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 |---|---|---|---|---|---|
 | 2026-04-03 | Phase 0 / ST-P0-01 → ST-P0-08 | Blocker môi trường shell/CLI/Docker/Node (agent) ngăn tự xác minh. | Đại ca đã xác nhận xác minh và pass các hạng mục liên quan (unit + integration + e2e theo phạm vi áp dụng). | — | Resolved |
 | 2026-04-03 | Phase 1 / ST-P1-01 → ST-P1-06 | Blocker môi trường shell/CLI/Docker/Node (agent) ngăn tự xác minh. | Đại ca đã xác nhận xác minh và pass các hạng mục liên quan (unit + integration + e2e theo phạm vi áp dụng). | — | Resolved |
+| 2026-04-03 | Phase 2 / ST-P2-01 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đã implement ST-P2-01 và bổ sung/cập nhật test liên quan nhưng chưa chạy/xác minh pass unit + integration + e2e; chưa thể tick Done theo DoD. | Cần Đại ca chạy build và các test liên quan rồi cung cấp kết quả pass. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
