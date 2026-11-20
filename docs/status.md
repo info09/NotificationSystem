@@ -61,7 +61,7 @@
   - [x] **ST-P2-03** — Triển khai `HealthCheck` `GET /health` (liveness) và `GET /health/ready` (readiness: API, Database, RabbitMQ).
   - [x] **ST-P2-04** — Triển khai `StructuredLog` (Serilog) với enrichment `CorrelationId` (`messageId`, `notificationId`, trace id) và middleware liên quan.
   - [x] **ST-P2-05** — Tích hợp OpenTelemetry cơ bản cho HTTP, EF Core, worker/RabbitMQ (mức khả thi MVP) và cấu hình theo môi trường.
-  - [ ] **ST-P2-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan DB, health, logging/tracing.
+  - [x] **ST-P2-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan DB, health, logging/tracing.
 
 ### Phase 3 — Module `Notification`: `CreateNotificationRequest`, `IdempotencyKey` & tra cứu `Thông báo`
 - **Mục tiêu:** Cho phép `IntegrationClient` tạo `Notification` qua API an toàn/idempotent và cho `Quản trị viên hệ thống`/`Nhân viên vận hành` tra cứu `Thông báo` trong `AdminUI`.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 2 — Nền tảng `Cơ sở dữ liệu`, `HealthCheck` & `Observability`.
-- **Story đang làm:** **ST-P2-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan DB, health, logging/tracing.
-- **Story tiếp theo đề xuất:** **ST-P3-01** — Triển khai domain `Notification` (`NotificationStatus`: `Pending`/`Processing`/`Sent`/`Failed`, `Recipient`, kênh/nội dung hoặc template ref) và quy tắc nghiệp vụ cơ bản.
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done **ST-P2-05**. Chuyển sang **ST-P2-06**.
+- **Phase đang làm:** Phase 3 — Module `Notification`: `CreateNotificationRequest`, `IdempotencyKey` & tra cứu `Thông báo`.
+- **Story đang làm:** **ST-P3-01** — Triển khai domain `Notification` (`NotificationStatus`: `Pending`/`Processing`/`Sent`/`Failed`, `Recipient`, kênh/nội dung hoặc template ref) và quy tắc nghiệp vụ cơ bản.
+- **Story tiếp theo đề xuất:** **ST-P3-02** — Triển khai application/use case và persistence cho tạo/truy vấn `Notification` theo Clean Architecture.
+- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done **ST-P2-06**. Hoàn tất Phase 2, chuyển sang **ST-P3-01**.
 
 ## 4. Deferred Work
 
@@ -226,5 +226,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 2 / ST-P2-03 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 2 / ST-P2-04 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 2 / ST-P2-05 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
+| 2026-04-03 | Phase 2 / ST-P2-06 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
