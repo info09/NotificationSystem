@@ -177,9 +177,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 0 — Hạ tầng, CI/CD & khung mã nguồn.
-- **Story đang làm:** **ST-P0-04** — Thiết lập `docker-compose` local/dev cho `postgres`, `rabbitmq`, `mailpit`, `api`, `worker`, `admin-ui` (skeleton chạy được, network/volumes cơ bản).
-- **Story tiếp theo đề xuất:** **ST-P0-05** — Tạo `.env.example` và cơ chế nạp cấu hình local cho các biến bắt buộc theo `docs/deploy.md` (không commit secret).
-- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-04. ST-P0-01, ST-P0-02, ST-P0-03 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI không chạy được).
+- **Story đang làm:** **ST-P0-05** — Tạo `.env.example` và cơ chế nạp cấu hình local cho các biến bắt buộc theo `docs/deploy.md` (không commit secret).
+- **Story tiếp theo đề xuất:** **ST-P0-06** — Thiết lập khung `tests/UnitTests`, `tests/IntegrationTests`, `tests/E2ETests` (bao gồm cấu hình Testcontainers/Docker cho integration khi áp dụng) và lệnh chạy test chuẩn.
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-05. ST-P0-01, ST-P0-02, ST-P0-03, ST-P0-04 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker không chạy được).
 
 ## 4. Deferred Work
 
@@ -207,5 +207,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 0 / ST-P0-02 | Blocker môi trường shell/CLI từ ST-P0-01 vẫn còn. | Không thể `dotnet` build/test để xác minh skeleton và không thể tick Done theo DoD. | Cần môi trường shell/.NET CLI hoạt động hoặc cách xác minh thay thế. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-03 | Blocker môi trường shell/CLI vẫn còn; không có Node/Angular CLI khả dụng để xác minh scaffold build. | Không thể build/test Hosts và `AdminUI` scaffold, không thể tick Done theo DoD. | Cần môi trường shell/.NET/Node khả dụng hoặc cách xác minh thay thế. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-04 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể chạy `docker compose` để xác minh skeleton chạy được và không thể tick Done theo DoD. | Cần môi trường Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
+| 2026-04-03 | Phase 0 / ST-P0-05 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể xác minh cơ chế nạp cấu hình local (compose/env) và chạy test liên quan; không thể tick Done theo DoD. | Cần môi trường Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.

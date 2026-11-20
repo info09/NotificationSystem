@@ -4,16 +4,19 @@ services:
   postgres:
     image: postgres:16
     container_name: notification-system-postgres
+    env_file:
+      - path: ../.env
+        required: false
     environment:
-      POSTGRES_DB: notification
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME:-notification}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d notification"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-notification}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,9 +26,12 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: notification-system-rabbitmq
+    env_file:
+      - path: ../.env
+        required: false
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -53,14 +59,26 @@ services:
       context: ..
       dockerfile: docker/api.Dockerfile
     container_name: notification-system-api
+    env_file:
+      - path: ../.env
+        required: false
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Database: Host=postgres;Port=5432;Database=notification;Username=postgres;Password=postgres
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: guest
-      RABBITMQ_PASSWORD: guest
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS:-http://+:8080}
+      ConnectionStrings__Database: ${ConnectionStrings__Database:-Host=postgres;Port=5432;Database=${DB_NAME:-notification};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}}
+      JWT_ISSUER: ${JWT_ISSUER:-notification-system-dev}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-notification-system-dev}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev-only-change-this-signing-key-min-32-chars-000000}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@notification.local}
+      SMTP_ENABLE_SSL: ${SMTP_ENABLE_SSL:-false}
     ports:
       - "8080:8080"
     depends_on:
@@ -76,13 +94,22 @@ services:
       context: ..
       dockerfile: docker/worker.Dockerfile
     container_name: notification-system-worker
+    env_file:
+      - path: ../.env
+        required: false
     environment:
-      DOTNET_ENVIRONMENT: Development
-      ConnectionStrings__Database: Host=postgres;Port=5432;Database=notification;Username=postgres;Password=postgres
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: guest
-      RABBITMQ_PASSWORD: guest
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT:-Development}
+      ConnectionStrings__Database: ${ConnectionStrings__Database:-Host=postgres;Port=5432;Database=${DB_NAME:-notification};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-postgres}}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@notification.local}
+      SMTP_ENABLE_SSL: ${SMTP_ENABLE_SSL:-false}
     depends_on:
       postgres:
         condition: service_healthy
