@@ -24,12 +24,21 @@ namespace Notification.Infrastructure.Persistence.Migrations
                     Channel = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: true),
-                    NotificationTemplateId = table.Column<Guid>(type: "uuid", nullable: true)
+                    NotificationTemplateId = table.Column<Guid>(type: "uuid", nullable: true),
+                    IdempotencyScope = table.Column<string>(type: "text", nullable: false),
+                    IdempotencyKey = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Notifications", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_IdempotencyScope_IdempotencyKey",
+                schema: "notification",
+                table: "Notifications",
+                columns: new[] { "IdempotencyScope", "IdempotencyKey" },
+                unique: true);
         }
 
         /// <inheritdoc />

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\BuildingBlocks.SharedKernel.csproj" />
     <ProjectReference Include="..\Application\IdentityAccess.Application.csproj" />
     <ProjectReference Include="..\Infrastructure\IdentityAccess.Infrastructure.csproj" />
   </ItemGroup>

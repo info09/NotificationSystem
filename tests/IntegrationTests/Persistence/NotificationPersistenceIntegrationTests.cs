@@ -29,7 +29,9 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
             new Recipient("user@example.com"),
             NotificationChannel.Email,
             "Xin chao",
-            null);
+            null,
+            "integration-client-1",
+            "idem-key-1");
 
         await repository.AddAsync(notification, CancellationToken.None);
         await repository.SaveChangesAsync(CancellationToken.None);
@@ -45,6 +47,8 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
         Assert.Equal(NotificationStatus.Pending, persisted.Status);
         Assert.Equal("Xin chao", persisted.Content);
         Assert.Null(persisted.NotificationTemplateId);
+        Assert.Equal("integration-client-1", persisted.IdempotencyScope);
+        Assert.Equal("idem-key-1", persisted.IdempotencyKey);
     }
 
     [Fact]
@@ -72,7 +76,9 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
             new Recipient("recipient-id"),
             NotificationChannel.InApp,
             null,
-            Guid.NewGuid());
+            Guid.NewGuid(),
+            "integration-client-1",
+            "idem-key-2");
 
         await repository.AddAsync(notification, CancellationToken.None);
         await repository.SaveChangesAsync(CancellationToken.None);

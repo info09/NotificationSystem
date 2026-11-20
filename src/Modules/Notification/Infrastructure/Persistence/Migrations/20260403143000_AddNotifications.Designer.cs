@@ -41,6 +41,16 @@ namespace Notification.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("Content");
 
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("IdempotencyKey");
+
+                    b.Property<string>("IdempotencyScope")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("IdempotencyScope");
+
                     b.Property<Guid?>("NotificationTemplateId")
                         .HasColumnType("uuid")
                         .HasColumnName("NotificationTemplateId");
@@ -56,6 +66,9 @@ namespace Notification.Infrastructure.Persistence.Migrations
                         .HasColumnName("Status");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IdempotencyScope", "IdempotencyKey")
+                        .IsUnique();
 
                     b.ToTable("Notifications", "notification");
                 });

@@ -1,4 +1,4 @@
-namespace IdentityAccess.Presentation;
+namespace BuildingBlocks.SharedKernel.Constants;
 
 public static class RbacPolicies
 {

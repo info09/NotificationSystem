@@ -195,7 +195,7 @@
 - **Phase đang làm:** Phase 3 — Module `Notification`: `CreateNotificationRequest`, `IdempotencyKey` & tra cứu `Thông báo`.
 - **Story đang làm:** **ST-P3-03** — Triển khai API tạo `Notification` từ `CreateNotificationRequest` (JWT + RBAC, validation, trả `notificationId`) với xử lý `IdempotencyKey` chống tạo trùng.
 - **Story tiếp theo đề xuất:** **ST-P3-04** — Triển khai API truy vấn danh sách/chi tiết `Notification` (lọc trạng thái/kênh/thời gian, phân trang) theo quyền.
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done **ST-P3-02**. Chuyển sang **ST-P3-03**.
+- **Cập nhật lần cuối:** 2026-04-03 — Đã implement API tạo `Notification` (ST-P3-03): endpoint `POST /api/notifications` (JWT + RBAC `IntegrationClient`, validation, trả `notificationId`), idempotency theo scope claim + `IdempotencyKey` (unique index), cập nhật domain/application/persistence/migration và test liên quan (chưa commit). Chưa tick Done do chưa có bằng chứng chạy pass unit + integration + e2e liên quan.
 
 ## 4. Deferred Work
 
@@ -229,5 +229,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 2 / ST-P2-06 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 3 / ST-P3-01 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 3 / ST-P3-02 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; chưa có EF Core migration cho `notifications`. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
+| 2026-04-03 | Phase 3 / ST-P3-03 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; migration `AddNotifications` đã được cập nhật để bao gồm cột/index idempotency. | Đã implement API tạo `Notification` với idempotency và test liên quan nhưng chưa chạy/xác minh pass; chưa tick Done theo DoD. | Cần Đại ca apply/update schema DB theo migration hiện tại, chạy build và các test liên quan rồi cung cấp kết quả pass. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.

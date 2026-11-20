@@ -7,6 +7,8 @@ public sealed class Notification : Entity
     private Notification()
     {
         Recipient = null!;
+        IdempotencyScope = string.Empty;
+        IdempotencyKey = string.Empty;
     }
 
     private Notification(
@@ -15,7 +17,9 @@ public sealed class Notification : Entity
         NotificationChannel channel,
         NotificationStatus status,
         string? content,
-        Guid? notificationTemplateId)
+        Guid? notificationTemplateId,
+        string idempotencyScope,
+        string idempotencyKey)
     {
         Id = id;
         Recipient = recipient;
@@ -23,6 +27,8 @@ public sealed class Notification : Entity
         Status = status;
         Content = content;
         NotificationTemplateId = notificationTemplateId;
+        IdempotencyScope = idempotencyScope;
+        IdempotencyKey = idempotencyKey;
     }
 
     public Recipient Recipient { get; private set; }
@@ -35,12 +41,18 @@ public sealed class Notification : Entity
 
     public Guid? NotificationTemplateId { get; private set; }
 
+    public string IdempotencyScope { get; private set; }
+
+    public string IdempotencyKey { get; private set; }
+
     public static Notification Create(
         Guid id,
         Recipient recipient,
         NotificationChannel channel,
         string? content,
-        Guid? notificationTemplateId)
+        Guid? notificationTemplateId,
+        string idempotencyScope,
+        string idempotencyKey)
     {
         ArgumentNullException.ThrowIfNull(recipient);
 
@@ -49,7 +61,25 @@ public sealed class Notification : Entity
             throw new ArgumentException("Notification content or notification template reference is required.");
         }
 
-        return new Notification(id, recipient, channel, NotificationStatus.Pending, content, notificationTemplateId);
+        if (string.IsNullOrWhiteSpace(idempotencyScope))
+        {
+            throw new ArgumentException("Idempotency scope is required.", nameof(idempotencyScope));
+        }
+
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            throw new ArgumentException("Idempotency key is required.", nameof(idempotencyKey));
+        }
+
+        return new Notification(
+            id,
+            recipient,
+            channel,
+            NotificationStatus.Pending,
+            content,
+            notificationTemplateId,
+            idempotencyScope,
+            idempotencyKey);
     }
 
     public void MarkProcessing()

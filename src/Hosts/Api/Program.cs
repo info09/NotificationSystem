@@ -6,6 +6,7 @@ using BuildingBlocks.Observability.Logging;
 using BuildingBlocks.Observability.OpenTelemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Notification.Infrastructure.Persistence;
+using Notification.Presentation;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready")
 }).AllowAnonymous();
+
+app.MapNotificationEndpoints();
 
 // Gọi Configure của mỗi module
 foreach (var module in app.Services.GetServices<IModuleInitializer>())

@@ -17,7 +17,9 @@ public sealed class GetNotificationsUseCaseTests
             new Recipient("user@example.com"),
             NotificationChannel.Email,
             "Hello",
-            null);
+            null,
+            "integration-client-1",
+            "idem-key-1");
         var repository = new FakeNotificationRepository([notification]);
         var useCase = new GetNotificationsUseCase(repository);
 

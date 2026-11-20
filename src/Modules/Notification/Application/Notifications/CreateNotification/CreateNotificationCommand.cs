@@ -6,4 +6,6 @@ public sealed record CreateNotificationCommand(
     string Recipient,
     NotificationChannel Channel,
     string? Content,
-    Guid? NotificationTemplateId);
+    Guid? NotificationTemplateId,
+    string IdempotencyScope,
+    string IdempotencyKey);
