@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace IdentityAccess.Presentation;
 
@@ -56,13 +55,11 @@ public sealed class RbacProblemDetailsAuthorizationMiddlewareResultHandler
         }
 
         context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = detail,
-            Instance = context.Request.Path
-        });
+        await Results.Problem(
+                title: title,
+                detail: detail,
+                statusCode: statusCode,
+                instance: context.Request.Path)
+            .ExecuteAsync(context);
     }
 }

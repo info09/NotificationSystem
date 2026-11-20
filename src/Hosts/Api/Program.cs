@@ -19,3 +19,5 @@ app.MapHealthChecks("/health/ready")
     .AllowAnonymous();
 
 app.Run();
+
+public partial class Program { }

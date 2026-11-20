@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Modules\IdentityAccess\Domain\IdentityAccess.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

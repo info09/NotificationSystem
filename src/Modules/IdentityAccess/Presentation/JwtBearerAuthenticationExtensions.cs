@@ -66,37 +66,31 @@ public static class JwtBearerAuthenticationExtensions
                     {
                         context.HandleResponse();
 
-                        if (context.Response.HasStarted)
+                        if (context.HttpContext.Response.HasStarted)
                         {
                             return;
                         }
 
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status401Unauthorized,
-                            Title = "Unauthorized",
-                            Detail = "Authentication is required to access this resource.",
-                            Instance = context.Request.Path
-                        });
+                        await Results.Problem(
+                                title: "Unauthorized",
+                                detail: "Authentication is required to access this resource.",
+                                statusCode: StatusCodes.Status401Unauthorized,
+                                instance: context.HttpContext.Request.Path)
+                            .ExecuteAsync(context.HttpContext);
                     },
                     OnForbidden = async context =>
                     {
-                        if (context.Response.HasStarted)
+                        if (context.HttpContext.Response.HasStarted)
                         {
                             return;
                         }
 
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status403Forbidden,
-                            Title = "Forbidden",
-                            Detail = "You do not have permission to access this resource.",
-                            Instance = context.Request.Path
-                        });
+                        await Results.Problem(
+                                title: "Forbidden",
+                                detail: "You do not have permission to access this resource.",
+                                statusCode: StatusCodes.Status403Forbidden,
+                                instance: context.HttpContext.Request.Path)
+                            .ExecuteAsync(context.HttpContext);
                     }
                 };
             });
