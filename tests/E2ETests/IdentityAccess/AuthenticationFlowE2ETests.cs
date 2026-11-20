@@ -16,6 +16,7 @@ public sealed class AuthenticationFlowE2ETests : IClassFixture<WebApplicationFac
     {
         _client = factory.WithWebHostBuilder(builder =>
         {
+            builder.UseEnvironment("Testing");
             builder.UseSetting(
                 "ConnectionStrings:Database",
                 "Host=localhost;Port=5432;Database=notification_test;Username=postgres;Password=postgres");
