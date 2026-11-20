@@ -11,8 +11,11 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Ok(new { service = "NotificationSystem.Api", status = "running" }));
-app.MapHealthChecks("/health");
-app.MapHealthChecks("/health/ready");
+app.MapGet("/", () => Results.Ok(new { service = "NotificationSystem.Api", status = "running" }))
+    .AllowAnonymous();
+app.MapHealthChecks("/health")
+    .AllowAnonymous();
+app.MapHealthChecks("/health/ready")
+    .AllowAnonymous();
 
 app.Run();

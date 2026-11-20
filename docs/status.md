@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 1 — `IdentityAccess`: `JwtBearer`, `RBAC` & `AdminUI` `Đăng nhập`/`Đăng xuất`.
-- **Story đang làm:** **ST-P1-02** — Triển khai `RBAC` cho vai trò `SystemAdministrator`, `BusinessOperator`, `IntegrationClient` và policy/authorization handlers.
-- **Story tiếp theo đề xuất:** **ST-P1-03** — Áp dụng bảo vệ endpoint API theo `RBAC` (bao gồm endpoint quản trị nhạy cảm) và chuẩn hóa lỗi 401/403 (ProblemDetails).
-- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P1-02. Đã bổ sung Phase 13 (quản lý user & credential, ST-P13-01 → ST-P13-09) và cập nhật tài liệu theo `docs/design-user-management.md`. ST-P0-01 → ST-P0-08 và các story Phase 1/13 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker/Node không chạy được).
+- **Story đang làm:** **ST-P1-03** — Áp dụng bảo vệ endpoint API theo `RBAC` (bao gồm endpoint quản trị nhạy cảm) và chuẩn hóa lỗi 401/403 (ProblemDetails).
+- **Story tiếp theo đề xuất:** **ST-P1-04** — Dựng `AdminUI` màn hình `Đăng nhập` / `Login` (form, validation, loading/empty/error/success) và tích hợp luồng xác thực.
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P1-03. Đã bổ sung Phase 13 và cập nhật tài liệu theo `docs/design-user-management.md`. ST-P0-01 → ST-P0-08 và các story Phase 1/13 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker/Node không chạy được).
 
 ## 4. Deferred Work
 
@@ -229,5 +229,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 0 / ST-P0-08 | Blocker môi trường shell/CLI/Docker/Node vẫn còn; agent không thể tự chạy lệnh xác minh. | Không thể xác minh build, compose smoke, test scaffold 3 tầng và pipeline CI chạy pass; không thể tick Done theo DoD/quy ước tick. | Cần Đại ca chạy xác minh (local/CI) và cung cấp log/kết quả pass cho các hạng mục liên quan. | Open |
 | 2026-04-03 | Phase 1 / ST-P1-01 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
 | 2026-04-03 | Phase 1 / ST-P1-02 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
+| 2026-04-03 | Phase 1 / ST-P1-03 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.

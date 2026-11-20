@@ -23,6 +23,7 @@ public static class RbacAuthorizationExtensions
         });
 
         services.AddSingleton<IAuthorizationHandler, RbacRoleAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationMiddlewareResultHandler, RbacProblemDetailsAuthorizationMiddlewareResultHandler>();
 
         return services;
     }
