@@ -1,5 +1,6 @@
-using Notification.Application.Abstractions;
-using Notification.Application.Notifications;
+using BuildingBlocks.SharedKernel.Repository;
+using Notification.Application.Notifications.GetNotificationById;
+using System.Linq.Expressions;
 using DomainNotification = global::Notification.Domain.Notification;
 using NotificationChannel = global::Notification.Domain.NotificationChannel;
 using NotificationStatus = global::Notification.Domain.NotificationStatus;
@@ -43,7 +44,7 @@ public sealed class GetNotificationByIdUseCaseTests
         Assert.Null(result);
     }
 
-    private sealed class FakeNotificationRepository : INotificationRepository
+    private sealed class FakeNotificationRepository : IRepository<DomainNotification>
     {
         private readonly DomainNotification? _notification;
 
@@ -52,13 +53,25 @@ public sealed class GetNotificationByIdUseCaseTests
             _notification = notification;
         }
 
-        public Task AddAsync(DomainNotification notification, CancellationToken cancellationToken)
-            => Task.CompletedTask;
+        public Task<DomainNotification> AddAsync(DomainNotification entity, CancellationToken cancellationToken = default)
+            => Task.FromResult(entity);
 
-        public Task<DomainNotification?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        public Task DeleteAsync(DomainNotification entity, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<IEnumerable<DomainNotification>> FindAsync(Expression<Func<DomainNotification, bool>> predicate, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<IEnumerable<DomainNotification>> GetAllAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IEnumerable<DomainNotification>>(_notification is null ? [] : [_notification]);
+
+        public Task<DomainNotification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
             => Task.FromResult(_notification is not null && _notification.Id == id ? _notification : null);
 
-        public Task<IReadOnlyList<DomainNotification>> GetListAsync(CancellationToken cancellationToken)
-            => Task.FromResult<IReadOnlyList<DomainNotification>>(_notification is null ? [] : [_notification]);
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
     }
 }

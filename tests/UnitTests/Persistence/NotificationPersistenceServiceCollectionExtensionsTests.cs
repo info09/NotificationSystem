@@ -1,8 +1,11 @@
+using BuildingBlocks.SharedKernel.Repository;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Notification.Application.Abstractions;
-using Notification.Application.Notifications;
+using Notification.Application.Notifications.CreateNotification;
+using Notification.Application.Notifications.GetNotificationById;
+using Notification.Application.Notifications.GetNotifications;
 using Notification.Infrastructure.Persistence;
+using DomainNotification = Notification.Domain.Notification;
 
 namespace UnitTests.Persistence;
 
@@ -37,7 +40,7 @@ public sealed class NotificationPersistenceServiceCollectionExtensionsTests
         using var scope = serviceProvider.CreateScope();
 
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<NotificationDbContext>());
-        Assert.NotNull(scope.ServiceProvider.GetRequiredService<INotificationRepository>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IRepository<DomainNotification>>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<CreateNotificationUseCase>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetNotificationByIdUseCase>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<GetNotificationsUseCase>());

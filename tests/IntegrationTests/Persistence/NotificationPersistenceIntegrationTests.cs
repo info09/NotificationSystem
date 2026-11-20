@@ -1,6 +1,6 @@
+using BuildingBlocks.SharedKernel.Repository;
 using Microsoft.EntityFrameworkCore;
 using Notification.Infrastructure.Persistence;
-using Notification.Infrastructure.Persistence.Repositories;
 using Testcontainers.PostgreSql;
 using DomainNotification = global::Notification.Domain.Notification;
 using NotificationChannel = global::Notification.Domain.NotificationChannel;
@@ -23,7 +23,7 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
         await using var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync();
 
-        var repository = new NotificationRepository(dbContext);
+        var repository = new RepositoryBase<DomainNotification>(dbContext);
         var notification = DomainNotification.Create(
             Guid.NewGuid(),
             new Recipient("user@example.com"),
@@ -32,9 +32,10 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
             null);
 
         await repository.AddAsync(notification, CancellationToken.None);
+        await repository.SaveChangesAsync(CancellationToken.None);
 
         await using var queryDbContext = CreateDbContext();
-        var queryRepository = new NotificationRepository(queryDbContext);
+        var queryRepository = new RepositoryBase<DomainNotification>(queryDbContext);
         var persisted = await queryRepository.GetByIdAsync(notification.Id, CancellationToken.None);
 
         Assert.NotNull(persisted);
@@ -52,7 +53,7 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
         await using var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync();
 
-        var repository = new NotificationRepository(dbContext);
+        var repository = new RepositoryBase<DomainNotification>(dbContext);
 
         var persisted = await repository.GetByIdAsync(Guid.NewGuid(), CancellationToken.None);
 
@@ -65,7 +66,7 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
         await using var dbContext = CreateDbContext();
         await dbContext.Database.EnsureCreatedAsync();
 
-        var repository = new NotificationRepository(dbContext);
+        var repository = new RepositoryBase<DomainNotification>(dbContext);
         var notification = DomainNotification.Create(
             Guid.NewGuid(),
             new Recipient("recipient-id"),
@@ -74,15 +75,17 @@ public sealed class NotificationPersistenceIntegrationTests : IAsyncLifetime
             Guid.NewGuid());
 
         await repository.AddAsync(notification, CancellationToken.None);
+        await repository.SaveChangesAsync(CancellationToken.None);
 
         await using var queryDbContext = CreateDbContext();
-        var queryRepository = new NotificationRepository(queryDbContext);
-        var notifications = await queryRepository.GetListAsync(CancellationToken.None);
+        var queryRepository = new RepositoryBase<DomainNotification>(queryDbContext);
+        var notifications = await queryRepository.GetAllAsync(CancellationToken.None);
 
-        Assert.Single(notifications);
-        Assert.Equal(notification.Id, notifications[0].Id);
-        Assert.Equal(NotificationChannel.InApp, notifications[0].Channel);
-        Assert.NotNull(notifications[0].NotificationTemplateId);
+        var notificationList = notifications.ToList();
+        Assert.Single(notificationList);
+        Assert.Equal(notification.Id, notificationList[0].Id);
+        Assert.Equal(NotificationChannel.InApp, notificationList[0].Channel);
+        Assert.NotNull(notificationList[0].NotificationTemplateId);
     }
 
     private NotificationDbContext CreateDbContext()
