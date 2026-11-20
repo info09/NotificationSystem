@@ -1,5 +1,6 @@
 ﻿using Administration.Presentation;
 using BuildingBlocks.Observability;
+using BuildingBlocks.SharedKernel.Repository;
 using Delivery.Presentation;
 using IdentityAccess.Presentation;
 using IntegrationMessaging.Presentation;
@@ -27,7 +28,7 @@ public static class ModuleServiceCollectionExtensions
         // Đăng ký IHttpContextAccessor để lấy userId từ JWT token trong handler
         //services.AddHttpContextAccessor();
 
-        //services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
+        services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
 
         //services.AddScoped<IUnitOfWork, UnitOfWork>();
 

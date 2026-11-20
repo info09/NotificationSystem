@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Notification.Application.Notifications.CreateNotification;
+using Notification.Application.Notifications.GetNotificationById;
+using Notification.Application.Notifications.GetNotifications;
 
 namespace Notification.Infrastructure.Persistence;
 
@@ -23,6 +26,10 @@ public static class NotificationPersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly(typeof(NotificationDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "notification")));
+
+        services.AddScoped<CreateNotificationUseCase>();
+        services.AddScoped<GetNotificationByIdUseCase>();
+        services.AddScoped<GetNotificationsUseCase>();
 
         return services;
     }

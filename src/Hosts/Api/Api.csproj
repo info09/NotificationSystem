@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\SharedKernel\BuildingBlocks.SharedKernel.csproj" />
     <ProjectReference Include="..\..\Modules\Administration\Presentation\Administration.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Delivery\Presentation\Delivery.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />

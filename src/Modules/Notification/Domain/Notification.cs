@@ -1,33 +1,39 @@
+using BuildingBlocks.SharedKernel.Entity;
+
 namespace Notification.Domain;
 
-public sealed class Notification
+public sealed class Notification : Entity
 {
+    private Notification()
+    {
+        Recipient = null!;
+    }
+
     private Notification(
         Guid id,
         Recipient recipient,
         NotificationChannel channel,
+        NotificationStatus status,
         string? content,
         Guid? notificationTemplateId)
     {
         Id = id;
         Recipient = recipient;
         Channel = channel;
+        Status = status;
         Content = content;
         NotificationTemplateId = notificationTemplateId;
-        Status = NotificationStatus.Pending;
     }
 
-    public Guid Id { get; }
+    public Recipient Recipient { get; private set; }
 
-    public Recipient Recipient { get; }
-
-    public NotificationChannel Channel { get; }
+    public NotificationChannel Channel { get; private set; }
 
     public NotificationStatus Status { get; private set; }
 
-    public string? Content { get; }
+    public string? Content { get; private set; }
 
-    public Guid? NotificationTemplateId { get; }
+    public Guid? NotificationTemplateId { get; private set; }
 
     public static Notification Create(
         Guid id,
@@ -43,7 +49,7 @@ public sealed class Notification
             throw new ArgumentException("Notification content or notification template reference is required.");
         }
 
-        return new Notification(id, recipient, channel, content, notificationTemplateId);
+        return new Notification(id, recipient, channel, NotificationStatus.Pending, content, notificationTemplateId);
     }
 
     public void MarkProcessing()
