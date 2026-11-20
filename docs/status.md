@@ -177,9 +177,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 0 — Hạ tầng, CI/CD & khung mã nguồn.
-- **Story đang làm:** **ST-P0-06** — Thiết lập khung `tests/UnitTests`, `tests/IntegrationTests`, `tests/E2ETests` (bao gồm cấu hình Testcontainers/Docker cho integration khi áp dụng) và lệnh chạy test chuẩn.
-- **Story tiếp theo đề xuất:** **ST-P0-07** — Thiết lập GitHub Actions CI: build + lint/format cơ bản + gate `unit → integration → e2e`, fail thì dừng pipeline.
-- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-06. ST-P0-01, ST-P0-02, ST-P0-03, ST-P0-04, ST-P0-05 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker không chạy được).
+- **Story đang làm:** **ST-P0-07** — Thiết lập GitHub Actions CI: build + lint/format cơ bản + gate `unit → integration → e2e`, fail thì dừng pipeline.
+- **Story tiếp theo đề xuất:** **ST-P0-08** — Xác minh pipeline và môi trường local chạy pass (build, compose smoke, test scaffold các tầng liên quan) theo quy ước tick.
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P0-07. ST-P0-01, ST-P0-02, ST-P0-03, ST-P0-04, ST-P0-05, ST-P0-06 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker không chạy được).
 
 ## 4. Deferred Work
 
@@ -209,5 +209,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 0 / ST-P0-04 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể chạy `docker compose` để xác minh skeleton chạy được và không thể tick Done theo DoD. | Cần môi trường Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-05 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể xác minh cơ chế nạp cấu hình local (compose/env) và chạy test liên quan; không thể tick Done theo DoD. | Cần môi trường Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-06 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể chạy `dotnet test`/restore và xác minh pass 3 tầng test liên quan; không thể tick Done theo DoD. | Cần môi trường .NET CLI/Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
+| 2026-04-03 | Phase 0 / ST-P0-07 | Blocker môi trường shell/CLI/Docker và chưa có bằng chứng chạy pipeline CI thực tế. | Không thể xác minh workflow CI chạy pass (build/lint/format/gate unit→integration→e2e); không thể tick Done theo DoD. | Cần chạy/xác minh CI (GitHub Actions hoặc local tương đương) và cung cấp kết quả. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
