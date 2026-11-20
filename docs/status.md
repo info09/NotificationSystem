@@ -195,7 +195,7 @@
 - **Phase đang làm:** Phase 3 — Module `Notification`: `CreateNotificationRequest`, `IdempotencyKey` & tra cứu `Thông báo`.
 - **Story đang làm:** **ST-P3-01** — Triển khai domain `Notification` (`NotificationStatus`: `Pending`/`Processing`/`Sent`/`Failed`, `Recipient`, kênh/nội dung hoặc template ref) và quy tắc nghiệp vụ cơ bản.
 - **Story tiếp theo đề xuất:** **ST-P3-02** — Triển khai application/use case và persistence cho tạo/truy vấn `Notification` theo Clean Architecture.
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done **ST-P2-06**. Hoàn tất Phase 2, chuyển sang **ST-P3-01**.
+- **Cập nhật lần cuối:** 2026-04-03 — Đã implement domain `Notification` cho ST-P3-01 (`Notification`, `NotificationStatus`, `NotificationChannel`, `Recipient`, quy tắc tạo/chuyển trạng thái cơ bản) và bổ sung unit test domain liên quan. Chưa tick Done do chưa có bằng chứng chạy pass unit + integration + e2e liên quan trong môi trường hiện tại.
 
 ## 4. Deferred Work
 
@@ -227,5 +227,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 2 / ST-P2-04 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 2 / ST-P2-05 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 2 / ST-P2-06 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
+| 2026-04-03 | Phase 3 / ST-P3-01 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đã implement domain `Notification` và unit test liên quan nhưng chưa chạy/xác minh pass (integration/e2e không áp dụng trực tiếp ở mức domain thuần); chưa thể tick Done theo DoD. | Cần Đại ca chạy build và các test liên quan rồi cung cấp kết quả pass. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
