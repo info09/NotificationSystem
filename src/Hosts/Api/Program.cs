@@ -7,6 +7,7 @@ using BuildingBlocks.Observability.OpenTelemetry;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Notification.Infrastructure.Persistence;
 using Notification.Presentation;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.UseStructuredLogging();
 builder.AddOpenTelemetryObservability(instrumentAspNetCore: true);
 
 builder.Services.AddModules(builder.Configuration);
+builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton<RabbitMqTcpHealthCheck>();
 builder.Services.AddHealthChecks()
@@ -39,6 +41,9 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("ready")
 }).AllowAnonymous();
+
+app.MapOpenApi().AllowAnonymous();
+app.MapScalarApiReference().AllowAnonymous();
 
 app.MapNotificationEndpoints();
 

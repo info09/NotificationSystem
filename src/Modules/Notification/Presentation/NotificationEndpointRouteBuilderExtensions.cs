@@ -15,6 +15,7 @@ public static class NotificationEndpointRouteBuilderExtensions
         ArgumentNullException.ThrowIfNull(endpoints);
 
         endpoints.MapPost("/api/notifications", HandleCreateNotificationAsync)
+            .WithTags("Notification")
             .RequireAuthorization(RbacPolicies.IntegrationClient);
 
         return endpoints;
