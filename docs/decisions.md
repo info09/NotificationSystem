@@ -50,4 +50,59 @@ Mỗi quyết định là một entry riêng trong mục **Log** (heading con đ
 > Nguyên tắc: nếu người khác (hoặc chính bạn trong tương lai) có thể hỏi "vì sao lại làm như vậy?" và câu trả lời không hiển nhiên từ code/PRD/architecture hiện tại, hãy ghi vào đây.
 
 ## 4. Log
-*(Chưa có quyết định. Các entry sẽ được bổ sung trong quá trình thiết kế và implement.)*
+
+### DEC-001 — Quản lý user & credential tập trung tại `IdentityAccess` (Cách 1), sẵn sàng tích hợp IdP
+- **Ngày:** 2026-04-03
+- **Bối cảnh (Context):** Cần bổ sung chức năng quản lý user (tài khoản, vai trò, credential, hồ sơ nhận in-app) ngoài phạm vi PRD/status hiện tại; cần chọn ranh giới module và hướng phát triển lâu dài (IdP).
+- **Các lựa chọn đã xem xét (Options considered):**
+  - **Cách 1 — Tập trung trong `IdentityAccess`:** quản lý tài khoản/credential/phát `JWT`/reset mật khẩu và hồ sơ `EndUser` trong cùng module, `AdminUI` quản trị tập trung — *Chọn vì:* triển khai trọn bộ nhanh, nhất quán, thuận lợi tích hợp IdP sau.
+  - **Cách 2 — Tách theo trách nhiệm:** `IdentityAccess` cho tài khoản/credential/`JWT`, module `Notification` cho hồ sơ `EndUser` — *Loại vì:* tách luồng dữ liệu/trải nghiệm quản trị, phối hợp nhiều hơn trong giai đoạn hiện tại.
+- **Quyết định (Decision):** Tập trung quản lý user/credential và hồ sơ `EndUser` trong module `IdentityAccess` (Cách 1), với contract rõ để `Notification`/`InAppNotification` tham chiếu khi cần.
+- **Lý do (Rationale):** Phù hợp kiến trúc Modular Monolith 1 developer, giảm trùng lặp và chuẩn bị điểm mở rộng IdP; bám mục tiêu bảo mật/phân quyền (NFR-05, FR-16, FR-01) trong `docs/prd.md` và ranh giới module trong `docs/architecture.md`.
+- **Đánh đổi/Hệ quả (Trade-off):** `IdentityAccess` mở rộng trách nhiệm (bao gồm hồ sơ `EndUser` gắn nghiệp vụ nhận in-app), cần giữ contract/port rõ với module `Notification` để tránh coupling không kiểm soát.
+- **Trạng thái (Status):** Active
+
+### DEC-002 — Quản lý credential trong app (hiện tại), hỗ trợ tích hợp IdP sau
+- **Ngày:** 2026-04-03
+- **Bối cảnh (Context):** Hệ thống cần cơ chế xác thực/quản trị tài khoản ngay trong MVP/mở rộng hiện tại, nhưng có nhu cầu tích hợp IdP/SSO trong tương lai.
+- **Các lựa chọn đã xem xét (Options considered):**
+  - **Tự quản lý credential trong app:** lưu/hash credential, cấp/phát token trong hệ thống — *Chọn vì:* đáp ứng nhu cầu hiện tại, chủ động vận hành.
+  - **Tích hợp IdP/SSO ngay:** ủy thác danh tính/xác thực cho IdP — *Loại (hiện tại) vì:* chưa phải ưu tiên triển khai ngay; vẫn giữ làm hướng mở rộng.
+- **Quyết định (Decision):** Hiện tại quản lý credential trong ứng dụng (DB/hash/luồng nội bộ), thiết kế abstraction để có thể tích hợp IdP/SSO về sau.
+- **Lý do (Rationale):** Đáp ứng phạm vi và tiến độ mong muốn; tương thích định hướng bảo mật `JwtBearer`/`RBAC` (NFR-05) trong `docs/prd.md`.
+- **Đánh đổi/Hệ quả (Trade-off):** Tăng phạm vi phát triển/vận hành bảo mật (lưu trữ, reset, rotate secret); cần thiết kế điểm mở rộng để giảm chi phí chuyển đổi sang IdP.
+- **Trạng thái (Status):** Active
+
+### DEC-003 — `IntegrationClient` dùng client credentials do app quản lý để phát `JWT`
+- **Ngày:** 2026-04-03
+- **Bối cảnh (Context):** `IntegrationClient` cần cơ chế truy cập API an toàn; hệ thống đã có xác thực/validation `JwtBearer`.
+- **Các lựa chọn đã xem xét (Options considered):**
+  - **Client credentials (client id/secret) → phát `JWT`:** hệ thống quản lý credential và cấp token — *Chọn vì:* thống nhất với `JwtBearer`/`RBAC` hiện có, thuận lợi quản lý và mở rộng.
+  - **API key/secret dài hạn gửi trực tiếp:** xác thực bằng khóa tĩnh — *Loại vì:* khác mô hình token hiện tại, khó chuẩn hóa claim/role và vòng đời như `JWT`.
+- **Quyết định (Decision):** `IntegrationClient` sử dụng client id/secret do ứng dụng quản lý (cấp/rotate/vô hiệu hóa) để lấy `JWT` truy cập API.
+- **Lý do (Rationale):** Tái sử dụng hạ tầng `JwtBearer` (ST-P1-01) và mô hình `RBAC` (NFR-05, FR-01) trong `docs/prd.md`/`docs/architecture.md`.
+- **Đánh đổi/Hệ quả (Trade-off):** Cần cơ chế lưu hash/rotate secret và endpoint cấp token an toàn; phải kiểm soát rò rỉ secret và thu hồi hiệu lực.
+- **Trạng thái (Status):** Active
+
+### DEC-004 — Đặt lại mật khẩu tự phục vụ qua link/token gửi email
+- **Ngày:** 2026-04-03
+- **Bối cảnh (Context):** Tài khoản `SystemAdministrator`/`BusinessOperator` cần cơ chế khôi phục truy cập khi quên mật khẩu.
+- **Các lựa chọn đã xem xét (Options considered):**
+  - **Tự đặt lại qua link/token gửi email:** người dùng yêu cầu và hoàn tất đặt lại bằng token một lần — *Chọn vì:* tự phục vụ, giảm phụ thuộc thao tác thủ công.
+  - **Quản trị viên đặt mật khẩu mới/trả mật khẩu tạm trực tiếp:** xử lý thủ công trong app — *Loại vì:* không đáp ứng nhu cầu tự phục vụ đã chọn.
+- **Quyết định (Decision):** Triển khai luồng đặt lại mật khẩu tự phục vụ bằng link/token (một lần, có hạn, gửi email) cho tài khoản quản trị/vận hành đăng nhập `AdminUI`.
+- **Lý do (Rationale):** Tăng khả năng vận hành và trải nghiệm người dùng `AdminUI`; tận dụng hạ tầng email trong kiến trúc (FR-11/NFR-10, `docs/architecture.md`, `docs/deploy.md`).
+- **Đánh đổi/Hệ quả (Trade-off):** Phụ thuộc cấu hình gửi email và cần kiểm soát bảo mật (token ngẫu nhiên, TTL, chống lạm dụng, không lộ thông tin tài khoản).
+- **Trạng thái (Status):** Active
+
+### DEC-005 — Hồ sơ `EndUser` là thực thể lưu trong hệ thống, khóa theo định danh hệ thống nguồn
+- **Ngày:** 2026-04-03
+- **Bối cảnh (Context):** Cần khả năng quản lý người nhận `EndUser` cho `InAppNotification`; đồng thời phải xác định nguồn định danh và mô hình lưu trữ.
+- **Các lựa chọn đã xem xét (Options considered):**
+  - **Chỉ tham chiếu định danh từ hệ thống nguồn (không lưu hồ sơ quản trị):** nhẹ, tránh danh bạ nội bộ — *Loại (theo lựa chọn cuối) vì:* cần CRUD tạo/sửa/khóa hồ sơ `EndUser` trong hệ thống.
+  - **Lưu hồ sơ `EndUser` trong hệ thống, khóa theo định danh nguồn:** có thực thể quản trị nhưng giữ liên kết nguồn — *Chọn vì:* đáp ứng yêu cầu quản lý và vẫn nhất quán với định danh từ hệ thống nguồn.
+  - **Tự sinh id nội bộ làm khóa chính:** độc lập định danh — *Loại vì:* yêu cầu dùng định danh hệ thống nguồn làm khóa/liên kết chính.
+- **Quyết định (Decision):** Quản lý hồ sơ `EndUser` như thực thể lưu trong hệ thống (tạo/sửa/khóa/mở khóa), sử dụng định danh từ hệ thống nguồn làm khóa chính/liên kết nghiệp vụ.
+- **Lý do (Rationale):** Đáp ứng phạm vi quản lý được yêu cầu và hỗ trợ nghiệp vụ nhận `InAppNotification` (FR-12) trong `docs/prd.md`/`docs/architecture.md`, giữ truy vết với hệ thống nguồn.
+- **Đánh đổi/Hệ quả (Trade-off):** Phát sinh dữ liệu hồ sơ nội bộ cần quản lý vòng đời/đồng bộ kỳ vọng với nguồn; cần quy ước rõ khi `EndUser` bị khóa ảnh hưởng luồng nhận/hiển thị in-app.
+- **Trạng thái (Status):** Active

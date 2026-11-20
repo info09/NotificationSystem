@@ -17,6 +17,8 @@ Nguyên tắc gắn với đối tượng người dùng trong `docs/prd.md` (m�
 ```text
 Admin UI
 ├─ Đăng nhập / Login
+│  ├─ Quên mật khẩu / ForgotPassword
+│  └─ Đặt lại mật khẩu / ResetPassword (qua link/token)
 └─ Khu vực sau đăng nhập (RBAC)
    ├─ Tổng quan / Dashboard
    ├─ Thông báo / Notification
@@ -28,22 +30,31 @@ Admin UI
    ├─ Hàng đợi thư chết / DeadLetterQueue
    │  ├─ Danh sách Hàng đợi thư chết
    │  └─ Chi tiết & thao tác Gửi lại / Resend
+   ├─ Quản lý người dùng (Quản trị viên hệ thống)
+   │  ├─ Tài khoản người dùng / UserAccount
+   │  │  └─ Chi tiết/Chỉnh sửa & Gán vai trò (RBAC)
+   │  ├─ Thông tin xác thực IntegrationClient / IntegrationClientCredential
+   │  └─ Hồ sơ người nhận EndUser / EndUserProfile
    └─ Cấu hình (Quản trị viên hệ thống)
       ├─ Mẫu thông báo / NotificationTemplate
       ├─ Cấu hình kênh thông báo / NotificationChannelConfig
       └─ Định tuyến sự kiện tích hợp / IntegrationEventRoute
 ```
 
-> Ghi chú: `Đăng xuất / Logout` là hành động toàn cục trong khu vực sau đăng nhập (header/menu người dùng), không phải màn hình nội dung riêng. `Nhân viên vận hành` có quyền truy cập `Tổng quan`, `Thông báo`, `Hàng đợi thư chết` và thao tác `Gửi lại` theo quyền; không thấy/quyền hạn chế với nhóm Cấu hình (theo RBAC). `Quản trị viên hệ thống` có toàn quyền vận hành/cấu hình.
+> Ghi chú: `Đăng xuất / Logout` là hành động toàn cục trong khu vực sau đăng nhập (header/menu người dùng), không phải màn hình nội dung riêng. `Nhân viên vận hành` có quyền truy cập `Tổng quan`, `Thông báo`, `Hàng đợi thư chết` và thao tác `Gửi lại` theo quyền; không truy cập nhóm Cấu hình và Quản lý người dùng (trừ khi được cấp quyền cụ thể theo `RBAC`). `Quản trị viên hệ thống` có toàn quyền vận hành/cấu hình/quản lý user & credential. Luồng `Quên mật khẩu`/`Đặt lại mật khẩu` dành cho `Tài khoản người dùng` đăng nhập `AdminUI` (`SystemAdministrator`, `BusinessOperator`).
 
 ### 2.2 Mapping màn hình ↔ FR
 | Màn hình / Khu vực (tên hiển thị / code) | Mục đích chính | FR liên quan |
 |---|---|---|
-| `Đăng nhập` / `Login` | Xác thực truy cập `AdminUI` bằng `JwtBearer`, định hướng theo vai trò `RBAC`. | FR-16, NFR-05 |
+| `Đăng nhập` / `Login` | Xác thực truy cập `AdminUI` bằng credential nội bộ và `JwtBearer`, định hướng theo vai trò `RBAC`. | FR-16, FR-19, NFR-05 |
+| `Quên mật khẩu` / `ForgotPassword`, `Đặt lại mật khẩu` / `ResetPassword` | Yêu cầu và hoàn tất đặt lại mật khẩu tự phục vụ qua link/token email. | FR-19, NFR-05 |
 | `Tổng quan` / `Dashboard` | Theo dõi hoạt động tổng thể, tóm tắt số liệu/ tình trạng (`Kiểm tra sức khỏe`, thông báo gần đây, DLQ cần chú ý). | FR-15, FR-16 (phần giám sát hoạt động) |
 | `Thông báo` (Danh sách & Chi tiết) / `Notification` | Tra cứu `Thông báo`, xem `Trạng thái thông báo`, thông tin người nhận/kênh, truy vết theo `Mã tương quan` (`MessageId`/`notificationId`). | FR-06, FR-14, FR-16 |
 | `Nhật ký gửi thông báo` & `Lần thử gửi` (trong Chi tiết `Thông báo`) / `NotificationDeliveryLog`, `DeliveryAttempt` | Xem lịch sử gửi/thử gửi, lỗi, thời gian, số lần `Thử lại`. | FR-14, FR-08 (hiển thị kết quả retry) |
 | `Hàng đợi thư chết` / `DeadLetterQueue` | Xem thông điệp/thông báo lỗi trong DLQ, nguyên nhân, và thực hiện `Gửi lại`. | FR-09, FR-16 |
+| `Tài khoản người dùng` / `UserAccount` | Quản lý tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient` (tạo/sửa/khóa/mở khóa/xóa theo chính sách, gán vai trò). | FR-17, FR-16, NFR-05 |
+| `Thông tin xác thực IntegrationClient` / `IntegrationClientCredential` | Quản lý client id/secret (cấp/rotate/vô hiệu hóa) cho `IntegrationClient`. | FR-18, NFR-05 |
+| `Hồ sơ người nhận EndUser` / `EndUserProfile` | Quản lý hồ sơ `EndUser` (tạo/sửa/khóa/mở khóa, tra cứu) theo định danh hệ thống nguồn. | FR-20, FR-12, NFR-05 |
 | `Mẫu thông báo` / `NotificationTemplate` | CRUD và quản lý nội dung/mẫu render cho `Thông báo`. | FR-16, FR-11 |
 | `Cấu hình kênh thông báo` / `NotificationChannelConfig` | Quản lý cấu hình/bật tắt kênh (`Email`, `Thông báo trong ứng dụng`) ở mức không nhạy cảm. | FR-16, FR-11, FR-12 |
 | `Định tuyến sự kiện tích hợp` / `IntegrationEventRoute` | Quản lý ánh xạ `Sự kiện tích hợp` → `Mẫu thông báo`/`Kênh thông báo`. | FR-02 (mapping), FR-16 |
@@ -130,6 +141,38 @@ Admin UI
 - **Mục tiêu:** Cấu hình ánh xạ `Sự kiện tích hợp` → `Mẫu thông báo` và/hoặc `Kênh thông báo`.
 - **Bước chính:** Danh sách route → tạo/sửa/xóa hoặc bật tắt (theo phạm vi API) → lưu → phản hồi.
 - **Trạng thái bắt buộc:** Loading / Empty / Error / Success. Validation rõ khi thiếu mapping bắt buộc hoặc event type không hợp lệ.
+
+### 3.9 Quên mật khẩu / `ForgotPassword` và Đặt lại mật khẩu / `ResetPassword`
+- **Mục tiêu:** Cho phép `SystemAdministrator`/`BusinessOperator` tự đặt lại mật khẩu khi quên thông qua link/token gửi email.
+- **Bước chính:**
+  1. Tại `Đăng nhập`, chọn "Quên mật khẩu" → nhập thông tin định danh (theo thiết kế, ví dụ email/tên đăng nhập) → gửi yêu cầu.
+  2. Hệ thống phản hồi trung tính (không tiết lộ tài khoản có tồn tại hay không) và gửi email chứa link/token nếu hợp lệ.
+  3. Người dùng mở link/token → nhập mật khẩu mới và xác nhận → hệ thống kiểm tra token (hợp lệ, còn hạn, chưa dùng) → cập nhật mật khẩu và thông báo kết quả.
+- **Trạng thái bắt buộc:**
+  - **Loading:** Đang gửi yêu cầu hoặc đang xác nhận đặt lại.
+  - **Empty:** Form trống ban đầu.
+  - **Error:** Token không hợp lệ/hết hạn/đã dùng, lỗi validation mật khẩu, lỗi hệ thống; hiển thị thông báo an toàn và gợi ý yêu cầu lại.
+  - **Success:** Yêu cầu đã được ghi nhận (màn Forgot) / đặt lại mật khẩu thành công (màn Reset) với hướng dẫn đăng nhập lại.
+- **Quyền:** Không yêu cầu đăng nhập để thực hiện luồng; áp dụng kiểm soát lạm dụng/rate limit ở mức khả thi.
+
+### 3.10 Quản lý Tài khoản người dùng / `UserAccount` và Thông tin xác thực IntegrationClient / `IntegrationClientCredential`
+- **Mục tiêu:** `Quản trị viên hệ thống` quản lý tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient`, gán vai trò `RBAC`, và quản lý client id/secret cho `IntegrationClient`.
+- **Bước chính:**
+  1. Xem danh sách `Tài khoản người dùng` (lọc theo vai trò/trạng thái/từ khóa nếu có).
+  2. Tạo mới hoặc chọn sửa tài khoản → cập nhật thông tin, vai trò, trạng thái (khóa/mở khóa) hoặc xóa theo chính sách.
+  3. Với `IntegrationClient`: cấp/rotate/vô hiệu hóa `Thông tin xác thực IntegrationClient`; hiển thị secret chỉ tại thời điểm cấp phát (nếu áp dụng).
+  4. Xác nhận thao tác nhạy cảm và ghi nhận kết quả (`AuditLog`).
+- **Trạng thái bắt buộc:** Loading / Empty / Error / Success cho danh sách, chi tiết/form và thao tác cấp/rotate/vô hiệu hóa.
+- **Ghi chú:** Không hiển thị mật khẩu/secret/token ở dạng plaintext; thao tác nhạy cảm cần xác nhận rõ hậu quả.
+
+### 3.11 Quản lý Hồ sơ người nhận EndUser / `EndUserProfile`
+- **Mục tiêu:** `Quản trị viên hệ thống` (hoặc vai trò được cấp quyền) quản lý hồ sơ `EndUser` phục vụ nhận `Thông báo trong ứng dụng`.
+- **Bước chính:**
+  1. Xem danh sách/tra cứu `Hồ sơ người nhận EndUser` theo định danh hệ thống nguồn và trạng thái.
+  2. Tạo mới (với định danh nguồn), chỉnh sửa thông tin hồ sơ, khóa/mở khóa.
+  3. Lưu và hiển thị kết quả; đảm bảo xử lý trùng định danh nguồn theo quy ước (conflict/idempotent theo thiết kế).
+- **Trạng thái bắt buộc:** Loading / Empty / Error / Success. Validation rõ khi thiếu/sai định danh nguồn hoặc vi phạm ràng buộc duy nhất.
+- **Ghi chú:** Trạng thái khóa ảnh hưởng nghiệp vụ nhận/hiển thị in-app theo quy ước phối hợp với module `Notification` (chi tiết chốt khi implement).
 
 ## 4. Design tokens cơ bản
 

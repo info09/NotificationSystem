@@ -19,6 +19,7 @@
 | 10 | Cấu hình quản trị: `Mẫu thông báo`, `Cấu hình kênh thông báo`, `Định tuyến sự kiện tích hợp` | Cung cấp cấu hình quản trị CRUD và UI tương ứng | Phase 1, 2, 3 |
 | 11 | `IntegrationEvent` end-to-end & `AuditLog` | Tiếp nhận `IntegrationEvent`, định tuyến cấu hình, ghi `AuditLog` thao tác nhạy cảm | Phase 3, 4, 5, 10 |
 | 12 | Hardening, kiểm thử hiệu năng/tải & quy trình deploy staging/production | Đạt mục tiêu NFR/metric MVP, xác minh pipeline và quy trình deploy/rollback | Phase 0–11 |
+| 13 | Quản lý user & credential (`IdentityAccess`, `EndUser`) | Quản lý tài khoản/vai trò/credential trong app, phát `JwtBearer` (login & client credentials), tự đặt lại mật khẩu, quản lý hồ sơ `EndUser` nhận in-app | Phase 1, 2 (hạ tầng gửi email cho reset mật khẩu; liên quan Phase 7) |
 
 ## 2. Chi tiết phase & stories
 
@@ -175,11 +176,26 @@
   - [ ] **ST-P12-06** — Xác minh deploy staging theo checklist (pre-check → build → migrate → deploy → smoke test/e2e) và ghi nhận kết quả.
   - [ ] **ST-P12-07** — Tổng hợp kết quả xác nhận FR/NFR/metric MVP, cập nhật hạn chế/rủi ro còn lại; **deploy production chỉ thực hiện khi có xác nhận rõ ràng từ người dùng trong cùng phiên**.
 
+### Phase 13 — Quản lý user & credential (`IdentityAccess`, `EndUser`)
+- **Mục tiêu:** Cung cấp quản lý tài khoản/vai trò/credential trong app (sẵn sàng tích hợp IdP sau), phát `JwtBearer` cho đăng nhập và `IntegrationClient` (client credentials), luồng tự đặt lại mật khẩu, và quản lý hồ sơ `EndUser` nhận in-app theo thiết kế `docs/design-user-management.md`.
+- **FR/NFR liên quan:** Bổ sung phạm vi PRD (quản lý user/credential, phát `JWT`, đặt lại mật khẩu, hồ sơ `EndUser`); FR-01, FR-15, FR-16, NFR-05, NFR-06, NFR-07.
+- **UI (theo `docs/ux.md`, bổ sung):** `Đăng nhập` / `Login` (credential nội bộ), quên/đặt lại mật khẩu, quản trị tài khoản & vai trò, quản trị `IntegrationClient` (client credentials), quản trị hồ sơ `EndUser`.
+- **Stories:**
+  - [ ] **ST-P13-01** — Cập nhật tài liệu liên quan (`docs/prd.md`, `docs/domain-glossary.md`, `docs/architecture.md`, `docs/ux.md`, `docs/deploy.md`, `docs/decisions.md`) và thiết kế/lập schema & migration trong module `IdentityAccess` cho tài khoản/vai trò, credential, client credentials `IntegrationClient`, `PasswordResetToken`, và hồ sơ `EndUser` (khóa theo định danh hệ thống nguồn).
+  - [ ] **ST-P13-02** — Triển khai quản trị tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient`: tạo/sửa/khóa/mở khóa/xóa (theo chính sách), gán vai trò, lưu mật khẩu/secret an toàn (hash) và API bảo vệ `RBAC`.
+  - [ ] **ST-P13-03** — Triển khai quản lý client credentials cho `IntegrationClient` (cấp/rotate/vô hiệu hóa, không lộ secret sau khi tạo) và endpoint client credentials để phát `JwtBearer` theo cấu hình hiện có.
+  - [ ] **ST-P13-04** — Triển khai đăng nhập `AdminUI` bằng credential nội bộ (xác thực, phát `JWT`, claims/role) và tích hợp với `Đăng xuất`/guard/điều hướng hiện có.
+  - [ ] **ST-P13-05** — Triển khai luồng tự đặt lại mật khẩu: yêu cầu reset, tạo token/link một lần có hạn, gửi email, xác nhận và cập nhật mật khẩu; xử lý bảo mật cơ bản (không lộ thông tin nhạy cảm, chống lạm dụng ở mức khả thi).
+  - [ ] **ST-P13-06** — Triển khai quản lý hồ sơ `EndUser` (tạo/sửa/khóa/mở khóa, tra cứu theo định danh nguồn) và contract/port để module `Notification`/`InAppNotification` tham chiếu theo nghiệp vụ.
+  - [ ] **ST-P13-07** — Dựng `AdminUI` quản trị tài khoản & `IntegrationClient` (danh sách, tạo/sửa, khóa/xóa, gán vai trò, quản lý client credentials) theo `RBAC`, gồm trạng thái loading/empty/error/success.
+  - [ ] **ST-P13-08** — Dựng `AdminUI` luồng quên/đặt lại mật khẩu và màn hình quản lý hồ sơ `EndUser` (loading/empty/error/success).
+  - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
+
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 1 — `IdentityAccess`: `JwtBearer`, `RBAC` & `AdminUI` `Đăng nhập`/`Đăng xuất`.
 - **Story đang làm:** **ST-P1-01** — Triển khai xác thực `JwtBearer` trong module `IdentityAccess` (cấu hình issuer/audience/signing key, validate token).
 - **Story tiếp theo đề xuất:** **ST-P1-02** — Triển khai `RBAC` cho vai trò `SystemAdministrator`, `BusinessOperator`, `IntegrationClient` và policy/authorization handlers.
-- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P1-01 (theo yêu cầu Đại ca). ST-P0-01 → ST-P0-08 và các story Phase 1 khác chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker/Node không chạy được).
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P1-01. Đã bổ sung Phase 13 (quản lý user & credential, ST-P13-01 → ST-P13-09) và cập nhật tài liệu `docs/prd.md`, `docs/domain-glossary.md`, `docs/architecture.md`, `docs/ux.md`, `docs/conventions.md`, `docs/deploy.md`, `docs/decisions.md` theo thiết kế `docs/design-user-management.md`. ST-P0-01 → ST-P0-08 và các story Phase 1/13 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker/Node không chạy được).
 
 ## 4. Deferred Work
 

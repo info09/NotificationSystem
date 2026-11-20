@@ -44,8 +44,9 @@
   - **RabbitMQ:** `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST` (nếu dùng), exchange/queue config nếu tách biến.
   - **API/Worker app:** `ASPNETCORE_ENVIRONMENT`, `ASPNETCORE_URLS` (hoặc cấu hình port), cấu hình `MessageId`/`Idempotency` retention, retry/concurrency (mặc định theo PRD: retry 3 lần, concurrency 5/worker) nếu override.
   - **JWT Bearer (`JwtBearer`) & RBAC:** `JWT__Issuer`, `JWT__Audience`, `JWT__SigningKey` (hoặc key/certificate tương đương), thời hạn token/refresh theo thiết kế.
-  - **AdminUI (Angular):** `API_BASE_URL` (hoặc cấu hình environment build/runtime tương đương), allowed origin/CORS phía API (`CORS__AllowedOrigins`).
-  - **SMTP/`EmailProvider`:** `SMTP__Host`, `SMTP__Port`, `SMTP__User`, `SMTP__Password` (nếu có), `SMTP__From`, `SMTP__EnableSsl` (local dùng Mailpit; staging/prod dùng provider thật).
+  - **AdminUI (Angular):** `API_BASE_URL` (hoặc cấu hình environment build/runtime tương đương), allowed origin/CORS phía API (`CORS__AllowedOrigins`), `ADMIN_UI_BASE_URL` (hoặc biến tương đương) dùng để tạo link đặt lại mật khẩu trong email.
+  - **SMTP/`EmailProvider`:** `SMTP__Host`, `SMTP__Port`, `SMTP__User`, `SMTP__Password` (nếu có), `SMTP__From`, `SMTP__EnableSsl` (local dùng Mailpit; staging/prod dùng provider thật). Bắt buộc cấu hình hợp lệ ở môi trường có bật luồng tự đặt lại mật khẩu.
+  - **Quản lý user/credential (bổ sung):** thời hạn/TTL token đặt lại mật khẩu, thời hạn `JWT` cấp cho đăng nhập/`IntegrationClient`, và các tham số chính sách (rate limit/lockout/rotate) theo cấu hình ứng dụng (không hardcode; tên biến cụ thể chốt khi implement).
   - **Observability:** `OTEL_*` (nếu bật OpenTelemetry), log level/Serilog sink config theo môi trường.
   - **CI/CD deploy (GitHub Actions):** secrets truy cập server/registry (SSH key hoặc cơ chế deploy được chọn), image tags/registry credentials nếu publish image; **chỉ cấu hình khi phương thức deploy được chốt**.
 

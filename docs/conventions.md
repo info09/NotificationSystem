@@ -166,6 +166,7 @@ Cây thư mục chuẩn (Modular Monolith, map `docs/architecture.md` mục 3). 
 - [ ] Cấu trúc code đặt đúng lớp/module theo `docs/architecture.md` và mục 2 (Domain/Application/Infrastructure/Presentation/Hosts/AdminUI).
 - [ ] Không có business logic trong controller/endpoint/UI component; controller/endpoint chỉ điều phối input → handler → response.
 - [ ] Không hardcode secret, token, password, connection string; cấu hình qua biến môi trường/secret store (`docs/deploy.md`).
+- [ ] Mật khẩu, client secret, `PasswordResetToken` không lưu/ghi log/trả về dạng plaintext; chỉ lưu hash/an toàn và chỉ hiển thị secret một lần tại thời điểm cấp phát (nếu có).
 - [ ] Không silent fail: không có `catch` rỗng, không nuốt lỗi, API/worker trả/log/xử lý lỗi đúng quy ước mục 4.
 - [ ] Không còn `TODO`/`FIXME` chưa giải quyết, code bị comment-out không cần thiết, `console.log`/`print`/debug log tạm sót lại.
 - [ ] Tên biến/hàm/class rõ nghĩa, không viết tắt tùy tiện, tuân thủ casing theo mục 1.
@@ -182,6 +183,7 @@ Cây thư mục chuẩn (Modular Monolith, map `docs/architecture.md` mục 3). 
 - **Cấm** gọi trực tiếp Cơ sở dữ liệu từ frontend (`AdminUI`) hoặc từ client ngoài backend API; mọi truy cập dữ liệu đi qua backend theo kiến trúc.
 - **Cấm** truy cập/inject hạ tầng trực tiếp vào Domain (EF Core DbContext, RabbitMQ, SMTP, HTTP client, ASP.NET types).
 - **Cấm** hardcode secret/credential/token/connection string trong source code, test, compose commit, hoặc log.
+- **Cấm** lưu hoặc trả về plaintext mật khẩu, client secret, `PasswordResetToken`; cấm ghi log giá trị nhạy cảm này.
 - **Cấm** silent fail: nuốt exception, bỏ qua lỗi validation/idempotency, hoặc `ack`/đánh dấu thành công khi xử lý chưa an toàn.
 - **Cấm** commit/giữ lại debug artifacts: `console.log`/debug print tạm, breakpoint artifacts, code tắt tạm không lý do, `TODO` chưa xử lý trong phần hoàn tất.
 - **Cấm** dùng truy vấn SQL/command ghép chuỗi từ input không tham số hóa; cấm bypass validation cho `CreateNotificationRequest`/`IntegrationEvent`.
