@@ -1,4 +1,5 @@
 using Administration.Infrastructure.Persistence;
+using BuildingBlocks.Observability.Logging;
 using Delivery.Infrastructure.Persistence;
 using IdentityAccess.Infrastructure.Persistence;
 using IntegrationMessaging.Infrastructure.Persistence;
@@ -7,6 +8,8 @@ using TemplateConfiguration.Infrastructure.Persistence;
 using WorkerHost;
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.UseStructuredLogging();
+
 builder.Services.AddAdministrationPersistence(builder.Configuration);
 builder.Services.AddDeliveryPersistence(builder.Configuration);
 builder.Services.AddIdentityAccessPersistence(builder.Configuration);

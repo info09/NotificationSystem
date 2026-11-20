@@ -1,14 +1,19 @@
 using Administration.Infrastructure.Persistence;
 using Api.HealthChecks;
+using BuildingBlocks.Observability.Correlation;
+using BuildingBlocks.Observability.Logging;
 using Delivery.Infrastructure.Persistence;
 using IdentityAccess.Infrastructure.Persistence;
 using IdentityAccess.Presentation;
 using IntegrationMessaging.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Notification.Infrastructure.Persistence;
+using Serilog;
 using TemplateConfiguration.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.UseStructuredLogging();
 
 builder.Services.AddIdentityAccessJwtBearerAuthentication(builder.Configuration);
 builder.Services.AddIdentityAccessRbacAuthorization();
@@ -25,6 +30,9 @@ builder.Services.AddHealthChecks()
     .AddCheck<RabbitMqTcpHealthCheck>("rabbitmq", tags: ["ready"]);
 
 var app = builder.Build();
+
+app.UseCorrelationId();
+app.UseSerilogRequestLogging();
 
 app.UseAuthentication();
 app.UseAuthorization();
