@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace E2ETests.IdentityAccess;
 
@@ -20,6 +22,18 @@ public sealed class AuthenticationFlowE2ETests : IClassFixture<WebApplicationFac
             builder.UseSetting("JWT_ISSUER", "e2e-issuer");
             builder.UseSetting("JWT_AUDIENCE", "e2e-audience");
             builder.UseSetting("JWT_SIGNING_KEY", "e2e-test-signing-key-min-32-chars-000001");
+            builder.ConfigureTestServices(services =>
+            {
+                services.PostConfigure<HealthCheckServiceOptions>(options =>
+                {
+                    options.Registrations.Clear();
+                    options.Registrations.Add(new HealthCheckRegistration(
+                        "ready-stub",
+                        new AlwaysHealthyHealthCheck(),
+                        HealthStatus.Unhealthy,
+                        tags: ["ready"]));
+                });
+            });
         }).CreateClient();
     }
 
@@ -53,5 +67,13 @@ public sealed class AuthenticationFlowE2ETests : IClassFixture<WebApplicationFac
         });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private sealed class AlwaysHealthyHealthCheck : IHealthCheck
+    {
+        public Task<HealthCheckResult> CheckHealthAsync(
+            HealthCheckContext context,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(HealthCheckResult.Healthy());
     }
 }

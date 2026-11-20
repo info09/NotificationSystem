@@ -58,7 +58,7 @@
 - **Stories:**
   - [x] **ST-P2-01** — Thiết lập kết nối PostgreSQL, DbContext/EF Core và cấu trúc persistence theo module (Clean Architecture).
   - [x] **ST-P2-02** — Thiết lập chiến lược migration EF Core, transaction cơ bản và quy trình áp dụng trong môi trường local/dev.
-  - [ ] **ST-P2-03** — Triển khai `HealthCheck` `GET /health` (liveness) và `GET /health/ready` (readiness: API, Database, RabbitMQ).
+  - [x] **ST-P2-03** — Triển khai `HealthCheck` `GET /health` (liveness) và `GET /health/ready` (readiness: API, Database, RabbitMQ).
   - [ ] **ST-P2-04** — Triển khai `StructuredLog` (Serilog) với enrichment `CorrelationId` (`messageId`, `notificationId`, trace id) và middleware liên quan.
   - [ ] **ST-P2-05** — Tích hợp OpenTelemetry cơ bản cho HTTP, EF Core, worker/RabbitMQ (mức khả thi MVP) và cấu hình theo môi trường.
   - [ ] **ST-P2-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan DB, health, logging/tracing.
@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 2 — Nền tảng `Cơ sở dữ liệu`, `HealthCheck` & `Observability`.
-- **Story đang làm:** **ST-P2-03** — Triển khai `HealthCheck` `GET /health` (liveness) và `GET /health/ready` (readiness: API, Database, RabbitMQ).
-- **Story tiếp theo đề xuất:** **ST-P2-04** — Triển khai `StructuredLog` (Serilog) với enrichment `CorrelationId` (`messageId`, `notificationId`, trace id) và middleware liên quan.
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done **ST-P2-01** và **ST-P2-02**. Chuyển sang **ST-P2-03**.
+- **Story đang làm:** **ST-P2-04** — Triển khai `StructuredLog` (Serilog) với enrichment `CorrelationId` (`messageId`, `notificationId`, trace id) và middleware liên quan.
+- **Story tiếp theo đề xuất:** **ST-P2-05** — Tích hợp OpenTelemetry cơ bản cho HTTP, EF Core, worker/RabbitMQ (mức khả thi MVP) và cấu hình theo môi trường.
+- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done **ST-P2-03**. Chuyển sang **ST-P2-04**.
 
 ## 4. Deferred Work
 
@@ -223,5 +223,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 1 / ST-P1-01 → ST-P1-06 | Blocker môi trường shell/CLI/Docker/Node (agent) ngăn tự xác minh. | Đại ca đã xác nhận xác minh và pass các hạng mục liên quan (unit + integration + e2e theo phạm vi áp dụng). | — | Resolved |
 | 2026-04-03 | Phase 2 / ST-P2-01 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 2 / ST-P2-02 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
+| 2026-04-03 | Phase 2 / ST-P2-03 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
