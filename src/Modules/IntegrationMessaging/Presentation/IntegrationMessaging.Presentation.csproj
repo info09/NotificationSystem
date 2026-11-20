@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
     <ProjectReference Include="..\Application\IntegrationMessaging.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\IntegrationMessaging.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

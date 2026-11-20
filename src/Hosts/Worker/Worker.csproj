@@ -11,11 +11,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
-    <ProjectReference Include="..\..\Modules\Administration\Infrastructure\Administration.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\Delivery\Infrastructure\Delivery.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\IdentityAccess\Infrastructure\IdentityAccess.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\IntegrationMessaging\Infrastructure\IntegrationMessaging.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\Notification\Infrastructure\Notification.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\TemplateConfiguration\Infrastructure\TemplateConfiguration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Administration\Presentation\Administration.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Delivery\Presentation\Delivery.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\IntegrationMessaging\Presentation\IntegrationMessaging.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Notification\Presentation\Notification.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\TemplateConfiguration\Presentation\TemplateConfiguration.Presentation.csproj" />
   </ItemGroup>
 </Project>

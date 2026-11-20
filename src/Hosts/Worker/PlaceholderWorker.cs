@@ -3,7 +3,7 @@ using BuildingBlocks.Observability.OpenTelemetry;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace WorkerHost;
+namespace Worker;
 
 public sealed class PlaceholderWorker(ILogger<PlaceholderWorker> logger) : BackgroundService
 {
