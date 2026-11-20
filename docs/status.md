@@ -176,10 +176,10 @@
   - [ ] **ST-P12-07** — Tổng hợp kết quả xác nhận FR/NFR/metric MVP, cập nhật hạn chế/rủi ro còn lại; **deploy production chỉ thực hiện khi có xác nhận rõ ràng từ người dùng trong cùng phiên**.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 0 — Hạ tầng, CI/CD & khung mã nguồn.
-- **Story đang làm:** **ST-P0-08** — Xác minh pipeline và môi trường local chạy pass (build, compose smoke, test scaffold các tầng liên quan) theo quy ước tick.
-- **Story tiếp theo đề xuất:** **ST-P1-01** — Triển khai xác thực `JwtBearer` trong module `IdentityAccess` (cấu hình issuer/audience/signing key, validate token).
-- **Cập nhật lần cuối:** 2026-04-03 — Đang thực hiện ST-P0-08 (xác minh). ST-P0-01, ST-P0-02, ST-P0-03, ST-P0-04, ST-P0-05, ST-P0-06, ST-P0-07 chưa tick (blocker: chưa xác minh build/test/compose/pipeline do shell/CLI/Docker/Node không chạy được).
+- **Phase đang làm:** Phase 1 — `IdentityAccess`: `JwtBearer`, `RBAC` & `AdminUI` `Đăng nhập`/`Đăng xuất`.
+- **Story đang làm:** **ST-P1-01** — Triển khai xác thực `JwtBearer` trong module `IdentityAccess` (cấu hình issuer/audience/signing key, validate token).
+- **Story tiếp theo đề xuất:** **ST-P1-02** — Triển khai `RBAC` cho vai trò `SystemAdministrator`, `BusinessOperator`, `IntegrationClient` và policy/authorization handlers.
+- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P1-01 (theo yêu cầu Đại ca). ST-P0-01 → ST-P0-08 và các story Phase 1 khác chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker/Node không chạy được).
 
 ## 4. Deferred Work
 
@@ -211,5 +211,6 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 0 / ST-P0-06 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể chạy `dotnet test`/restore và xác minh pass 3 tầng test liên quan; không thể tick Done theo DoD. | Cần môi trường .NET CLI/Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-07 | Blocker môi trường shell/CLI/Docker và chưa có bằng chứng chạy pipeline CI thực tế. | Không thể xác minh workflow CI chạy pass (build/lint/format/gate unit→integration→e2e); không thể tick Done theo DoD. | Cần chạy/xác minh CI (GitHub Actions hoặc local tương đương) và cung cấp kết quả. | Open |
 | 2026-04-03 | Phase 0 / ST-P0-08 | Blocker môi trường shell/CLI/Docker/Node vẫn còn; agent không thể tự chạy lệnh xác minh. | Không thể xác minh build, compose smoke, test scaffold 3 tầng và pipeline CI chạy pass; không thể tick Done theo DoD/quy ước tick. | Cần Đại ca chạy xác minh (local/CI) và cung cấp log/kết quả pass cho các hạng mục liên quan. | Open |
+| 2026-04-03 | Phase 1 / ST-P1-01 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
