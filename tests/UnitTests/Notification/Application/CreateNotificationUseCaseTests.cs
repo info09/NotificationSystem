@@ -1,9 +1,9 @@
 using BuildingBlocks.SharedKernel.Repository;
+using Notification.Application.Notifications;
 using Notification.Application.Notifications.CreateNotification;
 using System.Linq.Expressions;
 using DomainNotification = global::Notification.Domain.Notification;
 using NotificationChannel = global::Notification.Domain.NotificationChannel;
-using NotificationStatus = global::Notification.Domain.NotificationStatus;
 using Recipient = global::Notification.Domain.Recipient;
 
 namespace UnitTests.Notification.Application;
@@ -11,29 +11,26 @@ namespace UnitTests.Notification.Application;
 public sealed class CreateNotificationUseCaseTests
 {
     [Fact]
-    public async Task HandleAsync_WithValidCommand_PersistsNotificationAndReturnsCreatedResult()
+    public async Task HandleAsync_WithValidRequest_PersistsNotificationAndReturnsCreatedResult()
     {
         var repository = new FakeNotificationRepository();
         var useCase = new CreateNotificationUseCase(repository);
-        var command = new CreateNotificationCommand(
+        var request = new CreateNotificationAppRequest(
+            IdempotencyKey: "idem-key-1",
             Recipient: "user@example.com",
-            Channel: NotificationChannel.Email,
+            Channel: "email",
             Content: "Xin chao",
             NotificationTemplateId: null,
-            IdempotencyScope: "integration-client-1",
-            IdempotencyKey: "idem-key-1");
+            Caller: new NotificationCallerContext("integration-client-1", ["IntegrationClient"]));
 
-        var result = await useCase.HandleAsync(command, CancellationToken.None);
+        var result = await useCase.HandleAsync(request, CancellationToken.None);
 
-        Assert.True(result.Created);
-        Assert.NotEqual(Guid.Empty, result.Notification.Id);
-        Assert.Equal(NotificationStatus.Pending, result.Notification.Status);
-        Assert.Equal("user@example.com", result.Notification.Recipient);
-        Assert.Equal(NotificationChannel.Email, result.Notification.Channel);
-        Assert.Equal("Xin chao", result.Notification.Content);
-        Assert.Null(result.Notification.NotificationTemplateId);
+        Assert.Equal(NotificationAppStatus.Created, result.Status);
+        Assert.NotNull(result.Value);
+        Assert.NotEqual(Guid.Empty, result.Value!.NotificationId);
+        Assert.Equal("Pending", result.Value.Status);
         Assert.NotNull(repository.AddedNotification);
-        Assert.Equal(result.Notification.Id, repository.AddedNotification!.Id);
+        Assert.Equal(result.Value.NotificationId, repository.AddedNotification!.Id);
         Assert.Equal(1, repository.SaveChangesCallCount);
     }
 
@@ -50,76 +47,97 @@ public sealed class CreateNotificationUseCaseTests
             "idem-key-1");
         var repository = new FakeNotificationRepository(existingNotification);
         var useCase = new CreateNotificationUseCase(repository);
-        var command = new CreateNotificationCommand(
+        var request = new CreateNotificationAppRequest(
+            IdempotencyKey: "idem-key-1",
             Recipient: "user@example.com",
-            Channel: NotificationChannel.Email,
+            Channel: "email",
             Content: "Xin chao",
             NotificationTemplateId: null,
-            IdempotencyScope: "integration-client-1",
-            IdempotencyKey: "idem-key-1");
+            Caller: new NotificationCallerContext("integration-client-1", ["IntegrationClient"]));
 
-        var result = await useCase.HandleAsync(command, CancellationToken.None);
+        var result = await useCase.HandleAsync(request, CancellationToken.None);
 
-        Assert.False(result.Created);
-        Assert.Equal(existingNotification.Id, result.Notification.Id);
+        Assert.Equal(NotificationAppStatus.Ok, result.Status);
+        Assert.NotNull(result.Value);
+        Assert.Equal(existingNotification.Id, result.Value!.NotificationId);
         Assert.Null(repository.AddedNotification);
         Assert.Equal(0, repository.SaveChangesCallCount);
     }
 
     [Fact]
-    public async Task HandleAsync_WithoutContentAndTemplate_ThrowsArgumentException()
+    public async Task HandleAsync_WithNullRequest_ReturnsValidationError()
     {
         var repository = new FakeNotificationRepository();
         var useCase = new CreateNotificationUseCase(repository);
-        var command = new CreateNotificationCommand(
-            Recipient: "user@example.com",
-            Channel: NotificationChannel.Email,
+
+        var result = await useCase.HandleAsync(null, CancellationToken.None);
+
+        Assert.Equal(NotificationAppStatus.ValidationError, result.Status);
+        Assert.NotNull(result.ValidationErrors);
+        Assert.Contains("request", result.ValidationErrors!.Keys);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WithInvalidFields_ReturnsValidationErrors()
+    {
+        var repository = new FakeNotificationRepository();
+        var useCase = new CreateNotificationUseCase(repository);
+        var request = new CreateNotificationAppRequest(
+            IdempotencyKey: "",
+            Recipient: "",
+            Channel: "sms",
             Content: null,
             NotificationTemplateId: null,
-            IdempotencyScope: "integration-client-1",
-            IdempotencyKey: "idem-key-2");
+            Caller: new NotificationCallerContext("integration-client-1", ["IntegrationClient"]));
 
-        await Assert.ThrowsAsync<ArgumentException>(() => useCase.HandleAsync(command, CancellationToken.None));
-        Assert.Null(repository.AddedNotification);
-        Assert.Equal(0, repository.SaveChangesCallCount);
+        var result = await useCase.HandleAsync(request, CancellationToken.None);
+
+        Assert.Equal(NotificationAppStatus.ValidationError, result.Status);
+        Assert.NotNull(result.ValidationErrors);
+        Assert.Contains("idempotencyKey", result.ValidationErrors!.Keys);
+        Assert.Contains("recipient", result.ValidationErrors.Keys);
+        Assert.Contains("channel", result.ValidationErrors.Keys);
+        Assert.Contains("content", result.ValidationErrors.Keys);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public async Task HandleAsync_WithoutIdempotencyScope_ThrowsArgumentException(string? scope)
+    [Fact]
+    public async Task HandleAsync_WithMissingCallerScope_ReturnsValidationError()
     {
         var repository = new FakeNotificationRepository();
         var useCase = new CreateNotificationUseCase(repository);
-        var command = new CreateNotificationCommand(
+        var request = new CreateNotificationAppRequest(
+            IdempotencyKey: "idem-key-1",
             Recipient: "user@example.com",
-            Channel: NotificationChannel.Email,
+            Channel: "email",
             Content: "Xin chao",
             NotificationTemplateId: null,
-            IdempotencyScope: scope!,
-            IdempotencyKey: "idem-key-3");
+            Caller: new NotificationCallerContext(null, ["IntegrationClient"]));
 
-        await Assert.ThrowsAsync<ArgumentException>(() => useCase.HandleAsync(command, CancellationToken.None));
+        var result = await useCase.HandleAsync(request, CancellationToken.None);
+
+        Assert.Equal(NotificationAppStatus.ValidationError, result.Status);
+        Assert.NotNull(result.ValidationErrors);
+        Assert.Contains("idempotencyScope", result.ValidationErrors!.Keys);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public async Task HandleAsync_WithoutIdempotencyKey_ThrowsArgumentException(string? key)
+    [Fact]
+    public async Task HandleAsync_WithInAppChannel_ParsesChannelAndCreatesNotification()
     {
         var repository = new FakeNotificationRepository();
         var useCase = new CreateNotificationUseCase(repository);
-        var command = new CreateNotificationCommand(
-            Recipient: "user@example.com",
-            Channel: NotificationChannel.Email,
-            Content: "Xin chao",
+        var request = new CreateNotificationAppRequest(
+            IdempotencyKey: "idem-key-2",
+            Recipient: "user-1",
+            Channel: "inapp",
+            Content: "Hello",
             NotificationTemplateId: null,
-            IdempotencyScope: "integration-client-1",
-            IdempotencyKey: key!);
+            Caller: new NotificationCallerContext("integration-client-1", ["IntegrationClient"]));
 
-        await Assert.ThrowsAsync<ArgumentException>(() => useCase.HandleAsync(command, CancellationToken.None));
+        var result = await useCase.HandleAsync(request, CancellationToken.None);
+
+        Assert.Equal(NotificationAppStatus.Created, result.Status);
+        Assert.NotNull(repository.AddedNotification);
+        Assert.Equal(NotificationChannel.InApp, repository.AddedNotification!.Channel);
     }
 
     private sealed class FakeNotificationRepository : IRepository<DomainNotification>

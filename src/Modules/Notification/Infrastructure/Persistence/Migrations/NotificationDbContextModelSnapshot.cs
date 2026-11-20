@@ -38,6 +38,10 @@ namespace Notification.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("Content");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt");
+
                     b.Property<string>("IdempotencyKey")
                         .IsRequired()
                         .HasColumnType("text")
@@ -64,8 +68,14 @@ namespace Notification.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Channel");
+
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("IdempotencyScope", "IdempotencyKey")
                         .IsUnique();
+
+                    b.HasIndex("Status");
 
                     b.ToTable("Notifications", "notification");
                 });

@@ -26,7 +26,8 @@ namespace Notification.Infrastructure.Persistence.Migrations
                     Content = table.Column<string>(type: "text", nullable: true),
                     NotificationTemplateId = table.Column<Guid>(type: "uuid", nullable: true),
                     IdempotencyScope = table.Column<string>(type: "text", nullable: false),
-                    IdempotencyKey = table.Column<string>(type: "text", nullable: false)
+                    IdempotencyKey = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,6 +40,24 @@ namespace Notification.Infrastructure.Persistence.Migrations
                 table: "Notifications",
                 columns: new[] { "IdempotencyScope", "IdempotencyKey" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_Status",
+                schema: "notification",
+                table: "Notifications",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_Channel",
+                schema: "notification",
+                table: "Notifications",
+                column: "Channel");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_CreatedAt",
+                schema: "notification",
+                table: "Notifications",
+                column: "CreatedAt");
         }
 
         /// <inheritdoc />

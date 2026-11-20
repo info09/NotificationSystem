@@ -1,6 +1,7 @@
 using BuildingBlocks.SharedKernel.Repository;
-using DomainNotification = Notification.Domain.Notification;
-using Recipient = Notification.Domain.Recipient;
+using DomainNotification = global::Notification.Domain.Notification;
+using NotificationChannel = global::Notification.Domain.NotificationChannel;
+using Recipient = global::Notification.Domain.Recipient;
 
 namespace Notification.Application.Notifications.CreateNotification;
 
@@ -13,7 +14,88 @@ public sealed class CreateNotificationUseCase
         _notificationRepository = notificationRepository;
     }
 
-    public async Task<CreateNotificationResult> HandleAsync(CreateNotificationCommand command, CancellationToken cancellationToken)
+    public async Task<NotificationAppResult<CreateNotificationResponseDto>> HandleAsync(
+        CreateNotificationAppRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return NotificationAppResult<CreateNotificationResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["request"] = ["Request body is required."]
+                });
+        }
+
+        var errors = new Dictionary<string, string[]>();
+
+        if (string.IsNullOrWhiteSpace(request.IdempotencyKey))
+        {
+            errors["idempotencyKey"] = ["IdempotencyKey is required."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Recipient))
+        {
+            errors["recipient"] = ["Recipient is required."];
+        }
+
+        NotificationChannel parsedChannel = default;
+        if (string.IsNullOrWhiteSpace(request.Channel))
+        {
+            errors["channel"] = ["Channel is required."];
+        }
+        else if (!TryParseChannel(request.Channel, out parsedChannel))
+        {
+            errors["channel"] = ["Channel must be 'email' or 'inapp'."];
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Content) && request.NotificationTemplateId is null)
+        {
+            errors["content"] = ["Content or notificationTemplateId is required."];
+        }
+
+        if (errors.Count > 0)
+        {
+            return NotificationAppResult<CreateNotificationResponseDto>.Validation(errors);
+        }
+
+        var idempotencyScope = request.Caller?.Subject;
+        if (string.IsNullOrWhiteSpace(idempotencyScope))
+        {
+            return NotificationAppResult<CreateNotificationResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["idempotencyScope"] = ["Authenticated caller scope could not be determined."]
+                });
+        }
+
+        var command = new CreateNotificationCommand(
+            request.Recipient!,
+            parsedChannel,
+            request.Content,
+            request.NotificationTemplateId,
+            idempotencyScope!,
+            request.IdempotencyKey!);
+
+        try
+        {
+            var result = await CreateAsync(command, cancellationToken);
+            var response = new CreateNotificationResponseDto(result.Notification.Id, result.Notification.Status.ToString());
+            return result.Created
+                ? NotificationAppResult<CreateNotificationResponseDto>.Created(response)
+                : NotificationAppResult<CreateNotificationResponseDto>.Ok(response);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotificationAppResult<CreateNotificationResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["request"] = [ex.Message]
+                });
+        }
+    }
+
+    private async Task<CreateNotificationResult> CreateAsync(CreateNotificationCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -69,5 +151,23 @@ public sealed class CreateNotificationUseCase
 
             throw;
         }
+    }
+
+    private static bool TryParseChannel(string channel, out NotificationChannel parsedChannel)
+    {
+        if (string.Equals(channel, "email", StringComparison.OrdinalIgnoreCase))
+        {
+            parsedChannel = NotificationChannel.Email;
+            return true;
+        }
+
+        if (string.Equals(channel, "inapp", StringComparison.OrdinalIgnoreCase))
+        {
+            parsedChannel = NotificationChannel.InApp;
+            return true;
+        }
+
+        parsedChannel = default;
+        return false;
     }
 }

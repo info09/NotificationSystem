@@ -9,4 +9,5 @@ public sealed record NotificationDto(
     NotificationChannel Channel,
     NotificationStatus Status,
     string? Content,
-    Guid? NotificationTemplateId);
+    Guid? NotificationTemplateId,
+    DateTime CreatedAt);

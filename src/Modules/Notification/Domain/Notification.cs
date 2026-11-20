@@ -19,7 +19,8 @@ public sealed class Notification : Entity
         string? content,
         Guid? notificationTemplateId,
         string idempotencyScope,
-        string idempotencyKey)
+        string idempotencyKey,
+        DateTime createdAt)
     {
         Id = id;
         Recipient = recipient;
@@ -29,6 +30,7 @@ public sealed class Notification : Entity
         NotificationTemplateId = notificationTemplateId;
         IdempotencyScope = idempotencyScope;
         IdempotencyKey = idempotencyKey;
+        CreatedAt = createdAt;
     }
 
     public Recipient Recipient { get; private set; }
@@ -45,6 +47,8 @@ public sealed class Notification : Entity
 
     public string IdempotencyKey { get; private set; }
 
+    public DateTime CreatedAt { get; private set; }
+
     public static Notification Create(
         Guid id,
         Recipient recipient,
@@ -52,7 +56,8 @@ public sealed class Notification : Entity
         string? content,
         Guid? notificationTemplateId,
         string idempotencyScope,
-        string idempotencyKey)
+        string idempotencyKey,
+        DateTime? createdAt = null)
     {
         ArgumentNullException.ThrowIfNull(recipient);
 
@@ -79,7 +84,8 @@ public sealed class Notification : Entity
             content,
             notificationTemplateId,
             idempotencyScope,
-            idempotencyKey);
+            idempotencyKey,
+            createdAt ?? DateTime.UtcNow);
     }
 
     public void MarkProcessing()

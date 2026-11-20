@@ -48,7 +48,15 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<DomainN
             .HasColumnName("IdempotencyKey")
             .IsRequired();
 
+        builder.Property(x => x.CreatedAt)
+            .HasColumnName("CreatedAt")
+            .IsRequired();
+
         builder.HasIndex(x => new { x.IdempotencyScope, x.IdempotencyKey })
             .IsUnique();
+
+        builder.HasIndex(x => x.Status);
+        builder.HasIndex(x => x.Channel);
+        builder.HasIndex(x => x.CreatedAt);
     }
 }

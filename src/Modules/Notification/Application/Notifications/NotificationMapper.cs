@@ -12,6 +12,7 @@ public static class NotificationMapper
             notification.Channel,
             notification.Status,
             notification.Content,
-            notification.NotificationTemplateId);
+            notification.NotificationTemplateId,
+            notification.CreatedAt);
     }
 }
