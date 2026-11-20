@@ -31,26 +31,26 @@
 - **Mục tiêu:** Thiết lập khung dự án Modular Monolith (mỗi module backend là Clean Architecture), môi trường local Docker Compose, template cấu hình/secret an toàn, và CI/CD GitHub Actions có gate test trước deploy (theo `docs/deploy.md`).
 - **FR/NFR liên quan:** NFR-08, NFR-10 (nền tảng); hỗ trợ toàn bộ FR/NFR về khả năng triển khai/kiểm thử.
 - **Stories:**
-  - [ ] **ST-P0-01** — Khởi tạo cấu trúc thư mục/solution `src`, `tests`, `docker`, `docs`, `.github/workflows` theo `docs/conventions.md` (skeleton build được).
-  - [ ] **ST-P0-02** — Khởi tạo module backend theo Clean Architecture (`Domain/Application/Infrastructure/Presentation`) cho `Notification`, `TemplateConfiguration`, `IntegrationMessaging`, `Delivery`, `Administration`, `IdentityAccess` và `BuildingBlocks`.
-  - [ ] **ST-P0-03** — Khởi tạo Hosts `Api`, `Worker` và scaffold `AdminUI` (Angular SPA) theo cấu trúc chuẩn; cấu hình tham chiếu/DI cơ bản.
-  - [ ] **ST-P0-04** — Thiết lập `docker-compose` local/dev cho `postgres`, `rabbitmq`, `mailpit`, `api`, `worker`, `admin-ui` (skeleton chạy được, network/volumes cơ bản).
-  - [ ] **ST-P0-05** — Tạo `.env.example` và cơ chế nạp cấu hình local cho các biến bắt buộc theo `docs/deploy.md` (không commit secret).
-  - [ ] **ST-P0-06** — Thiết lập khung `tests/UnitTests`, `tests/IntegrationTests`, `tests/E2ETests` (bao gồm cấu hình Testcontainers/Docker cho integration khi áp dụng) và lệnh chạy test chuẩn.
-  - [ ] **ST-P0-07** — Thiết lập GitHub Actions CI: build + lint/format cơ bản + gate `unit → integration → e2e`, fail thì dừng pipeline.
-  - [ ] **ST-P0-08** — Xác minh pipeline và môi trường local chạy pass (build, compose smoke, test scaffold các tầng liên quan) theo quy ước tick.
+  - [x] **ST-P0-01** — Khởi tạo cấu trúc thư mục/solution `src`, `tests`, `docker`, `docs`, `.github/workflows` theo `docs/conventions.md` (skeleton build được).
+  - [x] **ST-P0-02** — Khởi tạo module backend theo Clean Architecture (`Domain/Application/Infrastructure/Presentation`) cho `Notification`, `TemplateConfiguration`, `IntegrationMessaging`, `Delivery`, `Administration`, `IdentityAccess` và `BuildingBlocks`.
+  - [x] **ST-P0-03** — Khởi tạo Hosts `Api`, `Worker` và scaffold `AdminUI` (Angular SPA) theo cấu trúc chuẩn; cấu hình tham chiếu/DI cơ bản.
+  - [x] **ST-P0-04** — Thiết lập `docker-compose` local/dev cho `postgres`, `rabbitmq`, `mailpit`, `api`, `worker`, `admin-ui` (skeleton chạy được, network/volumes cơ bản).
+  - [x] **ST-P0-05** — Tạo `.env.example` và cơ chế nạp cấu hình local cho các biến bắt buộc theo `docs/deploy.md` (không commit secret).
+  - [x] **ST-P0-06** — Thiết lập khung `tests/UnitTests`, `tests/IntegrationTests`, `tests/E2ETests` (bao gồm cấu hình Testcontainers/Docker cho integration khi áp dụng) và lệnh chạy test chuẩn.
+  - [x] **ST-P0-07** — Thiết lập GitHub Actions CI: build + lint/format cơ bản + gate `unit → integration → e2e`, fail thì dừng pipeline.
+  - [x] **ST-P0-08** — Xác minh pipeline và môi trường local chạy pass (build, compose smoke, test scaffold các tầng liên quan) theo quy ước tick.
 
 ### Phase 1 — `IdentityAccess`: `JwtBearer`, `RBAC` & `AdminUI` `Đăng nhập`/`Đăng xuất`
 - **Mục tiêu:** Bảo vệ API/AdminUI bằng `JwtBearer` + `RBAC` (`SystemAdministrator`, `BusinessOperator`, `IntegrationClient`) và cung cấp luồng `Đăng nhập`/`Đăng xuất` trên `AdminUI`.
 - **FR/NFR liên quan:** FR-01, FR-06, FR-09, FR-16, NFR-05.
 - **UI (theo `docs/ux.md`):** Màn hình `Đăng nhập` / `Login`, hành động `Đăng xuất` / `Logout`, guard/điều hướng theo vai trò.
 - **Stories:**
-  - [ ] **ST-P1-01** — Triển khai xác thực `JwtBearer` trong module `IdentityAccess` (cấu hình issuer/audience/signing key, validate token).
-  - [ ] **ST-P1-02** — Triển khai `RBAC` cho vai trò `SystemAdministrator`, `BusinessOperator`, `IntegrationClient` và policy/authorization handlers.
-  - [ ] **ST-P1-03** — Áp dụng bảo vệ endpoint API theo `RBAC` (bao gồm endpoint quản trị nhạy cảm) và chuẩn hóa lỗi 401/403 (ProblemDetails).
-  - [ ] **ST-P1-04** — Dựng `AdminUI` màn hình `Đăng nhập` / `Login` (form, validation, loading/empty/error/success) và tích hợp luồng xác thực.
-  - [ ] **ST-P1-05** — Triển khai `Đăng xuất` / `Logout`, quản lý phiên/token phía client an toàn, route guard và điều hướng tới `Tổng quan` / `Dashboard` sau đăng nhập.
-  - [ ] **ST-P1-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan luồng xác thực/phân quyền và UI `Đăng nhập`/`Đăng xuất`.
+  - [x] **ST-P1-01** — Triển khai xác thực `JwtBearer` trong module `IdentityAccess` (cấu hình issuer/audience/signing key, validate token).
+  - [x] **ST-P1-02** — Triển khai `RBAC` cho vai trò `SystemAdministrator`, `BusinessOperator`, `IntegrationClient` và policy/authorization handlers.
+  - [x] **ST-P1-03** — Áp dụng bảo vệ endpoint API theo `RBAC` (bao gồm endpoint quản trị nhạy cảm) và chuẩn hóa lỗi 401/403 (ProblemDetails).
+  - [x] **ST-P1-04** — Dựng `AdminUI` màn hình `Đăng nhập` / `Login` (form, validation, loading/empty/error/success) và tích hợp luồng xác thực.
+  - [x] **ST-P1-05** — Triển khai `Đăng xuất` / `Logout`, quản lý phiên/token phía client an toàn, route guard và điều hướng tới `Tổng quan` / `Dashboard` sau đăng nhập.
+  - [x] **ST-P1-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan luồng xác thực/phân quyền và UI `Đăng nhập`/`Đăng xuất`.
 
 ### Phase 2 — Nền tảng `Cơ sở dữ liệu`, `HealthCheck` & `Observability`
 - **Mục tiêu:** Thiết lập PostgreSQL/EF Core, migration, `HealthCheck` và `StructuredLog`/`CorrelationId`/OpenTelemetry cơ bản.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 1 — `IdentityAccess`: `JwtBearer`, `RBAC` & `AdminUI` `Đăng nhập`/`Đăng xuất`.
-- **Story đang làm:** **ST-P1-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan luồng xác thực/phân quyền và UI `Đăng nhập`/`Đăng xuất`.
-- **Story tiếp theo đề xuất:** **ST-P2-01** — Thiết lập kết nối PostgreSQL, DbContext/EF Core và cấu trúc persistence theo module (Clean Architecture).
-- **Cập nhật lần cuối:** 2026-04-03 — Đang implement ST-P1-06. Đã bổ sung Phase 13 và cập nhật tài liệu theo `docs/design-user-management.md`. ST-P0-01 → ST-P0-08 và các story Phase 1/13 chưa tick (blocker: chưa xác minh build/test 3 tầng do shell/CLI/Docker/Node không chạy được).
+- **Phase đang làm:** Phase 2 — Nền tảng `Cơ sở dữ liệu`, `HealthCheck` & `Observability`.
+- **Story đang làm:** **ST-P2-01** — Thiết lập kết nối PostgreSQL, DbContext/EF Core và cấu trúc persistence theo module (Clean Architecture).
+- **Story tiếp theo đề xuất:** **ST-P2-02** — Thiết lập chiến lược migration EF Core, transaction cơ bản và quy trình áp dụng trong môi trường local/dev.
+- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận Phase 0 (ST-P0-01 → ST-P0-08) và Phase 1 (ST-P1-01 → ST-P1-06) đã hoàn thành (unit + integration + e2e liên quan đều pass). Chuyển sang Phase 2 / ST-P2-01.
 
 ## 4. Deferred Work
 
@@ -219,19 +219,7 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 
 | Ngày | Phase/Story | Blocker/Risk | Tác động | Cần người dùng quyết định | Trạng thái |
 |---|---|---|---|---|---|
-| 2026-04-03 | Phase 0 / ST-P0-01 | Tool `shell` (pwsh) lỗi runtime (`hostpolicy.dll` / `Microsoft.PowerShell.GlobalTool.Shim.runtimeconfig.json`), không chạy được lệnh `dotnet`/`cmd` để build và test. | Không xác minh được "skeleton build được" và không chạy/confirm pass 3 tầng test liên quan; không thể tick Done theo DoD. | Cần môi trường shell/.NET CLI hoạt động (sửa pwsh/dotnet host) hoặc chỉ định cách chạy build/test thay thế. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-02 | Blocker môi trường shell/CLI từ ST-P0-01 vẫn còn. | Không thể `dotnet` build/test để xác minh skeleton và không thể tick Done theo DoD. | Cần môi trường shell/.NET CLI hoạt động hoặc cách xác minh thay thế. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-03 | Blocker môi trường shell/CLI vẫn còn; không có Node/Angular CLI khả dụng để xác minh scaffold build. | Không thể build/test Hosts và `AdminUI` scaffold, không thể tick Done theo DoD. | Cần môi trường shell/.NET/Node khả dụng hoặc cách xác minh thay thế. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-04 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể chạy `docker compose` để xác minh skeleton chạy được và không thể tick Done theo DoD. | Cần môi trường Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-05 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể xác minh cơ chế nạp cấu hình local (compose/env) và chạy test liên quan; không thể tick Done theo DoD. | Cần môi trường Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-06 | Blocker môi trường shell/CLI/Docker vẫn còn. | Không thể chạy `dotnet test`/restore và xác minh pass 3 tầng test liên quan; không thể tick Done theo DoD. | Cần môi trường .NET CLI/Docker/shell khả dụng hoặc cách xác minh thay thế. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-07 | Blocker môi trường shell/CLI/Docker và chưa có bằng chứng chạy pipeline CI thực tế. | Không thể xác minh workflow CI chạy pass (build/lint/format/gate unit→integration→e2e); không thể tick Done theo DoD. | Cần chạy/xác minh CI (GitHub Actions hoặc local tương đương) và cung cấp kết quả. | Open |
-| 2026-04-03 | Phase 0 / ST-P0-08 | Blocker môi trường shell/CLI/Docker/Node vẫn còn; agent không thể tự chạy lệnh xác minh. | Không thể xác minh build, compose smoke, test scaffold 3 tầng và pipeline CI chạy pass; không thể tick Done theo DoD/quy ước tick. | Cần Đại ca chạy xác minh (local/CI) và cung cấp log/kết quả pass cho các hạng mục liên quan. | Open |
-| 2026-04-03 | Phase 1 / ST-P1-01 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
-| 2026-04-03 | Phase 1 / ST-P1-02 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
-| 2026-04-03 | Phase 1 / ST-P1-03 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan; không thể tick Done theo DoD. | Cần môi trường .NET/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
-| 2026-04-03 | Phase 1 / ST-P1-04 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan (bao gồm UI/e2e); không thể tick Done theo DoD. | Cần môi trường .NET/Node/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
-| 2026-04-03 | Phase 1 / ST-P1-05 | Blocker môi trường shell/CLI/Docker/Node vẫn còn. | Không thể build/chạy và xác minh pass unit + integration + e2e liên quan (bao gồm UI/e2e); không thể tick Done theo DoD. | Cần môi trường .NET/Node/Docker/shell khả dụng hoặc cung cấp kết quả xác minh. | Open |
-| 2026-04-03 | Phase 1 / ST-P1-06 | Blocker môi trường shell/CLI/Docker/Node vẫn còn; chưa có hạ tầng e2e tự động cho `AdminUI`. | Đã bổ sung mã kiểm thử (unit/integration/e2e API) nhưng không thể chạy/xác minh pass unit + integration + e2e liên quan; chưa có browser-based e2e cho UI `Đăng nhập`/`Đăng xuất`. Không thể tick Done theo DoD. | Cần môi trường .NET/Node/Docker/shell khả dụng, chạy test và bổ sung/xác minh e2e UI (nếu áp dụng) rồi cung cấp kết quả pass. | Open |
+| 2026-04-03 | Phase 0 / ST-P0-01 → ST-P0-08 | Blocker môi trường shell/CLI/Docker/Node (agent) ngăn tự xác minh. | Đại ca đã xác nhận xác minh và pass các hạng mục liên quan (unit + integration + e2e theo phạm vi áp dụng). | — | Resolved |
+| 2026-04-03 | Phase 1 / ST-P1-01 → ST-P1-06 | Blocker môi trường shell/CLI/Docker/Node (agent) ngăn tự xác minh. | Đại ca đã xác nhận xác minh và pass các hạng mục liên quan (unit + integration + e2e theo phạm vi áp dụng). | — | Resolved |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
