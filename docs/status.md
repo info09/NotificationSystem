@@ -70,8 +70,8 @@
 - **Stories:**
   - [x] **ST-P3-01** — Triển khai domain `Notification` (`NotificationStatus`: `Pending`/`Processing`/`Sent`/`Failed`, `Recipient`, kênh/nội dung hoặc template ref) và quy tắc nghiệp vụ cơ bản.
   - [x] **ST-P3-02** — Triển khai application/use case và persistence cho tạo/truy vấn `Notification` theo Clean Architecture.
-  - [ ] **ST-P3-03** — Triển khai API tạo `Notification` từ `CreateNotificationRequest` (JWT + RBAC, validation, trả `notificationId`) với xử lý `IdempotencyKey` chống tạo trùng. *(Đã implement; chờ xác minh pass unit + integration + e2e liên quan để tick Done.)*
-  - [ ] **ST-P3-04** — Triển khai API truy vấn danh sách/chi tiết `Notification` (lọc trạng thái/kênh/thời gian, phân trang) theo quyền. *(Đã implement; chờ xác minh pass unit + integration + e2e liên quan để tick Done.)*
+  - [x] **ST-P3-03** — Triển khai API tạo `Notification` từ `CreateNotificationRequest` (JWT + RBAC, validation, trả `notificationId`) với xử lý `IdempotencyKey` chống tạo trùng.
+  - [x] **ST-P3-04** — Triển khai API truy vấn danh sách/chi tiết `Notification` (lọc trạng thái/kênh/thời gian, phân trang) theo quyền.
   - [ ] **ST-P3-05** — Dựng `AdminUI` danh sách `Thông báo` (bảng, bộ lọc, phân trang, loading/empty/error/success).
   - [ ] **ST-P3-06** — Dựng `AdminUI` chi tiết `Thông báo` cơ bản (thông tin, `Trạng thái thông báo`, `Mã tương quan`, loading/empty/error/success).
   - [ ] **ST-P3-07** — Hoàn thiện kiểm thử unit/integration/e2e liên quan tạo, idempotency, truy vấn và UI `Thông báo`.
@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 3 — Module `Notification`: `CreateNotificationRequest`, `IdempotencyKey` & tra cứu `Thông báo`.
-- **Story đang làm:** **ST-P3-03**, **ST-P3-04** — đã implement API tạo và truy vấn (danh sách/chi tiết, lọc trạng thái/kênh/thời gian, phân trang) `Notification` theo quyền; chờ Đại ca xác nhận pass unit + integration + e2e liên quan để tick Done theo DoD.
-- **Story tiếp theo đề xuất:** **ST-P3-05** — Dựng `AdminUI` danh sách `Thông báo` (bảng, bộ lọc, phân trang, loading/empty/error/success).
-- **Cập nhật lần cuối:** 2026-04-03 — Đã implement **ST-P3-04**: `GET /api/notifications` và `GET /api/notifications/{id}` (JWT + RBAC `NotificationRead`: `SystemAdministrator`/`BusinessOperator` toàn quyền, `IntegrationClient` chỉ theo scope), lọc trạng thái/kênh/thời gian, phân trang; bổ sung `CreatedAt`, repository/query/use case/endpoint/DTO, cập nhật migration `AddNotifications` + snapshot, và test unit/integration/e2e liên quan (chưa commit). Đã refactor Notification API: chuyển logic vào Application, `Presentation` mỏng (bind/gọi/map); dọn code chết Presentation, gộp helper parse/scope, thống nhất mapping response, đơn giản hóa luồng `GetNotifications`, và chuẩn hóa `CreateNotificationUseCase` sang `INotificationRepository`. ST-P3-03/ST-P3-04 chưa tick Done do chưa có bằng chứng chạy pass unit + integration + e2e liên quan.
+- **Story đang làm:** **ST-P3-05** — Dựng `AdminUI` danh sách `Thông báo` (bảng, bộ lọc, phân trang, loading/empty/error/success).
+- **Story tiếp theo đề xuất:** **ST-P3-06** — Dựng `AdminUI` chi tiết `Thông báo` cơ bản (thông tin, `Trạng thái thông báo`, `Mã tương quan`, loading/empty/error/success).
+- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận đã pass **unit + integration + e2e** liên quan; đã tick Done **ST-P3-03**, **ST-P3-04** (API tạo/truy vấn `Notification`, idempotency, lọc/phân trang theo quyền, refactor logic vào Application và các chỉnh sửa/chuẩn hóa liên quan). Chuyển sang **ST-P3-05**.
 
 ## 4. Deferred Work
 
@@ -229,7 +229,7 @@ Khi thay đổi phase/story đang làm, phải cập nhật mục **Trạng thá
 | 2026-04-03 | Phase 2 / ST-P2-06 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 3 / ST-P3-01 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 | 2026-04-03 | Phase 3 / ST-P3-02 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; chưa có EF Core migration cho `notifications`. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
-| 2026-04-03 | Phase 3 / ST-P3-03 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; migration `AddNotifications` đã được cập nhật để bao gồm cột/index idempotency và `CreatedAt` (khi implement ST-P3-04). | Đã implement API tạo `Notification` với idempotency và test liên quan nhưng chưa chạy/xác minh pass; chưa tick Done theo DoD. | Cần Đại ca apply/update schema DB theo migration hiện tại, chạy build và các test liên quan rồi cung cấp kết quả pass. | Open |
-| 2026-04-03 | Phase 3 / ST-P3-04 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; migration `AddNotifications` đã được cập nhật thêm `CreatedAt`/index phục vụ lọc/truy vấn. | Đã implement API truy vấn danh sách/chi tiết `Notification` (lọc trạng thái/kênh/thời gian, phân trang) theo quyền và test liên quan nhưng chưa chạy/xác minh pass; chưa tick Done theo DoD. | Cần Đại ca apply/update schema DB theo migration hiện tại, chạy build và các test liên quan (unit/integration/e2e) rồi cung cấp kết quả pass. | Open |
+| 2026-04-03 | Phase 3 / ST-P3-03 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; migration `AddNotifications` đã được cập nhật để bao gồm cột/index idempotency và `CreatedAt` (khi implement ST-P3-04). | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
+| 2026-04-03 | Phase 3 / ST-P3-04 | Môi trường agent không chạy được `shell`/`.NET CLI`/Docker/Node để tự build/test; migration `AddNotifications` đã được cập nhật thêm `CreatedAt`/index phục vụ lọc/truy vấn. | Đại ca đã xác nhận kết quả pass unit + integration + e2e liên quan; đã tick Done theo DoD. | — | Resolved |
 
 > Agent phải ghi blocker/risk tại đây khi gặp vướng mắc cần quyết định; **không được tự quyết rồi im lặng**.
