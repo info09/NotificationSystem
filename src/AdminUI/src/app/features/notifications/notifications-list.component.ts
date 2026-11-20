@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { GetNotificationsResponse, NotificationItem } from '../../core/notifications/notification.models';
@@ -11,7 +12,7 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
 @Component({
   selector: 'app-notifications-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <section class="page" aria-labelledby="notifications-title">
       <header class="page-header">
@@ -87,7 +88,9 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
           </thead>
           <tbody>
             <tr *ngFor="let item of items; trackBy: trackById">
-              <td class="mono" title="{{ item.id }}">{{ item.id }}</td>
+              <td class="mono" title="{{ item.id }}">
+                <a [routerLink]="['/notifications', item.id]" class="row-link">{{ item.id }}</a>
+              </td>
               <td>{{ item.recipient }}</td>
               <td>{{ displayChannel(item.channel) }}</td>
               <td>
@@ -141,6 +144,9 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
     th { background: #f8fafc; font-weight: 600; color: #0f172a; }
     tbody tr:last-child td { border-bottom: none; }
     .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; word-break: break-all; }
+    .row-link { color: #2563eb; text-decoration: none; }
+    .row-link:hover { text-decoration: underline; }
+    .row-link:focus { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }
     .content-cell { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
     .badge-pending { background: #fffbeb; color: #92400e; border-color: #fde68a; }

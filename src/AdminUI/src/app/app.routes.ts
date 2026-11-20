@@ -27,6 +27,13 @@ export const routes: Routes = [
             (m) => m.NotificationsListComponent
           )
       },
+      {
+        path: 'notifications/:id',
+        loadComponent: () =>
+          import('./features/notifications/notification-detail.component').then(
+            (m) => m.NotificationDetailComponent
+          )
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },

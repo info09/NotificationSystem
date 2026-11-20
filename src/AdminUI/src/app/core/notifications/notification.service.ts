@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { GetNotificationsResponse, NotificationListQuery } from './notification.models';
+import { GetNotificationsResponse, NotificationItem, NotificationListQuery } from './notification.models';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -26,5 +26,9 @@ export class NotificationService {
     }
 
     return this.http.get<GetNotificationsResponse>('/api/notifications', { params });
+  }
+
+  getNotificationById(id: string): Observable<NotificationItem> {
+    return this.http.get<NotificationItem>(`/api/notifications/${id}`);
   }
 }
