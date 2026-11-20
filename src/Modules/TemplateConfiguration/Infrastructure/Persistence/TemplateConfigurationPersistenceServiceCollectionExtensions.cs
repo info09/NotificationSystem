@@ -20,7 +20,9 @@ public static class TemplateConfigurationPersistenceServiceCollectionExtensions
         }
 
         services.AddDbContext<TemplateConfigurationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(TemplateConfigurationDbContext).Assembly.FullName)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "template_configuration")));
 
         return services;
     }

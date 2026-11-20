@@ -20,7 +20,9 @@ public static class DeliveryPersistenceServiceCollectionExtensions
         }
 
         services.AddDbContext<DeliveryDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(DeliveryDbContext).Assembly.FullName)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "delivery")));
 
         return services;
     }

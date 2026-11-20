@@ -20,7 +20,9 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
         }
 
         services.AddDbContext<IdentityAccessDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(IdentityAccessDbContext).Assembly.FullName)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "identity_access")));
 
         return services;
     }

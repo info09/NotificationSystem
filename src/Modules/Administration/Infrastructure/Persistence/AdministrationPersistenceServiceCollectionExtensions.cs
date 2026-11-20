@@ -20,7 +20,9 @@ public static class AdministrationPersistenceServiceCollectionExtensions
         }
 
         services.AddDbContext<AdministrationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(AdministrationDbContext).Assembly.FullName)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "administration")));
 
         return services;
     }

@@ -20,7 +20,9 @@ public static class NotificationPersistenceServiceCollectionExtensions
         }
 
         services.AddDbContext<NotificationDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(NotificationDbContext).Assembly.FullName)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "notification")));
 
         return services;
     }

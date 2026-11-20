@@ -64,13 +64,24 @@
 ## 5. Database migration
 
 - **Công cụ:** Entity Framework Core migrations (theo `docs/architecture.md`).
+- **Chiến lược (modular monolith, nhiều DbContext/module):**
+  - Mỗi module backend có `DbContext` và persistence riêng trong `src/Modules/<Module>/Infrastructure/Persistence/` (ví dụ `NotificationDbContext`, `IdentityAccessDbContext`), dùng chung một database PostgreSQL nhưng **tách schema theo module** (ví dụ `notification`, `identity_access`, `integration_messaging`, `delivery`, `template_configuration`, `administration`).
+  - Migration được quản lý **riêng theo từng DbContext/module**; file migration đặt tại `src/Modules/<Module>/Infrastructure/Persistence/Migrations/` (assembly migrations = Infrastructure của module).
+  - Mỗi DbContext dùng **bảng lịch sử migration riêng theo schema**: `__EFMigrationsHistory` trong schema của module tương ứng (tránh xung đột khi nhiều context cùng database). Cấu hình này được thiết lập trong đăng ký persistence và trong `IDesignTimeDbContextFactory` của từng DbContext.
+  - **Transaction cơ bản:** các thao tác ghi cần nhất quán trong phạm vi một module/DbContext sử dụng transaction của EF Core (`DbContext.Database.BeginTransactionAsync` / `CommitAsync` / `RollbackAsync`, hoặc `IDbContextTransaction`). Trường hợp cần nhất quán nghiệp vụ + outbox/inbox trong cùng transaction DB sẽ áp dụng theo luồng tương ứng ở các phase sau (ví dụ `TransactionalOutbox`).
 - **Nguyên tắc:** Migration áp dụng lên production phải **reversible** hoặc có **kế hoạch rollback rõ ràng** được chuẩn bị và review trước khi chạy. Ưu tiên migration tương thích ngược (expand/contract) khi thay đổi schema có rủi ro.
 - **Cách chạy theo môi trường:**
-  - **local/dev:** chạy migration tự động hoặc thủ công khi khởi tạo/cập nhật schema dev; có thể reset DB khi cần.
-  - **staging:** chạy migration như bước bắt buộc trong quy trình deploy staging (sau pre-check/build, trước hoặc trong bước rollout có kiểm soát), dùng cùng quy trình với production.
+  - **local/dev:** chạy migration thủ công theo từng DbContext khi khởi tạo/cập nhật schema dev (có thể reset DB/volume khi cần). Yêu cầu `dotnet-ef` và .NET SDK tương thích; cấu hình chuỗi kết nối qua biến môi trường `ConnectionStrings__Database` (hoặc dùng giá trị mặc định dev trong design-time factory/`appsettings`).
+    - **Tạo migration** (ví dụ module `Notification`, chạy từ thư mục gốc repo):
+      - `dotnet ef migrations add <MigrationName> --context NotificationDbContext --project src/Modules/Notification/Infrastructure/Notification.Infrastructure.csproj --startup-project src/Hosts/Api/Api.csproj --output-dir Persistence/Migrations`
+    - **Áp dụng migration:**
+      - `dotnet ef database update --context NotificationDbContext --project src/Modules/Notification/Infrastructure/Notification.Infrastructure.csproj --startup-project src/Hosts/Api/Api.csproj`
+    - Lặp lại tương tự cho các DbContext/module khác: `TemplateConfigurationDbContext`, `IntegrationMessagingDbContext`, `DeliveryDbContext`, `AdministrationDbContext`, `IdentityAccessDbContext` (thay `--context`, `--project`, `--output-dir` theo module). Có thể áp dụng lần lượt theo thứ tự phụ thuộc nghiệp vụ khi đã có schema; ở giai đoạn nền tảng các module độc lập thì thứ tự không ràng buộc.
+    - **Xem danh sách migration:** `dotnet ef migrations list --context <DbContext> --project <Infrastructure.csproj> --startup-project src/Hosts/Api/Api.csproj`
+  - **staging:** chạy migration như bước bắt buộc trong quy trình deploy staging (sau pre-check/build, trước hoặc trong bước rollout có kiểm soát), dùng cùng quy trình với production; áp dụng cho tất cả DbContext/module có migration mới.
   - **production:** chỉ chạy sau pre-check và backup/điểm khôi phục sẵn sàng; thực hiện theo checklist deploy, giám sát lỗi và sẵn sàng rollback theo kế hoạch.
 - **Rollback migration:**
-  - Nếu migration có down script an toàn: rollback bằng EF Core xuống migration trước đó đã xác định.
+  - Nếu migration có down script an toàn: rollback bằng EF Core xuống migration trước đó đã xác định cho từng DbContext liên quan (`dotnet ef database update <PreviousMigration> --context <DbContext> ...`).
   - Nếu thay đổi không reversible an toàn: chuẩn bị script/chiến lược bù (data fix/forward fix) và kế hoạch khôi phục từ backup; **không** chạy migration loại này trên production khi chưa có kế hoạch rollback được xác nhận.
 
 ## 6. Quy trình deploy từng bước

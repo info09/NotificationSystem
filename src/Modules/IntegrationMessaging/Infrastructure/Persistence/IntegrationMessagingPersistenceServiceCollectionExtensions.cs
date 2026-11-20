@@ -20,7 +20,9 @@ public static class IntegrationMessagingPersistenceServiceCollectionExtensions
         }
 
         services.AddDbContext<IntegrationMessagingDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+                npgsqlOptions.MigrationsAssembly(typeof(IntegrationMessagingDbContext).Assembly.FullName)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "integration_messaging")));
 
         return services;
     }
