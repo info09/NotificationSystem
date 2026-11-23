@@ -14,6 +14,7 @@ import { AuthService } from '../auth/auth.service';
           <nav class="nav" aria-label="Điều hướng chính">
             <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tổng quan</a>
             <a routerLink="/notifications" routerLinkActive="active">Thông báo</a>
+            <a routerLink="/dead-letter-queues" routerLinkActive="active">Hàng đợi thư chết</a>
           </nav>
         </div>
         <button type="button" class="logout-button" (click)="onLogout()">Đăng xuất</button>

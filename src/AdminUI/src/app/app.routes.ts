@@ -34,6 +34,13 @@ export const routes: Routes = [
             (m) => m.NotificationDetailComponent
           )
       },
+      {
+        path: 'dead-letter-queues',
+        loadComponent: () =>
+          import('./features/dead-letter-queue/dead-letter-queue-list.component').then(
+            (m) => m.DeadLetterQueueListComponent
+          )
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },

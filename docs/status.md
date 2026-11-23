@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 6 — `Retry`, `ExponentialBackoff`, `DeadLetterQueue` & `Resend`.
-- **Story đang làm:** **ST-P6-03** — Triển khai API truy vấn `DeadLetterQueue` và luồng `Resend` idempotent theo `RBAC` (kèm `AuditLog` thao tác nhạy cảm).
-- **Story tiếp theo đề xuất:** **ST-P6-04** — Dựng `AdminUI` danh sách `Hàng đợi thư chết` (lọc/chi tiết tóm tắt, loading/empty/error/success).
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P6-01/02/03 (retry/DLQ worker, DLQ query/resend API + AuditLog + idempotency, thêm unit/integration/e2e tests). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
+- **Story đang làm:** **ST-P6-04** — Dựng `AdminUI` danh sách `Hàng đợi thư chết` (lọc/chi tiết tóm tắt, loading/empty/error/success).
+- **Story tiếp theo đề xuất:** **ST-P6-05** — Dựng `AdminUI` chi tiết DLQ và thao tác `Gửi lại` (modal xác nhận, trạng thái xử lý, kết quả success/error).
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P6-01/02/03/04 (retry/DLQ worker, DLQ query/resend API + AuditLog, AdminUI danh sách DLQ). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
 
 ## 4. Deferred Work
 
