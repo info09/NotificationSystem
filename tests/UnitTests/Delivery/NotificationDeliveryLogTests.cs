@@ -52,4 +52,25 @@ public sealed class NotificationDeliveryLogTests
         Assert.Throws<ArgumentException>(() =>
             NotificationDeliveryLog.Create(Guid.NewGuid(), Guid.NewGuid(), "", DeliveryAttemptResult.Success, null, 0, "corr"));
     }
+
+    [Fact]
+    public void Update_WithValidData_UpdatesFields()
+    {
+        var log = NotificationDeliveryLog.Create(Guid.NewGuid(), Guid.NewGuid(), "Email", DeliveryAttemptResult.Failed, "err", 0, "corr-1");
+
+        log.Update(DeliveryAttemptResult.Success, null, 1, "corr-2");
+
+        Assert.Equal(DeliveryAttemptResult.Success, log.Result);
+        Assert.Null(log.ErrorMessage);
+        Assert.Equal(1, log.RetryCount);
+        Assert.Equal("corr-2", log.CorrelationId);
+    }
+
+    [Fact]
+    public void Update_WithNegativeRetryCount_ThrowsArgumentOutOfRangeException()
+    {
+        var log = NotificationDeliveryLog.Create(Guid.NewGuid(), Guid.NewGuid(), "Email", DeliveryAttemptResult.Failed, "err", 0, "corr-1");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => log.Update(DeliveryAttemptResult.Failed, "err", -1, "corr-1"));
+    }
 }

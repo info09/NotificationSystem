@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 8 — `NotificationDeliveryLog`, `DeliveryAttempt` & truy vết.
-- **Story đang làm:** **ST-P8-04** — Dựng UI hiển thị `Nhật ký gửi thông báo` & `Lần thử gửi` trong chi tiết `Thông báo` (đã implement, chờ Đại ca xác nhận test pass để tick Done ST-P8-01..ST-P8-04).
-- **Story tiếp theo đề xuất:** **ST-P8-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan ghi nhận và truy vết lịch sử gửi.
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P8-01..ST-P8-04; chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
+- **Phase đang làm:** Phase 8 — `NotificationDeliveryLog`, `DeliveryAttempt` & truy vết (đã implement ST-P8-01..ST-P8-05, chờ xác nhận test pass để tick Done).
+- **Story đang làm:** **ST-P8-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan ghi nhận và truy vết lịch sử gửi (đã implement, chờ Đại ca xác nhận test pass).
+- **Story tiếp theo đề xuất:** **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P8-01..ST-P8-05; chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
 
 ## 4. Deferred Work
 

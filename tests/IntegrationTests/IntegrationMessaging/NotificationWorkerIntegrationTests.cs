@@ -279,6 +279,56 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HandleMessageAsync_WhenDispatchFails_RecordsFailedDeliveryAttempt()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var integrationDbContext = CreateDbContext();
+        await integrationDbContext.Database.MigrateAsync();
+        await using var notificationDbContext = CreateNotificationDbContext();
+        await notificationDbContext.Database.MigrateAsync();
+        await using (var deliveryDbContext = CreateDeliveryDbContext())
+        {
+            await deliveryDbContext.Database.MigrateAsync();
+        }
+
+        var notification = DomainNotification.Create(
+            Guid.NewGuid(),
+            new global::Notification.Domain.Recipient("user@example.com"),
+            NotificationChannel.Email,
+            "Xin chao",
+            null,
+            "scope-fail",
+            "key-fail",
+            DateTime.UtcNow);
+        notificationDbContext.Notifications.Add(notification);
+        await notificationDbContext.SaveChangesAsync();
+
+        var messageId = Guid.NewGuid();
+        await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.EmailQueue, "notification.email.created", messageId, notification.Id);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var worker = CreateWorkerWithRealDeliveryDispatch(options, new ThrowingNotificationChannelDispatcher());
+        worker.RetryDelaySelector = _ => TimeSpan.Zero;
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        await using var verifyDeliveryDbContext = CreateDeliveryDbContext();
+        var attempts = await verifyDeliveryDbContext.DeliveryAttempts.AsNoTracking()
+            .Where(x => x.NotificationId == notification.Id)
+            .OrderBy(x => x.AttemptNumber)
+            .ToListAsync();
+        Assert.NotEmpty(attempts);
+        Assert.All(attempts, a => Assert.Equal(global::Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Failed, a.Result));
+
+        var log = await verifyDeliveryDbContext.NotificationDeliveryLogs.AsNoTracking()
+            .SingleAsync(x => x.NotificationId == notification.Id && x.Channel == "Email");
+        Assert.Equal(global::Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Failed, log.Result);
+    }
+
+    [Fact]
     public async Task HandleMessageAsync_WithInvalidMessageId_RoutesToDlq()
     {
         var options = CreateRabbitMqOptions();
@@ -415,7 +465,7 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             NullLogger<NotificationWorker>.Instance);
     }
 
-    private NotificationWorker CreateWorkerWithRealDeliveryDispatch(IOptions<RabbitMqOptions> options)
+    private NotificationWorker CreateWorkerWithRealDeliveryDispatch(IOptions<RabbitMqOptions> options, INotificationChannelDispatcher? dispatcher = null)
     {
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder()
@@ -438,6 +488,10 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
 
         services.AddDeliveryPersistence(configuration);
         services.AddScoped<IEmailSender, NoOpEmailSender>();
+        if (dispatcher is not null)
+        {
+            services.AddScoped<INotificationChannelDispatcher>(_ => dispatcher);
+        }
 
         var provider = services.BuildServiceProvider();
 
@@ -616,6 +670,14 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         {
             Requests.Add(request);
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class ThrowingNotificationChannelDispatcher : INotificationChannelDispatcher
+    {
+        public Task DispatchAsync(NotificationChannelDispatchRequest request, CancellationToken cancellationToken)
+        {
+            throw new InvalidOperationException("Dispatch failed.");
         }
     }
 

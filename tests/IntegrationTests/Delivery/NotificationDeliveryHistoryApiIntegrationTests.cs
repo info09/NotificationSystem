@@ -94,6 +94,24 @@ public sealed class NotificationDeliveryHistoryApiIntegrationTests : IAsyncLifet
         Assert.Equal("Email", payload.Logs[0].Channel);
     }
 
+    [Fact]
+    public async Task GetDeliveryHistory_WithUnauthorizedRole_ReturnsForbidden()
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/notifications/{Guid.NewGuid()}/delivery-history?page=1&pageSize=10", RbacRoles.IntegrationClient);
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetDeliveryHistory_WithInvalidPage_ReturnsValidationProblem()
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/notifications/{Guid.NewGuid()}/delivery-history?page=0&pageSize=10", RbacRoles.BusinessOperator);
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private async Task SeedAsync(Guid notificationId, string channel, DeliveryAttemptResult result, string? error, int attemptNumber, int retryCount, DateTime atUtc)
     {
         using var scope = _factory.Services.CreateScope();
