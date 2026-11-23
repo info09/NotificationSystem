@@ -1,4 +1,5 @@
 using Delivery.Application.Abstractions;
+using Delivery.Application.Email;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -45,6 +46,8 @@ public static class DeliveryEmailServiceCollectionExtensions
             });
 
         services.AddSingleton<IEmailProvider, SmtpEmailProvider>();
+        services.AddSingleton<IEmailTemplateRenderer, PassThroughEmailTemplateRenderer>();
+        services.AddScoped<IEmailSender, EmailSender>();
         return services;
     }
 }
