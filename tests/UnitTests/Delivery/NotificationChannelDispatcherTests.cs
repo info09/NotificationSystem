@@ -43,6 +43,17 @@ public sealed class NotificationChannelDispatcherTests
         Assert.Equal("user-1", repository.Items[0].RecipientUserId);
     }
 
+    [Fact]
+    public async Task DispatchAsync_WithUnsupportedChannel_ThrowsNotSupportedException()
+    {
+        var dispatcher = new NotificationChannelDispatcher(new FakeEmailSender(), CreateInAppUseCase(new FakeInAppNotificationRepository()));
+
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
+            dispatcher.DispatchAsync(
+                new NotificationChannelDispatchRequest(Guid.NewGuid(), "Sms", "user-1", "Hello", null),
+                CancellationToken.None));
+    }
+
     private static CreateInAppNotificationUseCase CreateInAppUseCase(IInAppNotificationRepository repository) => new(repository);
 
     private sealed class FakeEmailSender : IEmailSender

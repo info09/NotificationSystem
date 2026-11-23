@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 7 — Kênh `Email` & `Thông báo trong ứng dụng` (`InAppNotification`).
-- **Story đang làm:** **ST-P7-05** — Tích hợp cập nhật kết quả dispatch kênh vào luồng worker/trạng thái xử lý.
-- **Story tiếp theo đề xuất:** **ST-P7-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan dispatch kênh, `Email`, `InAppNotification` và `ReadStatus`.
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P7-05 (abstraction `INotificationChannelDispatcher`, `NotificationChannelDispatcher` dispatch Email/InApp, tích hợp `NotificationWorker` trước khi lưu Inbox/MarkSent, cập nhật test worker + unit dispatcher). Chưa tick Done ST-P7-01..05 do chưa có xác nhận pass 3 tầng từ Đại ca.
+- **Story đang làm:** **ST-P7-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan dispatch kênh, `Email`, `InAppNotification` và `ReadStatus`.
+- **Story tiếp theo đề xuất:** **ST-P8-01** — Thiết kế và triển khai domain `NotificationDeliveryLog` (thành công/thất bại, kênh, thời gian, lỗi).
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P7-06 (bổ sung test dispatcher unsupported channel, integration/e2e worker dispatch InApp tạo `InAppNotification`, củng cố coverage Email/InApp/ReadStatus). Chưa tick Done ST-P7-01..06 do chưa có xác nhận pass 3 tầng từ Đại ca.
 
 ## 4. Deferred Work
 

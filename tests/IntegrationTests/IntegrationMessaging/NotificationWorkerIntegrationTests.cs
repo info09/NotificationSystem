@@ -1,8 +1,14 @@
 using System.Text.Json;
 using Delivery.Application.Abstractions;
+using Delivery.Application.Email;
+using Delivery.Application.InAppNotifications.CreateInAppNotification;
+using Delivery.Infrastructure.Dispatching;
+using Delivery.Infrastructure.Email;
+using Delivery.Infrastructure.Persistence;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -218,6 +224,48 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HandleMessageAsync_WithInAppNotification_CreatesInAppNotification()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var integrationDbContext = CreateDbContext();
+        await integrationDbContext.Database.MigrateAsync();
+        await using var notificationDbContext = CreateNotificationDbContext();
+        await notificationDbContext.Database.MigrateAsync();
+        await using (var deliveryDbContext = CreateDeliveryDbContext())
+        {
+            await deliveryDbContext.Database.MigrateAsync();
+        }
+
+        var notification = DomainNotification.Create(
+            Guid.NewGuid(),
+            new global::Notification.Domain.Recipient("user-1"),
+            NotificationChannel.InApp,
+            "Xin chao in-app",
+            null,
+            "scope-inapp",
+            "key-inapp",
+            DateTime.UtcNow);
+        notificationDbContext.Notifications.Add(notification);
+        await notificationDbContext.SaveChangesAsync();
+
+        var messageId = Guid.NewGuid();
+        await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.InAppQueue, "notification.inapp.created", messageId, notification.Id, NotificationChannel.InApp);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.InAppQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var worker = CreateWorkerWithRealDeliveryDispatch(options);
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        await using var verifyDeliveryDbContext = CreateDeliveryDbContext();
+        var inApp = await verifyDeliveryDbContext.InAppNotifications.AsNoTracking()
+            .SingleAsync(x => x.NotificationId == notification.Id && x.RecipientUserId == "user-1");
+        Assert.Equal(global::Delivery.Domain.InAppNotifications.ReadStatus.Unread, inApp.ReadStatus);
+    }
+
+    [Fact]
     public async Task HandleMessageAsync_WithInvalidMessageId_RoutesToDlq()
     {
         var options = CreateRabbitMqOptions();
@@ -354,6 +402,38 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             NullLogger<NotificationWorker>.Instance);
     }
 
+    private NotificationWorker CreateWorkerWithRealDeliveryDispatch(IOptions<RabbitMqOptions> options)
+    {
+        var services = new ServiceCollection();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Database"] = _postgreSqlContainer.GetConnectionString()
+            })
+            .Build();
+
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddDbContext<IntegrationMessagingDbContext>(dbOptions =>
+            dbOptions.UseNpgsql(
+                _postgreSqlContainer.GetConnectionString(),
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "integration_messaging")));
+        services.AddDbContext<NotificationDbContext>(dbOptions =>
+            dbOptions.UseNpgsql(
+                _postgreSqlContainer.GetConnectionString(),
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "notification")));
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+
+        services.AddDeliveryPersistence(configuration);
+        services.AddScoped<IEmailSender, NoOpEmailSender>();
+
+        var provider = services.BuildServiceProvider();
+
+        return new NotificationWorker(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            options,
+            NullLogger<NotificationWorker>.Instance);
+    }
+
     private IOptions<RabbitMqOptions> CreateRabbitMqOptions() =>
         Options.Create(new RabbitMqOptions
         {
@@ -386,6 +466,17 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         return new NotificationDbContext(options);
     }
 
+    private DeliveryDbContext CreateDeliveryDbContext()
+    {
+        var options = new DbContextOptionsBuilder<DeliveryDbContext>()
+            .UseNpgsql(
+                _postgreSqlContainer.GetConnectionString(),
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "delivery"))
+            .Options;
+
+        return new DeliveryDbContext(options);
+    }
+
     private static async Task PublishRawMessageAsync(RabbitMqOptions options, string routingKey, string messageId)
     {
         var factory = CreateConnectionFactory(options);
@@ -407,13 +498,13 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             body: System.Text.Encoding.UTF8.GetBytes("""{"channel":"Email","notificationId":"00000000-0000-0000-0000-000000000001"}"""));
     }
 
-    private static async Task PublishTestMessageAsync(RabbitMqOptions options, string queue, string routingKey, Guid messageId, Guid? notificationId = null)
+    private static async Task PublishTestMessageAsync(RabbitMqOptions options, string queue, string routingKey, Guid messageId, Guid? notificationId = null, NotificationChannel channelType = NotificationChannel.Email)
     {
         var factory = CreateConnectionFactory(options);
         await using var connection = await factory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
 
-        var payload = JsonSerializer.Serialize(new { channel = "Email", notificationId = notificationId ?? Guid.NewGuid() });
+        var payload = JsonSerializer.Serialize(new { channel = channelType.ToString(), notificationId = notificationId ?? Guid.NewGuid() });
         var properties = new BasicProperties
         {
             Persistent = true,
@@ -513,5 +604,10 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             Requests.Add(request);
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class NoOpEmailSender : IEmailSender
+    {
+        public Task SendAsync(SendEmailRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
