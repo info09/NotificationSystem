@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 6 — `Retry`, `ExponentialBackoff`, `DeadLetterQueue` & `Resend`.
-- **Story đang làm:** **ST-P6-05** — Dựng `AdminUI` chi tiết DLQ và thao tác `Gửi lại` (modal xác nhận, trạng thái xử lý, kết quả success/error).
-- **Story tiếp theo đề xuất:** **ST-P6-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan retry, DLQ và `Resend`.
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P6-01/02/03/04/05 (retry/DLQ worker, DLQ query/resend API + AuditLog, AdminUI danh sách DLQ + chi tiết/gửi lại). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
+- **Story đang làm:** **ST-P6-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan retry, DLQ và `Resend`.
+- **Story tiếp theo đề xuất:** **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P6-01/02/03/04/05/06 (retry/DLQ worker, DLQ query/resend API + AuditLog, AdminUI DLQ, bổ sung test retry/DLQ/resend/idempotency/RBAC). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
 
 ## 4. Deferred Work
 

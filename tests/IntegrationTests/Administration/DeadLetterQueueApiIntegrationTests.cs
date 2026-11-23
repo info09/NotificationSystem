@@ -124,6 +124,41 @@ public sealed class DeadLetterQueueApiIntegrationTests : IAsyncLifetime
         Assert.Equal("Success", audit.Result);
     }
 
+    [Fact]
+    public async Task ResendDeadLetterMessage_WithSameIdempotencyKey_ReturnsDuplicate()
+    {
+        var notificationId = await SeedNotificationAsync();
+        _gateway.ResendResult = new DeadLetterResendGatewayResult("msg-dup-1", Guid.NewGuid(), notificationId, "notifications.email.dlq");
+
+        using var firstRequest = CreateAuthorizedRequest(HttpMethod.Post, "/api/admin/dead-letter-queues/notifications.email.dlq/messages/msg-dup-1/resend", RbacRoles.SystemAdministrator, "admin-1");
+        firstRequest.Content = JsonContent.Create(new { idempotencyKey = "idem-dup-1" });
+        var firstResponse = await _client.SendAsync(firstRequest);
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+
+        using var secondRequest = CreateAuthorizedRequest(HttpMethod.Post, "/api/admin/dead-letter-queues/notifications.email.dlq/messages/msg-dup-1/resend", RbacRoles.SystemAdministrator, "admin-1");
+        secondRequest.Content = JsonContent.Create(new { idempotencyKey = "idem-dup-1" });
+        var secondResponse = await _client.SendAsync(secondRequest);
+
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+        var payload = await secondResponse.Content.ReadFromJsonAsync<ResendDeadLetterMessageResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("Duplicate", payload!.Status);
+
+        using var scope = _factory.Services.CreateScope();
+        var administrationDbContext = scope.ServiceProvider.GetRequiredService<AdministrationDbContext>();
+        var resendRequests = await administrationDbContext.DeadLetterResendRequestRecords.CountAsync(x => x.IdempotencyKey == "idem-dup-1");
+        Assert.Equal(1, resendRequests);
+    }
+
+    [Fact]
+    public async Task GetDeadLetterMessages_WithIntegrationClient_ReturnsForbidden()
+    {
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, "/api/admin/dead-letter-queues/notifications.email.dlq/messages?limit=10", RbacRoles.IntegrationClient, "integration-1");
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     /// <summary>
     /// Tạo yêu cầu HTTP có token xác thực.
     /// </summary>

@@ -1,9 +1,3 @@
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 using Administration.Application.DeadLetterQueue;
 using Administration.Infrastructure.Persistence;
 using IdentityAccess.Domain;
@@ -18,6 +12,12 @@ using Microsoft.IdentityModel.Tokens;
 using Notification.Infrastructure.Persistence;
 using RabbitMQ.Client;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 
@@ -126,6 +126,28 @@ public sealed class DeadLetterQueueResendE2ETests : IAsyncLifetime
         Assert.NotNull(published);
     }
 
+    [Fact]
+    public async Task ResendDeadLetterMessage_WithSameIdempotencyKey_ReturnsDuplicate()
+    {
+        var notificationId = await SeedNotificationAsync();
+        var messageId = Guid.NewGuid().ToString();
+        await PublishDlqMessageAsync(messageId, notificationId);
+
+        using var firstRequest = CreateAuthorizedRequest(HttpMethod.Post, $"/api/admin/dead-letter-queues/notifications.email.dlq/messages/{messageId}/resend", RbacRoles.SystemAdministrator, "admin-1");
+        firstRequest.Content = JsonContent.Create(new { idempotencyKey = "idem-e2e-dup-1" });
+        var firstResponse = await _client.SendAsync(firstRequest);
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+
+        using var secondRequest = CreateAuthorizedRequest(HttpMethod.Post, $"/api/admin/dead-letter-queues/notifications.email.dlq/messages/{messageId}/resend", RbacRoles.SystemAdministrator, "admin-1");
+        secondRequest.Content = JsonContent.Create(new { idempotencyKey = "idem-e2e-dup-1" });
+        var secondResponse = await _client.SendAsync(secondRequest);
+
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+        var payload = await secondResponse.Content.ReadFromJsonAsync<ResendDeadLetterMessageResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("Duplicate", payload!.Status);
+    }
+
     /// <summary>
     /// Tạo dữ liệu Thông báo phục vụ E2E.
     /// </summary>
@@ -190,8 +212,8 @@ public sealed class DeadLetterQueueResendE2ETests : IAsyncLifetime
                         ["count"] = 1L,
                         ["queue"] = RabbitMqTopologyNames.EmailQueue,
                         ["exchange"] = RabbitMqTopologyNames.NotificationsExchange,
-                        ["routing-keys"] = new List<object> { Encoding.UTF8.GetBytes(RabbitMqTopologyNames.EmailRoutingKey) },
-                        ["time"] = DateTime.UtcNow
+                        ["routing-keys"] = new List<object> { Encoding.UTF8.GetBytes(RabbitMqTopologyNames.EmailRoutingKeyPattern) },
+                        ["time"] = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                     }
                 }
             }

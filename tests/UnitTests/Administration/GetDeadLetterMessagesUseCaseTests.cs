@@ -1,3 +1,4 @@
+using Administration.Application;
 using Administration.Application.DeadLetterQueue;
 
 namespace UnitTests.Administration;
@@ -14,7 +15,7 @@ public sealed class GetDeadLetterMessagesUseCaseTests
 
         var result = await useCase.HandleAsync("invalid.queue", 10, CancellationToken.None);
 
-        Assert.Equal(Administration.Application.AdministrationAppStatus.ValidationError, result.Status);
+        Assert.Equal(AdministrationAppStatus.ValidationError, result.Status);
         Assert.NotNull(result.ValidationErrors);
     }
 
@@ -32,7 +33,7 @@ public sealed class GetDeadLetterMessagesUseCaseTests
 
         var result = await useCase.HandleAsync("notifications.email.dlq", 10, CancellationToken.None);
 
-        Assert.Equal(Administration.Application.AdministrationAppStatus.Ok, result.Status);
+        Assert.Equal(AdministrationAppStatus.Ok, result.Status);
         Assert.NotNull(result.Value);
         Assert.Single(result.Value!.Items);
     }
