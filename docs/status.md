@@ -90,11 +90,11 @@
 - **Mục tiêu:** Xử lý `Message` nền với at-least-once + idempotent (`InboxPattern`/`InboxMessage`, `MessageId`), chuyển trạng thái và kiểm soát concurrency.
 - **FR/NFR liên quan:** FR-05, FR-06, FR-07, FR-10, NFR-02, NFR-03, NFR-07.
 - **Stories:**
-  - [ ] **ST-P5-01** — Triển khai entity & persistence `InboxMessage`/`InboxPattern` với ràng buộc unique theo `MessageId` và ngữ cảnh xử lý cần thiết.
-  - [ ] **ST-P5-02** — Triển khai `NotificationWorker` consume `Queue`, kiểm tra inbox/idempotency và `ack` sau xử lý an toàn.
-  - [ ] **ST-P5-03** — Triển khai luồng cập nhật `NotificationStatus` (`Pending`→`Processing`→`Sent`/`Failed`) trong xử lý nền.
-  - [ ] **ST-P5-04** — Triển khai giới hạn concurrency (mặc định 5/worker, cấu hình được) và hỗ trợ chạy nhiều worker instance (competing consumers).
-  - [ ] **ST-P5-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan consume, idempotency và concurrency.
+  - [x] **ST-P5-01** — Triển khai entity & persistence `InboxMessage`/`InboxPattern` với ràng buộc unique theo `MessageId` và ngữ cảnh xử lý cần thiết.
+  - [x] **ST-P5-02** — Triển khai `NotificationWorker` consume `Queue`, kiểm tra inbox/idempotency và `ack` sau xử lý an toàn.
+  - [x] **ST-P5-03** — Triển khai luồng cập nhật `NotificationStatus` (`Pending`→`Processing`→`Sent`/`Failed`) trong xử lý nền.
+  - [x] **ST-P5-04** — Triển khai giới hạn concurrency (mặc định 5/worker, cấu hình được) và hỗ trợ chạy nhiều worker instance (competing consumers).
+  - [x] **ST-P5-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan consume, idempotency và concurrency.
 
 ### Phase 6 — `Retry`, `ExponentialBackoff`, `DeadLetterQueue` & `Resend`
 - **Mục tiêu:** Tự động `Retry` lỗi tạm thời, cô lập lỗi vào `DeadLetterQueue` và hỗ trợ `Resend` idempotent từ `AdminUI`.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 5 — `NotificationWorker`, `InboxPattern`/`InboxMessage` & consume.
-- **Story đang làm:** **ST-P5-01** — Triển khai entity & persistence `InboxMessage`/`InboxPattern` với ràng buộc unique theo `MessageId` và ngữ cảnh xử lý cần thiết.
-- **Story tiếp theo đề xuất:** **ST-P5-02** — Triển khai `NotificationWorker` consume `Queue`, kiểm tra inbox/idempotency và `ack` sau xử lý an toàn.
-- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 4**; đã tick Done **ST-P4-01**..**ST-P4-05** (`TransactionalOutbox`/`OutboxMessage`, RabbitMQ topology MVP, Outbox Publisher, retry/backoff an toàn, bổ sung kiểm thử unit/integration/e2e liên quan). Chuyển sang **Phase 5 / ST-P5-01**.
+- **Phase đang làm:** Phase 6 — `Retry`, `ExponentialBackoff`, `DeadLetterQueue` & `Resend`.
+- **Story đang làm:** **ST-P6-01** — Triển khai phân loại lỗi retryable/non-retryable và chính sách `Retry` tối đa 3 lần với `ExponentialBackoff` + jitter.
+- **Story tiếp theo đề xuất:** **ST-P6-02** — Triển khai chuyển `Message` vào `DeadLetterQueue` khi vượt ngưỡng/không xử lý được theo chính sách.
+- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 5**; đã tick Done **ST-P5-01**..**ST-P5-05** (`InboxMessage`/unique constraint, `NotificationWorker` consume+idempotency+ack an toàn, cập nhật `NotificationStatus`, concurrency cấu hình, kiểm thử liên quan). Chuyển sang **Phase 6 / ST-P6-01**.
 
 ## 4. Deferred Work
 
