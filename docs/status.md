@@ -112,7 +112,7 @@
 - **Mục tiêu:** Gửi `Notification` qua `Email` và `InAppNotification` theo abstraction kênh, hỗ trợ pull/polling và `ReadStatus`.
 - **FR/NFR liên quan:** FR-11, FR-12, FR-13, NFR-01, NFR-02.
 - **Stories:**
-  - [ ] **ST-P7-01** — Triển khai abstraction dispatch kênh `NotificationChannel` (strategy/factory/dispatcher) cho `Email` và `InAppNotification`.
+  - [ ] **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
   - [ ] **ST-P7-02** — Triển khai gửi `Email` qua SMTP (`EmailProvider`, Mailpit dev), hỗ trợ HTML/plain-text fallback và render nội dung/template.
   - [ ] **ST-P7-03** — Triển khai lưu `InAppNotification` và API pull/polling (danh sách, chi tiết, số chưa đọc) cho `EndUser`.
   - [ ] **ST-P7-04** — Triển khai cập nhật `ReadStatus` (`Unread`/`Read`) và API đánh dấu đã đọc.
@@ -195,7 +195,7 @@
 - **Phase đang làm:** Phase 7 — Kênh `Email` & `Thông báo trong ứng dụng` (`InAppNotification`).
 - **Story đang làm:** **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
 - **Story tiếp theo đề xuất:** **ST-P7-02** — Triển khai `NotificationDispatcher`/abstraction kênh (strategy/factory) để mở rộng không sửa luồng cốt lõi.
-- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 6**; đã tick Done **ST-P6-01**..**ST-P6-06** (retry/DLQ worker, DLQ query/resend API + AuditLog, AdminUI DLQ, kiểm thử liên quan). Chuyển sang **Phase 7 / ST-P7-01**.
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P7-01 (Delivery domain `EmailMessage`, `IEmailProvider`, `SmtpOptions`/`SmtpEmailProvider`, DI + Mailpit config, unit tests). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
 
 ## 4. Deferred Work
 

@@ -27,6 +27,9 @@
     <ProjectReference Include="..\..\src\Hosts\Worker\Worker.csproj" />
     <ProjectReference Include="..\..\src\Modules\Administration\Application\Administration.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Administration\Domain\Administration.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Delivery\Application\Delivery.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Delivery\Domain\Delivery.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Delivery\Infrastructure\Delivery.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\IdentityAccess\Domain\IdentityAccess.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
     <ProjectReference Include="..\..\src\Modules\IntegrationMessaging\Infrastructure\IntegrationMessaging.Infrastructure.csproj" />

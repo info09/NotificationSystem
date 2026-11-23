@@ -1,5 +1,6 @@
 ﻿using BuildingBlocks.Observability;
 using BuildingBlocks.Observability.DataContext;
+using Delivery.Infrastructure.Email;
 using Delivery.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +35,7 @@ namespace Delivery.Presentation
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
             services.AddDeliveryPersistence(configuration);
+            services.AddDeliveryEmail(configuration);
         }
     }
 }
