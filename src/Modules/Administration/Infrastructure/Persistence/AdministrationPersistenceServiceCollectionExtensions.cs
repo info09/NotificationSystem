@@ -1,3 +1,6 @@
+using Administration.Application.Abstractions;
+using Administration.Application.DeadLetterQueue;
+using Administration.Infrastructure.DeadLetterQueue;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +35,14 @@ public static class AdministrationPersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly(typeof(AdministrationDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "administration")));
+
+        services.Configure<AdministrationRabbitMqOptions>(configuration.GetSection(AdministrationRabbitMqOptions.SectionName));
+        services.AddHttpClient(nameof(RabbitMqDeadLetterQueueGateway));
+        services.AddScoped<IDeadLetterQueueGateway, RabbitMqDeadLetterQueueGateway>();
+        services.AddScoped<IAdministrationAuditLogWriter, AdministrationAuditLogWriter>();
+        services.AddScoped<IDeadLetterResendRequestRepository, DeadLetterResendRequestRepository>();
+        services.AddScoped<GetDeadLetterMessagesUseCase>();
+        services.AddScoped<ResendDeadLetterMessageUseCase>();
 
         return services;
     }

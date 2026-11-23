@@ -180,4 +180,17 @@ public sealed class Notification : Entity
 
         Status = NotificationStatus.Failed;
     }
+
+    /// <summary>
+    /// Chuyển Thông báo về trạng thái Chờ xử lý để gửi lại.
+    /// </summary>
+    public void MarkPendingForResend()
+    {
+        if (Status is not (NotificationStatus.Failed or NotificationStatus.Sent or NotificationStatus.Processing))
+        {
+            throw new InvalidOperationException("Only failed, sent, or processing notifications can be marked as pending for resend.");
+        }
+
+        Status = NotificationStatus.Pending;
+    }
 }

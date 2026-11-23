@@ -25,6 +25,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hosts\Api\Api.csproj" />
     <ProjectReference Include="..\..\src\Hosts\Worker\Worker.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Administration\Application\Administration.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Administration\Domain\Administration.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\IdentityAccess\Domain\IdentityAccess.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
     <ProjectReference Include="..\..\src\Modules\IntegrationMessaging\Infrastructure\IntegrationMessaging.Infrastructure.csproj" />

@@ -1,3 +1,4 @@
+using Administration.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace Administration.Infrastructure.Persistence;
@@ -9,6 +10,16 @@ namespace Administration.Infrastructure.Persistence;
 public sealed class AdministrationDbContext(
     DbContextOptions<AdministrationDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// Tập bản ghi Nhật ký kiểm toán.
+    /// </summary>
+    public DbSet<AuditLogRecord> AuditLogRecords => Set<AuditLogRecord>();
+
+    /// <summary>
+    /// Tập bản ghi yêu cầu Gửi lại từ Hàng đợi thư chết.
+    /// </summary>
+    public DbSet<DeadLetterResendRequestRecord> DeadLetterResendRequestRecords => Set<DeadLetterResendRequestRecord>();
+
     /// <summary>
     /// Cấu hình mô hình dữ liệu cho module Administration.
     /// </summary>

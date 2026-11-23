@@ -24,4 +24,14 @@ public static class RbacPolicies
     /// Policy cho phép đọc dữ liệu Thông báo theo quyền.
     /// </summary>
     public const string NotificationRead = "NotificationRead";
+
+    /// <summary>
+    /// Policy cho phép xem Hàng đợi thư chết.
+    /// </summary>
+    public const string DeadLetterQueueRead = "DeadLetterQueueRead";
+
+    /// <summary>
+    /// Policy cho phép gửi lại Thông điệp từ Hàng đợi thư chết.
+    /// </summary>
+    public const string DeadLetterQueueResend = "DeadLetterQueueResend";
 }

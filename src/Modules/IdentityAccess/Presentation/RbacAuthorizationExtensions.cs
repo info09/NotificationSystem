@@ -35,6 +35,16 @@ public static class RbacAuthorizationExtensions
                     RbacRoles.SystemAdministrator,
                     RbacRoles.BusinessOperator,
                     RbacRoles.IntegrationClient)));
+
+            options.AddPolicy(RbacPolicies.DeadLetterQueueRead, policy =>
+                policy.Requirements.Add(new RbacRoleRequirement(
+                    RbacRoles.SystemAdministrator,
+                    RbacRoles.BusinessOperator)));
+
+            options.AddPolicy(RbacPolicies.DeadLetterQueueResend, policy =>
+                policy.Requirements.Add(new RbacRoleRequirement(
+                    RbacRoles.SystemAdministrator,
+                    RbacRoles.BusinessOperator)));
         });
 
         services.AddSingleton<IAuthorizationHandler, RbacRoleAuthorizationHandler>();

@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 6 — `Retry`, `ExponentialBackoff`, `DeadLetterQueue` & `Resend`.
-- **Story đang làm:** **ST-P6-01** — Triển khai phân loại lỗi retryable/non-retryable và chính sách `Retry` tối đa 3 lần với `ExponentialBackoff` + jitter.
-- **Story tiếp theo đề xuất:** **ST-P6-02** — Triển khai chuyển `Message` vào `DeadLetterQueue` khi vượt ngưỡng/không xử lý được theo chính sách.
-- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 5**; đã tick Done **ST-P5-01**..**ST-P5-05** (`InboxMessage`/unique constraint, `NotificationWorker` consume+idempotency+ack an toàn, cập nhật `NotificationStatus`, concurrency cấu hình, kiểm thử liên quan). Chuyển sang **Phase 6 / ST-P6-01**.
+- **Story đang làm:** **ST-P6-03** — Triển khai API truy vấn `DeadLetterQueue` và luồng `Resend` idempotent theo `RBAC` (kèm `AuditLog` thao tác nhạy cảm).
+- **Story tiếp theo đề xuất:** **ST-P6-04** — Dựng `AdminUI` danh sách `Hàng đợi thư chết` (lọc/chi tiết tóm tắt, loading/empty/error/success).
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P6-01/02/03 (retry/DLQ worker, DLQ query/resend API + AuditLog + idempotency, thêm unit/integration/e2e tests). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
 
 ## 4. Deferred Work
 

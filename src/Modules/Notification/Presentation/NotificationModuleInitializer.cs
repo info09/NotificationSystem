@@ -1,9 +1,11 @@
 ﻿using BuildingBlocks.Observability;
 using BuildingBlocks.Observability.DataContext;
+using BuildingBlocks.SharedKernel.Notifications;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Notification.Infrastructure;
 using Notification.Infrastructure.Persistence;
 
 namespace Notification.Presentation;
@@ -34,5 +36,7 @@ public class NotificationModuleInitializer : IModuleInitializer
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddNotificationPersistence(configuration);
+
+        services.AddScoped<INotificationResendStateService, NotificationResendStateServiceAdapter>();
     }
 }

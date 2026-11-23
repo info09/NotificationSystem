@@ -1,3 +1,4 @@
+using Administration.Presentation;
 using Api.HealthChecks;
 using Api.Modules;
 using BuildingBlocks.Observability;
@@ -46,6 +47,7 @@ app.MapOpenApi().AllowAnonymous();
 app.MapScalarApiReference().AllowAnonymous();
 
 app.MapNotificationEndpoints();
+app.MapAdministrationEndpoints();
 
 // Gọi Configure của mỗi module
 foreach (var module in app.Services.GetServices<IModuleInitializer>())
