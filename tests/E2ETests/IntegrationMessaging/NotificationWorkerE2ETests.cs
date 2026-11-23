@@ -79,6 +79,52 @@ public sealed class NotificationWorkerE2ETests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HandleMessageAsync_WithMultipleMessages_ProcessesAllAndCreatesInboxRecords()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using (var dbContext = CreateDbContext())
+        {
+            await dbContext.Database.EnsureCreatedAsync();
+        }
+
+        var messageIds = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+        foreach (var messageId in messageIds)
+        {
+            await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.EmailQueue, "notification.email.created", messageId, Guid.NewGuid());
+        }
+
+        var worker = CreateWorker(options);
+        var tasks = new List<Task>();
+        var connections = new List<IConnection>();
+        var channels = new List<IChannel>();
+
+        foreach (var _ in messageIds)
+        {
+            var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+            connections.Add(connection);
+            channels.Add(channel);
+            tasks.Add(worker.HandleMessageAsync(channel, ea, CancellationToken.None));
+        }
+
+        await Task.WhenAll(tasks);
+
+        foreach (var channel in channels)
+        {
+            await channel.DisposeAsync();
+        }
+
+        foreach (var connection in connections)
+        {
+            await connection.DisposeAsync();
+        }
+
+        await using var verifyContext = CreateDbContext();
+        var inboxCount = await verifyContext.InboxMessages.CountAsync();
+        Assert.Equal(messageIds.Length, inboxCount);
+    }
+
+    [Fact]
     public async Task HandleMessageAsync_WithPendingNotification_UpdatesStatusToSent()
     {
         var options = CreateRabbitMqOptions();
