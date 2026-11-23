@@ -124,11 +124,11 @@
 - **FR/NFR liên quan:** FR-14, FR-08, NFR-06, NFR-08.
 - **UI (theo `docs/ux.md`):** `Nhật ký gửi thông báo` / `NotificationDeliveryLog` và `Lần thử gửi` / `DeliveryAttempt` trong chi tiết `Thông báo`.
 - **Stories:**
-  - [ ] **ST-P8-01** — Triển khai entity & persistence `NotificationDeliveryLog` và `DeliveryAttempt` (thời gian, kênh, kết quả, lỗi, retry, `Mã tương quan`).
-  - [ ] **ST-P8-02** — Ghi nhận `DeliveryAttempt`/`NotificationDeliveryLog` trong luồng gửi, `Retry` và kết quả xử lý kênh.
-  - [ ] **ST-P8-03** — Triển khai API truy vấn lịch sử/truy vết theo `Notification` (lọc/phân trang theo quyền, retention cấu hình).
-  - [ ] **ST-P8-04** — Dựng UI hiển thị `Nhật ký gửi thông báo` & `Lần thử gửi` trong chi tiết `Thông báo` (loading/empty/error/success).
-  - [ ] **ST-P8-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan ghi nhận và truy vết lịch sử gửi.
+  - [x] **ST-P8-01** — Triển khai entity & persistence `NotificationDeliveryLog` và `DeliveryAttempt` (thời gian, kênh, kết quả, lỗi, retry, `Mã tương quan`).
+  - [x] **ST-P8-02** — Ghi nhận `DeliveryAttempt`/`NotificationDeliveryLog` trong luồng gửi, `Retry` và kết quả xử lý kênh.
+  - [x] **ST-P8-03** — Triển khai API truy vấn lịch sử/truy vết theo `Notification` (lọc/phân trang theo quyền, retention cấu hình).
+  - [x] **ST-P8-04** — Dựng UI hiển thị `Nhật ký gửi thông báo` & `Lần thử gửi` trong chi tiết `Thông báo` (loading/empty/error/success).
+  - [x] **ST-P8-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan ghi nhận và truy vết lịch sử gửi.
 
 ### Phase 9 — `AdminUI` `Tổng quan` (`Dashboard`) & hoàn thiện vận hành
 - **Mục tiêu:** Cung cấp màn hình `Tổng quan` và hoàn thiện trải nghiệm tra cứu/vận hành nhất quán theo `docs/ux.md`.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 8 — `NotificationDeliveryLog`, `DeliveryAttempt` & truy vết (đã implement ST-P8-01..ST-P8-05, chờ xác nhận test pass để tick Done).
-- **Story đang làm:** **ST-P8-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan ghi nhận và truy vết lịch sử gửi (đã implement, chờ Đại ca xác nhận test pass).
-- **Story tiếp theo đề xuất:** **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P8-01..ST-P8-05; chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
+- **Phase đang làm:** Phase 9 — `AdminUI` `Tổng quan` (`Dashboard`) & hoàn thiện vận hành.
+- **Story đang làm:** **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
+- **Story tiếp theo đề xuất:** **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success).
+- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 8**; đã tick Done **ST-P8-01**..**ST-P8-05**. Chuyển sang **Phase 9 / ST-P9-01**.
 
 ## 4. Deferred Work
 

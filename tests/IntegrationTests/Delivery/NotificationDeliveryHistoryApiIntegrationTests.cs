@@ -97,7 +97,7 @@ public sealed class NotificationDeliveryHistoryApiIntegrationTests : IAsyncLifet
     [Fact]
     public async Task GetDeliveryHistory_WithUnauthorizedRole_ReturnsForbidden()
     {
-        using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/notifications/{Guid.NewGuid()}/delivery-history?page=1&pageSize=10", RbacRoles.IntegrationClient);
+        using var request = CreateAuthorizedRequest(HttpMethod.Get, $"/api/notifications/{Guid.NewGuid()}/delivery-history?page=1&pageSize=10", "UnauthorizedRole");
         var response = await _client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);

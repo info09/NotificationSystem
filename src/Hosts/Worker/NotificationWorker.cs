@@ -180,7 +180,7 @@ public sealed class NotificationWorker : BackgroundService
         if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Processing)
         {
             var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationChannelDispatcher>();
-            var deliveryLogRecorder = scope.ServiceProvider.GetRequiredService<IDeliveryLogRecorder>();
+            var deliveryLogRecorder = scope.ServiceProvider.GetService<IDeliveryLogRecorder>();
             try
             {
                 await dispatcher.DispatchAsync(
@@ -192,29 +192,36 @@ public sealed class NotificationWorker : BackgroundService
                         notification.NotificationTemplateId),
                     cancellationToken);
 
-                await deliveryLogRecorder.RecordAttemptAsync(
-                    new RecordDeliveryAttemptRequest(
-                        notification.Id,
-                        notification.Channel.ToString(),
-                        attemptNumber,
-                        Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Success,
-                        null,
-                        messageId.ToString(),
-                        DateTime.UtcNow),
-                    cancellationToken);
+                if (deliveryLogRecorder is not null)
+                {
+                    await deliveryLogRecorder.RecordAttemptAsync(
+                        new RecordDeliveryAttemptRequest(
+                            notification.Id,
+                            notification.Channel.ToString(),
+                            attemptNumber,
+                            Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Success,
+                            null,
+                            messageId.ToString(),
+                            DateTime.UtcNow),
+                        cancellationToken);
+                }
             }
             catch (Exception ex)
             {
-                await deliveryLogRecorder.RecordAttemptAsync(
-                    new RecordDeliveryAttemptRequest(
-                        notification.Id,
-                        notification.Channel.ToString(),
-                        attemptNumber,
-                        Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Failed,
-                        ex.Message,
-                        messageId.ToString(),
-                        DateTime.UtcNow),
-                    cancellationToken);
+                if (deliveryLogRecorder is not null)
+                {
+                    await deliveryLogRecorder.RecordAttemptAsync(
+                        new RecordDeliveryAttemptRequest(
+                            notification.Id,
+                            notification.Channel.ToString(),
+                            attemptNumber,
+                            Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Failed,
+                            ex.Message,
+                            messageId.ToString(),
+                            DateTime.UtcNow),
+                        cancellationToken);
+                }
+
                 throw;
             }
         }
