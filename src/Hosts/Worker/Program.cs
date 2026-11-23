@@ -25,6 +25,7 @@ public partial class Program
         builder.Services.AddModules(builder.Configuration);
 
         builder.Services.AddHostedService<OutboxPublisherBackgroundService>();
+        builder.Services.AddHostedService<NotificationWorker>();
         builder.Services.AddHostedService<PlaceholderWorker>();
 
         var host = builder.Build();
