@@ -23,6 +23,38 @@ namespace IntegrationMessaging.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("IntegrationMessaging.Domain.InboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
+
+                    b.Property<string>("ConsumerName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ConsumerName");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("EventType");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("MessageId");
+
+                    b.Property<DateTime>("ProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ProcessedAtUtc");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId", "ConsumerName")
+                        .IsUnique();
+
+                    b.ToTable("InboxMessages", "integration_messaging");
+                });
+
             modelBuilder.Entity("IntegrationMessaging.Domain.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")

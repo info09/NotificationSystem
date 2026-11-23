@@ -16,6 +16,11 @@ public sealed class IntegrationMessagingDbContext(
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     /// <summary>
+    /// Tập thực thể Bản ghi Inbox.
+    /// </summary>
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+
+    /// <summary>
     /// Cấu hình mô hình dữ liệu cho module IntegrationMessaging.
     /// </summary>
     /// <param name="modelBuilder">Builder cấu hình mô hình EF Core.</param>
