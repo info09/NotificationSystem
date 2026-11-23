@@ -112,12 +112,12 @@
 - **Mục tiêu:** Gửi `Notification` qua `Email` và `InAppNotification` theo abstraction kênh, hỗ trợ pull/polling và `ReadStatus`.
 - **FR/NFR liên quan:** FR-11, FR-12, FR-13, NFR-01, NFR-02.
 - **Stories:**
-  - [ ] **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
-  - [ ] **ST-P7-02** — Triển khai gửi `Email` qua SMTP (`EmailProvider`, Mailpit dev), hỗ trợ HTML/plain-text fallback và render nội dung/template.
-  - [ ] **ST-P7-03** — Triển khai lưu `InAppNotification` và API pull/polling (danh sách, chi tiết, số chưa đọc) cho `EndUser`.
-  - [ ] **ST-P7-04** — Triển khai cập nhật `ReadStatus` (`Unread`/`Read`) và API đánh dấu đã đọc.
-  - [ ] **ST-P7-05** — Tích hợp cập nhật kết quả dispatch kênh vào luồng worker/trạng thái xử lý.
-  - [ ] **ST-P7-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan dispatch kênh, `Email`, `InAppNotification` và `ReadStatus`.
+  - [x] **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
+  - [x] **ST-P7-02** — Triển khai gửi `Email` qua SMTP (`EmailProvider`, Mailpit dev), hỗ trợ HTML/plain-text fallback và render nội dung/template.
+  - [x] **ST-P7-03** — Triển khai lưu `InAppNotification` và API pull/polling (danh sách, chi tiết, số chưa đọc) cho `EndUser`.
+  - [x] **ST-P7-04** — Triển khai cập nhật `ReadStatus` (`Unread`/`Read`) và API đánh dấu đã đọc.
+  - [x] **ST-P7-05** — Tích hợp cập nhật kết quả dispatch kênh vào luồng worker/trạng thái xử lý.
+  - [x] **ST-P7-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan dispatch kênh, `Email`, `InAppNotification` và `ReadStatus`.
 
 ### Phase 8 — `NotificationDeliveryLog`, `DeliveryAttempt` & truy vết
 - **Mục tiêu:** Ghi nhận và truy vấn lịch sử gửi/thử gửi phục vụ điều tra vận hành.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 7 — Kênh `Email` & `Thông báo trong ứng dụng` (`InAppNotification`).
-- **Story đang làm:** **ST-P7-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan dispatch kênh, `Email`, `InAppNotification` và `ReadStatus`.
-- **Story tiếp theo đề xuất:** **ST-P8-01** — Thiết kế và triển khai domain `NotificationDeliveryLog` (thành công/thất bại, kênh, thời gian, lỗi).
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P7-06 (bổ sung test dispatcher unsupported channel, integration/e2e worker dispatch InApp tạo `InAppNotification`, củng cố coverage Email/InApp/ReadStatus). Chưa tick Done ST-P7-01..06 do chưa có xác nhận pass 3 tầng từ Đại ca.
+- **Phase đang làm:** Phase 8 — `NotificationDeliveryLog`, `DeliveryAttempt` & truy vết.
+- **Story đang làm:** **ST-P8-01** — Thiết kế và triển khai domain `NotificationDeliveryLog` (thành công/thất bại, kênh, thời gian, lỗi).
+- **Story tiếp theo đề xuất:** **ST-P8-02** — Thiết kế và triển khai domain `DeliveryAttempt` gắn với `Notification`, `Retry`, `ExponentialBackoff`.
+- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 7**; đã tick Done **ST-P7-01**..**ST-P7-06**. Chuyển sang **Phase 8 / ST-P8-01**.
 
 ## 4. Deferred Work
 
