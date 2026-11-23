@@ -1,3 +1,4 @@
+using IntegrationMessaging.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace IntegrationMessaging.Infrastructure.Persistence;
@@ -9,6 +10,11 @@ namespace IntegrationMessaging.Infrastructure.Persistence;
 public sealed class IntegrationMessagingDbContext(
     DbContextOptions<IntegrationMessagingDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// Tập thực thể Bản ghi Outbox.
+    /// </summary>
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
     /// <summary>
     /// Cấu hình mô hình dữ liệu cho module IntegrationMessaging.
     /// </summary>

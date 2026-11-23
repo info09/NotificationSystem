@@ -10,14 +10,19 @@ namespace Notification.Application.Notifications.CreateNotification;
 public sealed class CreateNotificationUseCase
 {
     private readonly INotificationRepository _notificationRepository;
+    private readonly INotificationOutboxWriter? _outboxWriter;
 
     /// <summary>
-    /// Khởi tạo use case với repository Thông báo.
+    /// Khởi tạo use case với repository Thông báo và outbox writer.
     /// </summary>
     /// <param name="notificationRepository">Repository Thông báo.</param>
-    public CreateNotificationUseCase(INotificationRepository notificationRepository)
+    /// <param name="outboxWriter">Port ghi bản ghi Outbox cho Thông báo.</param>
+    public CreateNotificationUseCase(
+        INotificationRepository notificationRepository,
+        INotificationOutboxWriter? outboxWriter = null)
     {
         _notificationRepository = notificationRepository;
+        _outboxWriter = outboxWriter;
     }
 
     /// <summary>
@@ -150,6 +155,7 @@ public sealed class CreateNotificationUseCase
         try
         {
             await _notificationRepository.AddAsync(notification, cancellationToken);
+            _outboxWriter?.AddNotificationCreated(notification);
             await _notificationRepository.SaveChangesAsync(cancellationToken);
 
             return new CreateNotificationResult(NotificationMapper.MapToDto(notification), Created: true);

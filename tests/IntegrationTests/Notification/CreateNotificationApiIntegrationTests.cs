@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using IdentityAccess.Domain;
+using IntegrationMessaging.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +45,8 @@ public sealed class CreateNotificationApiIntegrationTests : IAsyncLifetime
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
             await dbContext.Database.EnsureCreatedAsync();
+            var integrationDbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
+            await integrationDbContext.Database.EnsureCreatedAsync();
         }
 
         _client = _factory.CreateClient();
@@ -161,6 +164,46 @@ public sealed class CreateNotificationApiIntegrationTests : IAsyncLifetime
         Assert.NotNull(firstPayload);
         Assert.NotNull(secondPayload);
         Assert.NotEqual(firstPayload!.NotificationId, secondPayload!.NotificationId);
+    }
+
+    [Fact]
+    public async Task CreateNotification_WithValidRequest_PersistsOutboxMessageInSameBusinessFlow()
+    {
+        using var request = CreateAuthorizedRequest(CreateValidRequest("idem-outbox"), RbacRoles.IntegrationClient, "integration-client-1");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var payload = await response.Content.ReadFromJsonAsync<CreateNotificationResponsePayload>();
+        Assert.NotNull(payload);
+
+        using var scope = _factory.Services.CreateScope();
+        var outboxDbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
+        var outboxMessages = await outboxDbContext.OutboxMessages.AsNoTracking().ToListAsync();
+
+        Assert.Single(outboxMessages);
+        Assert.Equal("NotificationCreated", outboxMessages[0].EventType);
+        Assert.Equal("Pending", outboxMessages[0].Status.ToString());
+        Assert.Contains(payload!.NotificationId.ToString(), outboxMessages[0].Payload);
+    }
+
+    [Fact]
+    public async Task CreateNotification_WithDuplicateIdempotencyKey_DoesNotCreateAdditionalOutboxMessage()
+    {
+        using var firstRequest = CreateAuthorizedRequest(CreateValidRequest("idem-outbox-dup"), RbacRoles.IntegrationClient, "integration-client-1");
+        using var secondRequest = CreateAuthorizedRequest(CreateValidRequest("idem-outbox-dup"), RbacRoles.IntegrationClient, "integration-client-1");
+
+        var firstResponse = await _client.SendAsync(firstRequest);
+        var secondResponse = await _client.SendAsync(secondRequest);
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var outboxDbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
+        var outboxMessages = await outboxDbContext.OutboxMessages.AsNoTracking().ToListAsync();
+
+        Assert.Single(outboxMessages);
     }
 
     private static object CreateValidRequest(string idempotencyKey) => new

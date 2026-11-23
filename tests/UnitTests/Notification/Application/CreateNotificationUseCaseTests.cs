@@ -14,7 +14,8 @@ public sealed class CreateNotificationUseCaseTests
     public async Task HandleAsync_WithValidRequest_PersistsNotificationAndReturnsCreatedResult()
     {
         var repository = new FakeNotificationRepository();
-        var useCase = new CreateNotificationUseCase(repository);
+        var outboxWriter = new FakeNotificationOutboxWriter();
+        var useCase = new CreateNotificationUseCase(repository, outboxWriter);
         var request = new CreateNotificationAppRequest(
             IdempotencyKey: "idem-key-1",
             Recipient: "user@example.com",
@@ -32,6 +33,8 @@ public sealed class CreateNotificationUseCaseTests
         Assert.NotNull(repository.AddedNotification);
         Assert.Equal(result.Value.NotificationId, repository.AddedNotification!.Id);
         Assert.Equal(1, repository.SaveChangesCallCount);
+        Assert.Single(outboxWriter.AddedNotifications);
+        Assert.Equal(result.Value.NotificationId, outboxWriter.AddedNotifications[0].Id);
     }
 
     [Fact]
@@ -46,7 +49,8 @@ public sealed class CreateNotificationUseCaseTests
             "integration-client-1",
             "idem-key-1");
         var repository = new FakeNotificationRepository(existingNotification);
-        var useCase = new CreateNotificationUseCase(repository);
+        var outboxWriter = new FakeNotificationOutboxWriter();
+        var useCase = new CreateNotificationUseCase(repository, outboxWriter);
         var request = new CreateNotificationAppRequest(
             IdempotencyKey: "idem-key-1",
             Recipient: "user@example.com",
@@ -62,6 +66,7 @@ public sealed class CreateNotificationUseCaseTests
         Assert.Equal(existingNotification.Id, result.Value!.NotificationId);
         Assert.Null(repository.AddedNotification);
         Assert.Equal(0, repository.SaveChangesCallCount);
+        Assert.Empty(outboxWriter.AddedNotifications);
     }
 
     [Fact]
@@ -138,6 +143,16 @@ public sealed class CreateNotificationUseCaseTests
         Assert.Equal(NotificationAppStatus.Created, result.Status);
         Assert.NotNull(repository.AddedNotification);
         Assert.Equal(NotificationChannel.InApp, repository.AddedNotification!.Channel);
+    }
+
+    private sealed class FakeNotificationOutboxWriter : INotificationOutboxWriter
+    {
+        public List<DomainNotification> AddedNotifications { get; } = [];
+
+        public void AddNotificationCreated(DomainNotification notification)
+        {
+            AddedNotifications.Add(notification);
+        }
     }
 
     private sealed class FakeNotificationRepository : INotificationRepository

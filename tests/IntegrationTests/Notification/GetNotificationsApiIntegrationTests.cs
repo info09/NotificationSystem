@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using IdentityAccess.Domain;
+using IntegrationMessaging.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +45,8 @@ public sealed class GetNotificationsApiIntegrationTests : IAsyncLifetime
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
             await dbContext.Database.EnsureCreatedAsync();
+            var integrationDbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
+            await integrationDbContext.Database.EnsureCreatedAsync();
         }
 
         _client = _factory.CreateClient();

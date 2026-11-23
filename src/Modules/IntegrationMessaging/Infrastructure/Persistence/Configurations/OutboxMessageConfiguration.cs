@@ -1,0 +1,57 @@
+using IntegrationMessaging.Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace IntegrationMessaging.Infrastructure.Persistence.Configurations;
+
+/// <summary>
+/// Cấu hình ánh xạ EF Core cho thực thể OutboxMessage.
+/// </summary>
+public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+{
+    /// <summary>
+    /// Cấu hình bảng, cột và chỉ mục cho thực thể OutboxMessage.
+    /// </summary>
+    /// <param name="builder">Builder cấu hình thực thể.</param>
+    public void Configure(EntityTypeBuilder<OutboxMessage> builder)
+    {
+        builder.ToTable("OutboxMessages");
+
+        builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Id)
+            .HasColumnName("Id")
+            .ValueGeneratedNever();
+
+        builder.Property(x => x.MessageId)
+            .HasColumnName("MessageId")
+            .IsRequired();
+
+        builder.Property(x => x.EventType)
+            .HasColumnName("EventType")
+            .IsRequired();
+
+        builder.Property(x => x.Payload)
+            .HasColumnName("Payload")
+            .IsRequired();
+
+        builder.Property(x => x.Status)
+            .HasColumnName("Status")
+            .HasConversion<string>()
+            .IsRequired();
+
+        builder.Property(x => x.OccurredAtUtc)
+            .HasColumnName("OccurredAtUtc")
+            .IsRequired();
+
+        builder.Property(x => x.ProcessedAtUtc)
+            .HasColumnName("ProcessedAtUtc");
+
+        builder.HasIndex(x => x.MessageId)
+            .IsUnique();
+
+        builder.HasIndex(x => x.Status);
+
+        builder.HasIndex(x => x.OccurredAtUtc);
+    }
+}

@@ -37,6 +37,7 @@ public static class NotificationPersistenceServiceCollectionExtensions
                 npgsqlOptions.MigrationsAssembly(typeof(NotificationDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "notification")));
 
+        services.AddScoped<INotificationOutboxWriter, NotificationOutboxWriter>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
 
         services.AddScoped<CreateNotificationUseCase>();
