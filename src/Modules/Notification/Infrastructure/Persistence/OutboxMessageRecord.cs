@@ -39,4 +39,19 @@ internal sealed class OutboxMessageRecord
     /// Thời điểm publish thành công (UTC).
     /// </summary>
     public DateTime? ProcessedAtUtc { get; set; }
+
+    /// <summary>
+    /// Số lần publish đã thử thất bại.
+    /// </summary>
+    public int RetryCount { get; set; }
+
+    /// <summary>
+    /// Thời điểm được phép thử publish tiếp theo (UTC).
+    /// </summary>
+    public DateTime NextAttemptAtUtc { get; set; }
+
+    /// <summary>
+    /// Lỗi publish gần nhất.
+    /// </summary>
+    public string? LastError { get; set; }
 }

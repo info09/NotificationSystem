@@ -84,6 +84,39 @@ public sealed class OutboxPublisherIntegrationTests : IAsyncLifetime
         Assert.Contains("notificationId", body);
     }
 
+    [Fact]
+    public async Task PublishPendingMessagesAsync_WhenPublishFails_RecordsRetryAndKeepsOutboxMessage()
+    {
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync();
+
+        var outboxMessage = OutboxMessage.CreatePending(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "NotificationCreated",
+            JsonSerializer.Serialize(new { channel = "Email", notificationId = Guid.NewGuid() }),
+            DateTime.UtcNow);
+
+        dbContext.OutboxMessages.Add(outboxMessage);
+        await dbContext.SaveChangesAsync();
+
+        var backgroundService = new OutboxPublisherBackgroundService(
+            BuildScopeFactory(),
+            new ThrowingRabbitMqMessagePublisher(),
+            NullLogger<OutboxPublisherBackgroundService>.Instance);
+
+        var publishedCount = await backgroundService.PublishPendingMessagesAsync(CancellationToken.None);
+
+        Assert.Equal(0, publishedCount);
+
+        await using var verifyContext = CreateDbContext();
+        var persisted = await verifyContext.OutboxMessages.SingleAsync();
+        Assert.Equal(OutboxMessageStatus.Pending, persisted.Status);
+        Assert.Equal(1, persisted.RetryCount);
+        Assert.False(string.IsNullOrWhiteSpace(persisted.LastError));
+        Assert.True(persisted.NextAttemptAtUtc > DateTime.UtcNow.AddSeconds(-1));
+    }
+
     private IOptions<RabbitMqOptions> CreateRabbitMqOptions() =>
         Options.Create(new RabbitMqOptions
         {
@@ -125,4 +158,12 @@ public sealed class OutboxPublisherIntegrationTests : IAsyncLifetime
             Password = options.Password,
             VirtualHost = options.VirtualHost
         };
+
+    private sealed class ThrowingRabbitMqMessagePublisher : IRabbitMqMessagePublisher
+    {
+        public Task PublishAsync(string exchange, string routingKey, string payload, Guid messageId, CancellationToken cancellationToken = default)
+        {
+            throw new InvalidOperationException("Simulated publish failure.");
+        }
+    }
 }

@@ -34,9 +34,17 @@ namespace IntegrationMessaging.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("EventType");
 
+                    b.Property<string>("LastError")
+                        .HasColumnType("text")
+                        .HasColumnName("LastError");
+
                     b.Property<Guid>("MessageId")
                         .HasColumnType("uuid")
                         .HasColumnName("MessageId");
+
+                    b.Property<DateTime>("NextAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("NextAttemptAtUtc");
 
                     b.Property<DateTime>("OccurredAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -51,6 +59,12 @@ namespace IntegrationMessaging.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ProcessedAtUtc");
 
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("RetryCount");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text")
@@ -64,6 +78,8 @@ namespace IntegrationMessaging.Infrastructure.Persistence.Migrations
                     b.HasIndex("OccurredAtUtc");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc");
 
                     b.ToTable("OutboxMessages", "integration_messaging");
                 });

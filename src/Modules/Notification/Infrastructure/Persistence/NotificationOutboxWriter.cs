@@ -48,7 +48,10 @@ public sealed class NotificationOutboxWriter : INotificationOutboxWriter
             EventType = "NotificationCreated",
             Payload = payload,
             Status = "Pending",
-            OccurredAtUtc = notification.CreatedAt
+            OccurredAtUtc = notification.CreatedAt,
+            RetryCount = 0,
+            NextAttemptAtUtc = notification.CreatedAt,
+            LastError = null
         };
 
         _dbContext.Set<OutboxMessageRecord>().Add(outboxMessage);

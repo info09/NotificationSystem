@@ -45,11 +45,25 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.Property(x => x.ProcessedAtUtc)
             .HasColumnName("ProcessedAtUtc");
 
+        builder.Property(x => x.RetryCount)
+            .HasColumnName("RetryCount")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(x => x.NextAttemptAtUtc)
+            .HasColumnName("NextAttemptAtUtc")
+            .IsRequired();
+
+        builder.Property(x => x.LastError)
+            .HasColumnName("LastError");
+
         builder.HasIndex(x => x.MessageId)
             .IsUnique();
 
         builder.HasIndex(x => x.Status);
 
         builder.HasIndex(x => x.OccurredAtUtc);
+
+        builder.HasIndex(x => new { x.Status, x.NextAttemptAtUtc });
     }
 }

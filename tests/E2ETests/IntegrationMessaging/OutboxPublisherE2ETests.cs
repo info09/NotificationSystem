@@ -110,6 +110,45 @@ public sealed class OutboxPublisherE2ETests : IAsyncLifetime
         Assert.Contains("notificationId", Encoding.UTF8.GetString(result!.Body.ToArray()));
     }
 
+    [Fact]
+    public async Task OutboxPublisher_WhenPublishFails_KeepsPendingAndRecordsRetry()
+    {
+        await using (var dbContext = CreateDbContext())
+        {
+            await dbContext.Database.EnsureCreatedAsync();
+            dbContext.OutboxMessages.Add(OutboxMessage.CreatePending(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                "NotificationCreated",
+                JsonSerializer.Serialize(new { channel = "Email", notificationId = Guid.NewGuid() }),
+                DateTime.UtcNow));
+            await dbContext.SaveChangesAsync();
+        }
+
+        var services = new ServiceCollection();
+        services.AddDbContext<IntegrationMessagingDbContext>(dbOptions =>
+            dbOptions.UseNpgsql(
+                _postgreSqlContainer.GetConnectionString(),
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "integration_messaging")));
+        var provider = services.BuildServiceProvider();
+
+        var backgroundService = new OutboxPublisherBackgroundService(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            new ThrowingRabbitMqMessagePublisher(),
+            NullLogger<OutboxPublisherBackgroundService>.Instance);
+
+        var publishedCount = await backgroundService.PublishPendingMessagesAsync(CancellationToken.None);
+
+        Assert.Equal(0, publishedCount);
+
+        await using var verifyContext = CreateDbContext();
+        var persisted = await verifyContext.OutboxMessages.SingleAsync();
+        Assert.Equal(OutboxMessageStatus.Pending, persisted.Status);
+        Assert.Equal(1, persisted.RetryCount);
+        Assert.False(string.IsNullOrWhiteSpace(persisted.LastError));
+        Assert.True(persisted.NextAttemptAtUtc > DateTime.UtcNow.AddSeconds(-5));
+    }
+
     private IntegrationMessagingDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<IntegrationMessagingDbContext>()
@@ -119,5 +158,13 @@ public sealed class OutboxPublisherE2ETests : IAsyncLifetime
             .Options;
 
         return new IntegrationMessagingDbContext(options);
+    }
+
+    private sealed class ThrowingRabbitMqMessagePublisher : IRabbitMqMessagePublisher
+    {
+        public Task PublishAsync(string exchange, string routingKey, string payload, Guid messageId, CancellationToken cancellationToken = default)
+        {
+            throw new InvalidOperationException("Simulated publish failure.");
+        }
     }
 }

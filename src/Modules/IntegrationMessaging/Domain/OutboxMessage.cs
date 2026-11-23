@@ -19,13 +19,6 @@ public sealed class OutboxMessage : Entity
     /// <summary>
     /// Khởi tạo bản ghi Outbox với đầy đủ dữ liệu.
     /// </summary>
-    /// <param name="id">Mã định danh bản ghi Outbox.</param>
-    /// <param name="messageId">Mã định danh Thông điệp.</param>
-    /// <param name="eventType">Loại sự kiện/thông điệp.</param>
-    /// <param name="payload">Nội dung payload JSON.</param>
-    /// <param name="status">Trạng thái publish.</param>
-    /// <param name="occurredAtUtc">Thời điểm phát sinh sự kiện (UTC).</param>
-    /// <param name="processedAtUtc">Thời điểm xử lý publish (UTC).</param>
     private OutboxMessage(
         Guid id,
         Guid messageId,
@@ -33,7 +26,10 @@ public sealed class OutboxMessage : Entity
         string payload,
         OutboxMessageStatus status,
         DateTime occurredAtUtc,
-        DateTime? processedAtUtc)
+        DateTime? processedAtUtc,
+        int retryCount,
+        DateTime nextAttemptAtUtc,
+        string? lastError)
     {
         Id = id;
         MessageId = messageId;
@@ -42,6 +38,9 @@ public sealed class OutboxMessage : Entity
         Status = status;
         OccurredAtUtc = occurredAtUtc;
         ProcessedAtUtc = processedAtUtc;
+        RetryCount = retryCount;
+        NextAttemptAtUtc = nextAttemptAtUtc;
+        LastError = lastError;
     }
 
     /// <summary>
@@ -73,6 +72,21 @@ public sealed class OutboxMessage : Entity
     /// Thời điểm publish thành công (UTC), null nếu chưa publish.
     /// </summary>
     public DateTime? ProcessedAtUtc { get; private set; }
+
+    /// <summary>
+    /// Số lần publish đã thử thất bại.
+    /// </summary>
+    public int RetryCount { get; private set; }
+
+    /// <summary>
+    /// Thời điểm được phép thử publish tiếp theo (UTC).
+    /// </summary>
+    public DateTime NextAttemptAtUtc { get; private set; }
+
+    /// <summary>
+    /// Lỗi publish gần nhất.
+    /// </summary>
+    public string? LastError { get; private set; }
 
     /// <summary>
     /// Tạo bản ghi Outbox ở trạng thái chờ publish.
@@ -107,7 +121,10 @@ public sealed class OutboxMessage : Entity
             payload,
             OutboxMessageStatus.Pending,
             occurredAtUtc,
-            processedAtUtc: null);
+            processedAtUtc: null,
+            retryCount: 0,
+            nextAttemptAtUtc: occurredAtUtc,
+            lastError: null);
     }
 
     /// <summary>
@@ -118,13 +135,36 @@ public sealed class OutboxMessage : Entity
     {
         Status = OutboxMessageStatus.Published;
         ProcessedAtUtc = processedAtUtc;
+        LastError = null;
     }
 
     /// <summary>
-    /// Đánh dấu bản ghi Outbox publish thất bại.
+    /// Đánh dấu lần publish thất bại và lên lịch thử lại theo chính sách an toàn.
     /// </summary>
-    public void MarkFailed()
+    /// <param name="error">Thông tin lỗi.</param>
+    /// <param name="attemptedAtUtc">Thời điểm thử publish (UTC).</param>
+    /// <param name="nextAttemptAtUtc">Thời điểm thử lại tiếp theo (UTC).</param>
+    /// <param name="maxRetryCount">Số lần thử tối đa trước khi đánh dấu thất bại.</param>
+    public void MarkPublishFailed(string error, DateTime attemptedAtUtc, DateTime nextAttemptAtUtc, int maxRetryCount)
     {
-        Status = OutboxMessageStatus.Failed;
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        if (maxRetryCount < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxRetryCount), "Max retry count must be at least 1.");
+        }
+
+        RetryCount++;
+        LastError = error.Length > 2000 ? error[..2000] : error;
+        ProcessedAtUtc = attemptedAtUtc;
+
+        if (RetryCount >= maxRetryCount)
+        {
+            Status = OutboxMessageStatus.Failed;
+            NextAttemptAtUtc = attemptedAtUtc;
+            return;
+        }
+
+        Status = OutboxMessageStatus.Pending;
+        NextAttemptAtUtc = nextAttemptAtUtc;
     }
 }

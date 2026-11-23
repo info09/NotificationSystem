@@ -13,6 +13,9 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(5);
     private const int BatchSize = 20;
+    private const int MaxRetryCount = 10;
+    private static readonly TimeSpan BaseRetryDelay = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(5);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IRabbitMqMessagePublisher _messagePublisher;
@@ -74,9 +77,10 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
+        var nowUtc = DateTime.UtcNow;
 
         var pendingMessages = await dbContext.OutboxMessages
-            .Where(x => x.Status == OutboxMessageStatus.Pending)
+            .Where(x => x.Status == OutboxMessageStatus.Pending && x.NextAttemptAtUtc <= nowUtc)
             .OrderBy(x => x.OccurredAtUtc)
             .Take(BatchSize)
             .ToListAsync(cancellationToken);
@@ -90,7 +94,10 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
             var routingKey = ResolveRoutingKey(message);
             if (routingKey is null)
             {
-                _logger.LogWarning("Không xác định được routing key cho OutboxMessage {OutboxMessageId}.", message.Id);
+                var error = "Không xác định được routing key cho OutboxMessage.";
+                _logger.LogWarning("{Error} OutboxMessageId={OutboxMessageId}", error, message.Id);
+                message.MarkPublishFailed(error, DateTime.UtcNow, DateTime.UtcNow, maxRetryCount: 1);
+                await dbContext.SaveChangesAsync(cancellationToken);
                 continue;
             }
 
@@ -109,11 +116,36 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Publish OutboxMessage {OutboxMessageId} thất bại.", message.Id);
+                var attemptedAtUtc = DateTime.UtcNow;
+                var nextAttemptAtUtc = CalculateNextAttemptAtUtc(message.RetryCount + 1, attemptedAtUtc);
+                message.MarkPublishFailed(ex.Message, attemptedAtUtc, nextAttemptAtUtc, MaxRetryCount);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                _logger.LogError(
+                    ex,
+                    "Publish OutboxMessage {OutboxMessageId} thất bại. RetryCount={RetryCount}, NextAttemptAtUtc={NextAttemptAtUtc}, Status={Status}",
+                    message.Id,
+                    message.RetryCount,
+                    message.NextAttemptAtUtc,
+                    message.Status);
             }
         }
 
         return publishedCount;
+    }
+
+    /// <summary>
+    /// Tính thời điểm thử publish tiếp theo theo exponential backoff.
+    /// </summary>
+    /// <param name="retryCount">Số lần thử thất bại sau khi cập nhật.</param>
+    /// <param name="attemptedAtUtc">Thời điểm thử hiện tại (UTC).</param>
+    /// <returns>Thời điểm thử lại tiếp theo (UTC).</returns>
+    internal static DateTime CalculateNextAttemptAtUtc(int retryCount, DateTime attemptedAtUtc)
+    {
+        var exponent = Math.Clamp(retryCount - 1, 0, 10);
+        var delaySeconds = BaseRetryDelay.TotalSeconds * Math.Pow(2, exponent);
+        var delay = TimeSpan.FromSeconds(Math.Min(delaySeconds, MaxRetryDelay.TotalSeconds));
+        return attemptedAtUtc.Add(delay);
     }
 
     /// <summary>
