@@ -1,3 +1,4 @@
+using Delivery.Domain.DeliveryLogs;
 using Delivery.Domain.InAppNotifications;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,16 @@ public sealed class DeliveryDbContext(DbContextOptions<DeliveryDbContext> option
     /// Tập thực thể Thông báo trong ứng dụng.
     /// </summary>
     public DbSet<InAppNotification> InAppNotifications => Set<InAppNotification>();
+
+    /// <summary>
+    /// Tập thực thể Nhật ký gửi thông báo.
+    /// </summary>
+    public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs => Set<NotificationDeliveryLog>();
+
+    /// <summary>
+    /// Tập thực thể Lần thử gửi.
+    /// </summary>
+    public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
 
     /// <summary>
     /// Cấu hình mô hình dữ liệu cho module Delivery.
