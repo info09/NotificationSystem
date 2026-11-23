@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Delivery.Application.Abstractions;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -318,6 +319,8 @@ public sealed class NotificationWorkerE2ETests : IAsyncLifetime
             services.AddScoped<INotificationRepository, NoOpNotificationRepository>();
         }
 
+        services.AddScoped<INotificationChannelDispatcher, NoOpNotificationChannelDispatcher>();
+
         var provider = services.BuildServiceProvider();
 
         return new NotificationWorker(
@@ -417,5 +420,10 @@ public sealed class NotificationWorkerE2ETests : IAsyncLifetime
         public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(NotificationStatus? status, NotificationChannel? channel, DateTime? createdFromUtc, DateTime? createdToUtc, int page, int pageSize, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<DomainNotification>)Array.Empty<DomainNotification>(), 0));
         public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<DomainNotification?>(null);
+    }
+
+    private sealed class NoOpNotificationChannelDispatcher : INotificationChannelDispatcher
+    {
+        public Task DispatchAsync(NotificationChannelDispatchRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

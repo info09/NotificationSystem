@@ -1,3 +1,4 @@
+using Delivery.Application.Abstractions;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
@@ -173,6 +174,19 @@ public sealed class NotificationWorker : BackgroundService
         {
             notification.MarkProcessing();
             await notificationRepository.SaveChangesAsync(cancellationToken);
+        }
+
+        if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Processing)
+        {
+            var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationChannelDispatcher>();
+            await dispatcher.DispatchAsync(
+                new NotificationChannelDispatchRequest(
+                    notification.Id,
+                    notification.Channel.ToString(),
+                    notification.Recipient.Value,
+                    notification.Content,
+                    notification.NotificationTemplateId),
+                cancellationToken);
         }
 
         var eventType = ResolveEventType(ea);

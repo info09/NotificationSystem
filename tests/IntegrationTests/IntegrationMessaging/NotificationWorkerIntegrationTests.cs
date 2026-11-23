@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Delivery.Application.Abstractions;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
@@ -178,6 +179,45 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HandleMessageAsync_WithValidNotification_DispatchesToChannel()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var integrationDbContext = CreateDbContext();
+        await integrationDbContext.Database.MigrateAsync();
+        await using var notificationDbContext = CreateNotificationDbContext();
+        await notificationDbContext.Database.MigrateAsync();
+
+        var notification = DomainNotification.Create(
+            Guid.NewGuid(),
+            new global::Notification.Domain.Recipient("user@example.com"),
+            NotificationChannel.Email,
+            "Xin chao",
+            null,
+            "scope-dispatch",
+            "key-dispatch",
+            DateTime.UtcNow);
+        notificationDbContext.Notifications.Add(notification);
+        await notificationDbContext.SaveChangesAsync();
+
+        var messageId = Guid.NewGuid();
+        await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.EmailQueue, "notification.email.created", messageId, notification.Id);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var dispatcher = new CapturingNotificationChannelDispatcher();
+        var worker = CreateWorker(options, useRealNotificationRepository: true, dispatcher: dispatcher);
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        var request = Assert.Single(dispatcher.Requests);
+        Assert.Equal(notification.Id, request.NotificationId);
+        Assert.Equal("Email", request.Channel);
+        Assert.Equal("user@example.com", request.Recipient);
+    }
+
+    [Fact]
     public async Task HandleMessageAsync_WithInvalidMessageId_RoutesToDlq()
     {
         var options = CreateRabbitMqOptions();
@@ -279,7 +319,11 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         Assert.Equal(1, repository.GetByIdCallCount);
     }
 
-    private NotificationWorker CreateWorker(IOptions<RabbitMqOptions> options, INotificationRepository? notificationRepository = null, bool useRealNotificationRepository = false)
+    private NotificationWorker CreateWorker(
+        IOptions<RabbitMqOptions> options,
+        INotificationRepository? notificationRepository = null,
+        bool useRealNotificationRepository = false,
+        INotificationChannelDispatcher? dispatcher = null)
     {
         var services = new ServiceCollection();
         services.AddDbContext<IntegrationMessagingDbContext>(dbOptions =>
@@ -299,6 +343,8 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         {
             services.AddScoped<INotificationRepository>(_ => notificationRepository ?? new NoOpNotificationRepository());
         }
+
+        services.AddScoped<INotificationChannelDispatcher>(_ => dispatcher ?? new NoOpNotificationChannelDispatcher());
 
         var provider = services.BuildServiceProvider();
 
@@ -451,5 +497,21 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(NotificationStatus? status, NotificationChannel? channel, DateTime? createdFromUtc, DateTime? createdToUtc, int page, int pageSize, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<DomainNotification>)Array.Empty<DomainNotification>(), 0));
         public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<DomainNotification?>(null);
+    }
+
+    private sealed class NoOpNotificationChannelDispatcher : INotificationChannelDispatcher
+    {
+        public Task DispatchAsync(NotificationChannelDispatchRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class CapturingNotificationChannelDispatcher : INotificationChannelDispatcher
+    {
+        public List<NotificationChannelDispatchRequest> Requests { get; } = [];
+
+        public Task DispatchAsync(NotificationChannelDispatchRequest request, CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            return Task.CompletedTask;
+        }
     }
 }
