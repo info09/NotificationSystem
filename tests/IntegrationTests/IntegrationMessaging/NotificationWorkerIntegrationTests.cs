@@ -177,6 +177,60 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         Assert.Equal(NotificationStatus.Sent, persisted.Status);
     }
 
+    [Fact]
+    public async Task HandleMessageAsync_WithRetryableException_RetriesAndRoutesToDlqAfterMaxAttempts()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync();
+
+        var messageId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+        await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.EmailQueue, "notification.email.created", messageId, notificationId);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var repository = new ThrowingNotificationRepository(new TimeoutException("temporary"));
+        var worker = CreateWorker(options, notificationRepository: repository);
+        worker.RetryDelaySelector = _ => TimeSpan.Zero;
+
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        var dlqMessage = await channel.BasicGetAsync(RabbitMqTopologyNames.EmailDeadLetterQueue, autoAck: true);
+        Assert.NotNull(dlqMessage);
+        Assert.Equal(4, repository.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task HandleMessageAsync_WithNonRetryableException_RoutesToDlqImmediately()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync();
+
+        var messageId = Guid.NewGuid();
+        var notificationId = Guid.NewGuid();
+        await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.EmailQueue, "notification.email.created", messageId, notificationId);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var repository = new ThrowingNotificationRepository(new ArgumentException("bad payload"));
+        var worker = CreateWorker(options, notificationRepository: repository);
+        worker.RetryDelaySelector = _ => TimeSpan.Zero;
+
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        var dlqMessage = await channel.BasicGetAsync(RabbitMqTopologyNames.EmailDeadLetterQueue, autoAck: true);
+        Assert.NotNull(dlqMessage);
+        Assert.Equal(1, repository.GetByIdCallCount);
+    }
+
     private NotificationWorker CreateWorker(IOptions<RabbitMqOptions> options, INotificationRepository? notificationRepository = null, bool useRealNotificationRepository = false)
     {
         var services = new ServiceCollection();
@@ -290,6 +344,32 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             Password = options.Password,
             VirtualHost = options.VirtualHost
         };
+
+    private sealed class ThrowingNotificationRepository : INotificationRepository
+    {
+        private readonly Exception _exception;
+
+        public ThrowingNotificationRepository(Exception exception)
+        {
+            _exception = exception;
+        }
+
+        public int GetByIdCallCount { get; private set; }
+
+        public Task<DomainNotification> AddAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+        public Task DeleteAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<IEnumerable<DomainNotification>> FindAsync(System.Linq.Expressions.Expression<Func<DomainNotification, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<DomainNotification>());
+        public Task<IEnumerable<DomainNotification>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<DomainNotification>());
+        public Task<DomainNotification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            GetByIdCallCount++;
+            throw _exception;
+        }
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+        public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(NotificationStatus? status, NotificationChannel? channel, DateTime? createdFromUtc, DateTime? createdToUtc, int page, int pageSize, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<DomainNotification>)Array.Empty<DomainNotification>(), 0));
+        public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<DomainNotification?>(null);
+    }
 
     private sealed class NoOpNotificationRepository : INotificationRepository
     {

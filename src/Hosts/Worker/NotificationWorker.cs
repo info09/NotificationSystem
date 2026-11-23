@@ -22,6 +22,8 @@ public sealed class NotificationWorker : BackgroundService
     private readonly ILogger<NotificationWorker> _logger;
     private readonly SemaphoreSlim _channelSemaphore = new(1, 1);
 
+    internal Func<int, TimeSpan> RetryDelaySelector { get; set; } = attempt => NotificationWorkerRetryPolicy.GetDelay(attempt);
+
     /// <summary>
     /// Khởi tạo NotificationWorker.
     /// </summary>
@@ -101,15 +103,30 @@ public sealed class NotificationWorker : BackgroundService
             return;
         }
 
-        try
+        var attempt = 0;
+        while (true)
         {
-            await TryProcessAsync(messageId, ea, cancellationToken);
-            await AckAsync(channel, ea.DeliveryTag, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Xử lý Thông điệp thất bại. MessageId={MessageId}, DeliveryTag={DeliveryTag}", messageId, ea.DeliveryTag);
-            await NackAsync(channel, ea.DeliveryTag, cancellationToken);
+            try
+            {
+                await TryProcessAsync(messageId, ea, cancellationToken);
+                await AckAsync(channel, ea.DeliveryTag, cancellationToken);
+                return;
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                var retryable = NotificationWorkerRetryPolicy.IsRetryable(ex);
+                if (!retryable || attempt >= NotificationWorkerRetryPolicy.MaxRetryCount)
+                {
+                    _logger.LogError(ex, "Xử lý Thông điệp thất bại, chuyển DLQ. MessageId={MessageId}, DeliveryTag={DeliveryTag}, Attempt={Attempt}, Retryable={Retryable}", messageId, ea.DeliveryTag, attempt, retryable);
+                    await NackAsync(channel, ea.DeliveryTag, cancellationToken);
+                    return;
+                }
+
+                attempt++;
+                var delay = RetryDelaySelector(attempt);
+                _logger.LogWarning(ex, "Xử lý Thông điệp thất bại, sẽ retry. MessageId={MessageId}, DeliveryTag={DeliveryTag}, Attempt={Attempt}, DelayMs={DelayMs}", messageId, ea.DeliveryTag, attempt, delay.TotalMilliseconds);
+                await Task.Delay(delay, cancellationToken);
+            }
         }
     }
 
