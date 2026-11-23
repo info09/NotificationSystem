@@ -1,4 +1,5 @@
 using Delivery.Application.Abstractions;
+using Delivery.Application.DeliveryLogs.GetNotificationDeliveryHistory;
 using Delivery.Application.InAppNotifications.CreateInAppNotification;
 using Delivery.Application.InAppNotifications.GetInAppNotificationById;
 using Delivery.Application.InAppNotifications.GetInAppNotifications;
@@ -40,13 +41,17 @@ public static class DeliveryPersistenceServiceCollectionExtensions
                 npgsqlOptions.MigrationsAssembly(typeof(DeliveryDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "delivery")));
 
+        services.Configure<DeliveryHistoryOptions>(configuration.GetSection(DeliveryHistoryOptions.SectionName));
+
         services.AddScoped<IInAppNotificationRepository, InAppNotificationRepository>();
         services.AddScoped<IDeliveryLogRecorder, DeliveryLogRecorder>();
+        services.AddScoped<IDeliveryHistoryRepository, DeliveryHistoryRepository>();
         services.AddScoped<GetInAppNotificationsUseCase>();
         services.AddScoped<GetInAppNotificationByIdUseCase>();
         services.AddScoped<GetUnreadInAppNotificationCountUseCase>();
         services.AddScoped<CreateInAppNotificationUseCase>();
         services.AddScoped<MarkInAppNotificationAsReadUseCase>();
+        services.AddScoped<GetNotificationDeliveryHistoryUseCase>();
         services.AddScoped<INotificationChannelDispatcher, NotificationChannelDispatcher>();
 
         return services;

@@ -1,3 +1,6 @@
+using BuildingBlocks.SharedKernel.Constants;
+using Delivery.Application.DeliveryLogs;
+using Delivery.Application.DeliveryLogs.GetNotificationDeliveryHistory;
 using Delivery.Application.InAppNotifications;
 using Delivery.Application.InAppNotifications.GetInAppNotificationById;
 using Delivery.Application.InAppNotifications.GetInAppNotifications;
@@ -42,6 +45,10 @@ public static class DeliveryEndpointRouteBuilderExtensions
         endpoints.MapPut("/api/in-app-notifications/{id:guid}/read", HandleMarkInAppNotificationAsReadAsync)
             .WithTags("InAppNotification")
             .RequireAuthorization();
+
+        endpoints.MapGet("/api/notifications/{notificationId:guid}/delivery-history", HandleGetNotificationDeliveryHistoryAsync)
+            .WithTags("NotificationDeliveryHistory")
+            .RequireAuthorization(RbacPolicies.NotificationRead);
 
         return endpoints;
     }
@@ -125,6 +132,31 @@ public static class DeliveryEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu lấy lịch sử gửi Thông báo.
+    /// </summary>
+    /// <param name="notificationId">Mã định danh Thông báo.</param>
+    /// <param name="useCase">Use case lấy lịch sử gửi Thông báo.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <param name="channel">Kênh gửi cần lọc.</param>
+    /// <param name="result">Kết quả cần lọc.</param>
+    /// <param name="page">Số trang.</param>
+    /// <param name="pageSize">Kích thước trang.</param>
+    /// <returns>Kết quả HTTP của truy vấn lịch sử gửi.</returns>
+    private static async Task<IResult> HandleGetNotificationDeliveryHistoryAsync(
+        Guid notificationId,
+        GetNotificationDeliveryHistoryUseCase useCase,
+        CancellationToken cancellationToken,
+        string? channel = null,
+        string? result = null,
+        int page = DefaultPage,
+        int pageSize = DefaultPageSize)
+    {
+        var query = new GetNotificationDeliveryHistoryQuery(notificationId, channel, result, page, pageSize);
+        var resultData = await useCase.HandleAsync(query, cancellationToken);
+        return ToHttpResult(resultData);
+    }
+
+    /// <summary>
     /// Lấy mã định danh Người dùng cuối từ claims.
     /// </summary>
     /// <param name="user">Thông tin người dùng hiện tại.</param>
@@ -150,6 +182,24 @@ public static class DeliveryEndpointRouteBuilderExtensions
             InAppNotificationAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
             InAppNotificationAppStatus.NotFound => Results.NotFound(),
             InAppNotificationAppStatus.Forbidden => Results.Forbid(),
+            _ => Results.Problem("Unexpected application result status.")
+        };
+    }
+
+    /// <summary>
+    /// Chuyển kết quả tầng Application lịch sử gửi sang kết quả HTTP.
+    /// </summary>
+    /// <typeparam name="T">Kiểu dữ liệu trả về.</typeparam>
+    /// <param name="result">Kết quả xử lý từ tầng Application.</param>
+    /// <returns>Kết quả HTTP tương ứng.</returns>
+    private static IResult ToHttpResult<T>(DeliveryHistoryAppResult<T> result)
+    {
+        return result.Status switch
+        {
+            DeliveryHistoryAppStatus.Ok => Results.Ok(result.Value),
+            DeliveryHistoryAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
+            DeliveryHistoryAppStatus.NotFound => Results.NotFound(),
+            DeliveryHistoryAppStatus.Forbidden => Results.Forbid(),
             _ => Results.Problem("Unexpected application result status.")
         };
     }
