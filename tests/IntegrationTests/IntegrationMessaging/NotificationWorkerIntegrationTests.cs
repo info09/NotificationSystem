@@ -178,6 +178,27 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HandleMessageAsync_WithInvalidMessageId_RoutesToDlq()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync();
+
+        await PublishRawMessageAsync(options.Value, "notification.email.created", messageId: "not-a-guid");
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var worker = CreateWorker(options);
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        var dlqMessage = await channel.BasicGetAsync(RabbitMqTopologyNames.EmailDeadLetterQueue, autoAck: true);
+        Assert.NotNull(dlqMessage);
+    }
+
+    [Fact]
     public async Task HandleMessageAsync_WithRetryableException_RetriesAndRoutesToDlqAfterMaxAttempts()
     {
         var options = CreateRabbitMqOptions();
@@ -290,6 +311,27 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             .Options;
 
         return new NotificationDbContext(options);
+    }
+
+    private static async Task PublishRawMessageAsync(RabbitMqOptions options, string routingKey, string messageId)
+    {
+        var factory = CreateConnectionFactory(options);
+        await using var connection = await factory.CreateConnectionAsync();
+        await using var channel = await connection.CreateChannelAsync();
+
+        var properties = new BasicProperties
+        {
+            Persistent = true,
+            MessageId = messageId,
+            ContentType = "application/json"
+        };
+
+        await channel.BasicPublishAsync(
+            exchange: RabbitMqTopologyNames.NotificationsExchange,
+            routingKey: routingKey,
+            mandatory: false,
+            basicProperties: properties,
+            body: System.Text.Encoding.UTF8.GetBytes("""{"channel":"Email","notificationId":"00000000-0000-0000-0000-000000000001"}"""));
     }
 
     private static async Task PublishTestMessageAsync(RabbitMqOptions options, string queue, string routingKey, Guid messageId, Guid? notificationId = null)

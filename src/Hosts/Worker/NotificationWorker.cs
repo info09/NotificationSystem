@@ -64,6 +64,10 @@ public sealed class NotificationWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Kết nối RabbitMQ, đăng ký consumer và chờ cho đến khi dừng.
+    /// </summary>
+    /// <param name="stoppingToken">Token dừng dịch vụ.</param>
     private async Task ConsumeAsync(CancellationToken stoppingToken)
     {
         var concurrency = Math.Max(1, _options.ConsumerConcurrency);
@@ -93,13 +97,19 @@ public sealed class NotificationWorker : BackgroundService
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
+    /// <summary>
+    /// Xử lý một Thông điệp RabbitMQ với retry/idempotency và ack/nack an toàn.
+    /// </summary>
+    /// <param name="channel">Kênh RabbitMQ.</param>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
     internal async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
     {
         var messageId = ResolveMessageId(ea);
         if (messageId == Guid.Empty)
         {
-            _logger.LogWarning("Bỏ qua Thông điệp không có MessageId hợp lệ. DeliveryTag={DeliveryTag}", ea.DeliveryTag);
-            await AckAsync(channel, ea.DeliveryTag, cancellationToken);
+            _logger.LogWarning("Thông điệp không có MessageId hợp lệ, chuyển DLQ. DeliveryTag={DeliveryTag}", ea.DeliveryTag);
+            await NackAsync(channel, ea.DeliveryTag, cancellationToken);
             return;
         }
 
@@ -130,6 +140,13 @@ public sealed class NotificationWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Thực hiện xử lý nghiệp vụ cho Thông điệp, bảo đảm idempotency và cập nhật trạng thái Thông báo.
+    /// </summary>
+    /// <param name="messageId">Mã định danh Thông điệp.</param>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns><c>true</c> nếu xử lý mới thành công; <c>false</c> nếu là bản ghi trùng.</returns>
     private async Task<bool> TryProcessAsync(Guid messageId, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
@@ -191,6 +208,12 @@ public sealed class NotificationWorker : BackgroundService
         return true;
     }
 
+    /// <summary>
+    /// Gửi Ack cho Thông điệp trên channel theo cơ chế an toàn luồng.
+    /// </summary>
+    /// <param name="channel">Kênh RabbitMQ.</param>
+    /// <param name="deliveryTag">Delivery tag của Thông điệp.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
     private async Task AckAsync(IChannel channel, ulong deliveryTag, CancellationToken cancellationToken)
     {
         await _channelSemaphore.WaitAsync(cancellationToken);
@@ -204,6 +227,12 @@ public sealed class NotificationWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Gửi Nack để chuyển Thông điệp về DLQ theo cơ chế an toàn luồng.
+    /// </summary>
+    /// <param name="channel">Kênh RabbitMQ.</param>
+    /// <param name="deliveryTag">Delivery tag của Thông điệp.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
     private async Task NackAsync(IChannel channel, ulong deliveryTag, CancellationToken cancellationToken)
     {
         await _channelSemaphore.WaitAsync(cancellationToken);
@@ -217,6 +246,11 @@ public sealed class NotificationWorker : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Trích xuất MessageId từ thuộc tính RabbitMQ.
+    /// </summary>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <returns>MessageId hợp lệ hoặc <see cref="Guid.Empty"/>.</returns>
     internal static Guid ResolveMessageId(BasicDeliverEventArgs ea)
     {
         if (Guid.TryParse(ea.BasicProperties.MessageId, out var messageId))
@@ -227,6 +261,11 @@ public sealed class NotificationWorker : BackgroundService
         return Guid.Empty;
     }
 
+    /// <summary>
+    /// Trích xuất NotificationId từ payload Thông điệp.
+    /// </summary>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <returns>NotificationId hợp lệ hoặc <see cref="Guid.Empty"/>.</returns>
     internal static Guid ResolveNotificationId(BasicDeliverEventArgs ea)
     {
         var body = Encoding.UTF8.GetString(ea.Body.ToArray());
@@ -252,6 +291,11 @@ public sealed class NotificationWorker : BackgroundService
         return Guid.Empty;
     }
 
+    /// <summary>
+    /// Xác định loại sự kiện từ payload Thông điệp.
+    /// </summary>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <returns>Tên loại sự kiện.</returns>
     internal static string ResolveEventType(BasicDeliverEventArgs ea)
     {
         var body = Encoding.UTF8.GetString(ea.Body.ToArray());
@@ -263,6 +307,12 @@ public sealed class NotificationWorker : BackgroundService
         return "NotificationCreated";
     }
 
+    /// <summary>
+    /// Hoàn tất trạng thái Thông báo khi gặp duplicate đã xử lý nhưng trạng thái còn Processing.
+    /// </summary>
+    /// <param name="scope">Scope dịch vụ hiện tại.</param>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
     private async Task TryFinalizeProcessedNotificationAsync(IServiceScope scope, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
     {
         var notificationId = ResolveNotificationId(ea);
