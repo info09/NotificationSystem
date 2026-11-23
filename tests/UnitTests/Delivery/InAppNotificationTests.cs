@@ -43,4 +43,29 @@ public sealed class InAppNotificationTests
         Assert.Throws<ArgumentException>(() =>
             InAppNotification.Create(Guid.NewGuid(), Guid.NewGuid(), " ", "T", "C"));
     }
+
+    [Fact]
+    public void MarkAsRead_WhenUnread_SetsReadStatusAndTimestamp()
+    {
+        var notification = InAppNotification.Create(Guid.NewGuid(), Guid.NewGuid(), "user-1", "T", "C");
+        var readAt = DateTime.UtcNow;
+
+        notification.MarkAsRead(readAt);
+
+        Assert.Equal(ReadStatus.Read, notification.ReadStatus);
+        Assert.Equal(readAt, notification.ReadAtUtc);
+    }
+
+    [Fact]
+    public void MarkAsRead_WhenAlreadyRead_IsIdempotent()
+    {
+        var notification = InAppNotification.Create(Guid.NewGuid(), Guid.NewGuid(), "user-1", "T", "C");
+        var firstReadAt = DateTime.UtcNow.AddMinutes(-5);
+        notification.MarkAsRead(firstReadAt);
+
+        notification.MarkAsRead(DateTime.UtcNow);
+
+        Assert.Equal(ReadStatus.Read, notification.ReadStatus);
+        Assert.Equal(firstReadAt, notification.ReadAtUtc);
+    }
 }

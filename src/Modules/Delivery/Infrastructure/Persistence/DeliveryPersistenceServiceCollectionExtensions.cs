@@ -3,6 +3,7 @@ using Delivery.Application.InAppNotifications.CreateInAppNotification;
 using Delivery.Application.InAppNotifications.GetInAppNotificationById;
 using Delivery.Application.InAppNotifications.GetInAppNotifications;
 using Delivery.Application.InAppNotifications.GetUnreadInAppNotificationCount;
+using Delivery.Application.InAppNotifications.MarkInAppNotificationAsRead;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +44,7 @@ public static class DeliveryPersistenceServiceCollectionExtensions
         services.AddScoped<GetInAppNotificationByIdUseCase>();
         services.AddScoped<GetUnreadInAppNotificationCountUseCase>();
         services.AddScoped<CreateInAppNotificationUseCase>();
+        services.AddScoped<MarkInAppNotificationAsReadUseCase>();
 
         return services;
     }

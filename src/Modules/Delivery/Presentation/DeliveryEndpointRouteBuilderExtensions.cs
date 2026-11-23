@@ -2,6 +2,7 @@ using Delivery.Application.InAppNotifications;
 using Delivery.Application.InAppNotifications.GetInAppNotificationById;
 using Delivery.Application.InAppNotifications.GetInAppNotifications;
 using Delivery.Application.InAppNotifications.GetUnreadInAppNotificationCount;
+using Delivery.Application.InAppNotifications.MarkInAppNotificationAsRead;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -35,6 +36,10 @@ public static class DeliveryEndpointRouteBuilderExtensions
             .RequireAuthorization();
 
         endpoints.MapGet("/api/in-app-notifications/{id:guid}", HandleGetInAppNotificationByIdAsync)
+            .WithTags("InAppNotification")
+            .RequireAuthorization();
+
+        endpoints.MapPut("/api/in-app-notifications/{id:guid}/read", HandleMarkInAppNotificationAsReadAsync)
             .WithTags("InAppNotification")
             .RequireAuthorization();
 
@@ -97,6 +102,25 @@ public static class DeliveryEndpointRouteBuilderExtensions
     {
         var query = new GetUnreadInAppNotificationCountQuery(GetRecipientUserId(user));
         var result = await useCase.HandleAsync(query, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu đánh dấu Thông báo trong ứng dụng là đã đọc.
+    /// </summary>
+    /// <param name="id">Mã định danh Thông báo trong ứng dụng.</param>
+    /// <param name="user">Thông tin người dùng hiện tại.</param>
+    /// <param name="useCase">Use case đánh dấu đã đọc.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP của thao tác đánh dấu đã đọc.</returns>
+    private static async Task<IResult> HandleMarkInAppNotificationAsReadAsync(
+        Guid id,
+        ClaimsPrincipal user,
+        MarkInAppNotificationAsReadUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var command = new MarkInAppNotificationAsReadCommand(id, GetRecipientUserId(user));
+        var result = await useCase.HandleAsync(command, cancellationToken);
         return ToHttpResult(result);
     }
 

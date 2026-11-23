@@ -115,6 +115,27 @@ public sealed class InAppNotificationsApiIntegrationTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task MarkAsRead_WhenOwned_UpdatesReadStatusAndUnreadCount()
+    {
+        var id = await SeedAsync("user-1", Guid.NewGuid(), "Mine", "Content");
+
+        using var markRequest = CreateAuthorizedRequest(HttpMethod.Put, $"/api/in-app-notifications/{id}/read", "user-1");
+        var markResponse = await _client.SendAsync(markRequest);
+
+        Assert.Equal(HttpStatusCode.OK, markResponse.StatusCode);
+        var marked = await markResponse.Content.ReadFromJsonAsync<InAppNotificationResponsePayload>();
+        Assert.NotNull(marked);
+        Assert.Equal("Read", marked!.ReadStatus);
+        Assert.NotNull(marked.ReadAtUtc);
+
+        using var countRequest = CreateAuthorizedGetRequest("/api/in-app-notifications/unread-count", "user-1");
+        var countResponse = await _client.SendAsync(countRequest);
+        var countPayload = await countResponse.Content.ReadFromJsonAsync<UnreadCountResponsePayload>();
+        Assert.NotNull(countPayload);
+        Assert.Equal(0, countPayload!.UnreadCount);
+    }
+
     private async Task<Guid> SeedAsync(string recipientUserId, Guid notificationId, string title, string content)
     {
         using var scope = _factory.Services.CreateScope();
@@ -127,7 +148,12 @@ public sealed class InAppNotificationsApiIntegrationTests : IAsyncLifetime
 
     private static HttpRequestMessage CreateAuthorizedGetRequest(string url, string subject)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        return CreateAuthorizedRequest(HttpMethod.Get, url, subject);
+    }
+
+    private static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string url, string subject)
+    {
+        var request = new HttpRequestMessage(method, url);
         request.Headers.Authorization = new AuthenticationHeaderValue(
             JwtBearerDefaults.AuthenticationScheme,
             CreateToken(subject));

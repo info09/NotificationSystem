@@ -82,6 +82,21 @@ public sealed class InAppNotification : Entity
     public DateTime? ReadAtUtc { get; private set; }
 
     /// <summary>
+    /// Đánh dấu Thông báo trong ứng dụng là đã đọc.
+    /// </summary>
+    /// <param name="readAtUtc">Thời điểm đọc, mặc định là UTC hiện tại.</param>
+    public void MarkAsRead(DateTime? readAtUtc = null)
+    {
+        if (ReadStatus == ReadStatus.Read)
+        {
+            return;
+        }
+
+        ReadStatus = ReadStatus.Read;
+        ReadAtUtc = readAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Tạo mới Thông báo trong ứng dụng ở trạng thái chưa đọc.
     /// </summary>
     /// <param name="id">Mã định danh Thông báo trong ứng dụng.</param>

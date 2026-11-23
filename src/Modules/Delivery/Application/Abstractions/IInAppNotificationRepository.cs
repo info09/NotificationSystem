@@ -55,4 +55,16 @@ public interface IInAppNotificationRepository : IRepository<InAppNotification>
         Guid notificationId,
         string recipientUserId,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Lấy Thông báo trong ứng dụng được theo dõi theo mã định danh và Người dùng cuối.
+    /// </summary>
+    /// <param name="id">Mã định danh Thông báo trong ứng dụng.</param>
+    /// <param name="recipientUserId">Mã định danh Người dùng cuối.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Thông báo trong ứng dụng nếu tìm thấy; ngược lại null.</returns>
+    Task<InAppNotification?> GetTrackedByIdForRecipientAsync(
+        Guid id,
+        string recipientUserId,
+        CancellationToken cancellationToken);
 }

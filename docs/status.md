@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 7 — Kênh `Email` & `Thông báo trong ứng dụng` (`InAppNotification`).
-- **Story đang làm:** **ST-P7-03** — Triển khai lưu `InAppNotification` và API pull/polling (danh sách, chi tiết, số chưa đọc) cho `EndUser`.
-- **Story tiếp theo đề xuất:** **ST-P7-04** — Triển khai cập nhật `ReadStatus` (`Unread`/`Read`) và API đánh dấu đã đọc.
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P7-03 (domain `InAppNotification`/`ReadStatus`, EF config + migration `delivery`, repository/use cases idempotent `NotificationId+RecipientUserId`, endpoints pull/polling theo claim subject, unit/integration/e2e tests). Chưa tick Done ST-P7-01/02/03 do chưa có xác nhận pass 3 tầng từ Đại ca.
+- **Story đang làm:** **ST-P7-04** — Triển khai cập nhật `ReadStatus` (`Unread`/`Read`) và API đánh dấu đã đọc.
+- **Story tiếp theo đề xuất:** **ST-P7-05** — Tích hợp cập nhật kết quả dispatch kênh vào luồng worker/trạng thái xử lý.
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P7-03/04 (InAppNotification domain/repo/use cases/endpoints pull/polling + mark-read `PUT /api/in-app-notifications/{id}/read`, migration `delivery`, unit/integration/e2e tests). Chưa tick Done ST-P7-01..04 do chưa có xác nhận pass 3 tầng từ Đại ca.
 
 ## 4. Deferred Work
 

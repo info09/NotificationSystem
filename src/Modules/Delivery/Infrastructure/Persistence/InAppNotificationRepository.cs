@@ -77,4 +77,14 @@ public sealed class InAppNotificationRepository : RepositoryBase<InAppNotificati
         return await _dbContext.InAppNotifications
             .FirstOrDefaultAsync(x => x.NotificationId == notificationId && x.RecipientUserId == recipientUserId, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<InAppNotification?> GetTrackedByIdForRecipientAsync(
+        Guid id,
+        string recipientUserId,
+        CancellationToken cancellationToken)
+    {
+        return await _dbContext.InAppNotifications
+            .FirstOrDefaultAsync(x => x.Id == id && x.RecipientUserId == recipientUserId, cancellationToken);
+    }
 }

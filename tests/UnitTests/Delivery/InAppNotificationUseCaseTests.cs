@@ -4,6 +4,7 @@ using Delivery.Application.InAppNotifications.CreateInAppNotification;
 using Delivery.Application.InAppNotifications.GetInAppNotificationById;
 using Delivery.Application.InAppNotifications.GetInAppNotifications;
 using Delivery.Application.InAppNotifications.GetUnreadInAppNotificationCount;
+using Delivery.Application.InAppNotifications.MarkInAppNotificationAsRead;
 using Delivery.Domain.InAppNotifications;
 
 namespace UnitTests.Delivery;
@@ -80,6 +81,34 @@ public sealed class InAppNotificationUseCaseTests
         Assert.Equal(1, repository.Items.Count);
     }
 
+    [Fact]
+    public async Task MarkAsRead_WhenOwned_SetsReadStatus()
+    {
+        var repository = new FakeInAppNotificationRepository();
+        var entity = InAppNotification.Create(Guid.NewGuid(), Guid.NewGuid(), "user-1", "A", "B");
+        repository.Seed(entity);
+
+        var useCase = new MarkInAppNotificationAsReadUseCase(repository);
+        var result = await useCase.HandleAsync(new MarkInAppNotificationAsReadCommand(entity.Id, "user-1"), CancellationToken.None);
+
+        Assert.Equal(InAppNotificationAppStatus.Ok, result.Status);
+        Assert.Equal("Read", result.Value!.ReadStatus);
+        Assert.NotNull(result.Value.ReadAtUtc);
+    }
+
+    [Fact]
+    public async Task MarkAsRead_WhenNotOwned_ReturnsNotFound()
+    {
+        var repository = new FakeInAppNotificationRepository();
+        var entity = InAppNotification.Create(Guid.NewGuid(), Guid.NewGuid(), "user-1", "A", "B");
+        repository.Seed(entity);
+
+        var useCase = new MarkInAppNotificationAsReadUseCase(repository);
+        var result = await useCase.HandleAsync(new MarkInAppNotificationAsReadCommand(entity.Id, "user-2"), CancellationToken.None);
+
+        Assert.Equal(InAppNotificationAppStatus.NotFound, result.Status);
+    }
+
     private sealed class FakeInAppNotificationRepository : IInAppNotificationRepository
     {
         public List<InAppNotification> Items { get; } = [];
@@ -132,5 +161,8 @@ public sealed class InAppNotificationUseCaseTests
 
         public Task<InAppNotification?> FindByNotificationAndRecipientAsync(Guid notificationId, string recipientUserId, CancellationToken cancellationToken)
             => Task.FromResult(Items.FirstOrDefault(x => x.NotificationId == notificationId && x.RecipientUserId == recipientUserId));
+
+        public Task<InAppNotification?> GetTrackedByIdForRecipientAsync(Guid id, string recipientUserId, CancellationToken cancellationToken)
+            => Task.FromResult(Items.FirstOrDefault(x => x.Id == id && x.RecipientUserId == recipientUserId));
     }
 }
