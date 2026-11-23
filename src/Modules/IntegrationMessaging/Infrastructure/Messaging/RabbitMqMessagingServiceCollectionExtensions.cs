@@ -36,6 +36,12 @@ public static class RabbitMqMessagingServiceCollectionExtensions
                 {
                     options.Port = port;
                 }
+
+                var concurrencyValue = configuration["NOTIFICATION_WORKER_CONCURRENCY"] ?? configuration["RabbitMq:ConsumerConcurrency"];
+                if (int.TryParse(concurrencyValue, out var concurrency) && concurrency > 0)
+                {
+                    options.ConsumerConcurrency = concurrency;
+                }
             });
 
         services.AddSingleton<IRabbitMqTopologyInitializer, RabbitMqTopologyInitializer>();

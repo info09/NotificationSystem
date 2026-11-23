@@ -34,4 +34,9 @@ public sealed class RabbitMqOptions
     /// Virtual host RabbitMQ.
     /// </summary>
     public string VirtualHost { get; set; } = "/";
+
+    /// <summary>
+    /// Số lượng Thông điệp xử lý đồng thời tối đa trên mỗi worker instance.
+    /// </summary>
+    public int ConsumerConcurrency { get; set; } = 5;
 }

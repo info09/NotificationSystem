@@ -47,6 +47,26 @@ public sealed class RabbitMqTopologyTests
         Assert.Equal("user", options.UserName);
         Assert.Equal("pass", options.Password);
         Assert.Equal("/app", options.VirtualHost);
+        Assert.Equal(5, options.ConsumerConcurrency);
+    }
+
+    [Fact]
+    public void AddIntegrationMessagingRabbitMq_BindsConsumerConcurrency()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["NOTIFICATION_WORKER_CONCURRENCY"] = "7"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddIntegrationMessagingRabbitMq(configuration);
+
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+
+        Assert.Equal(7, options.ConsumerConcurrency);
     }
 
     [Fact]

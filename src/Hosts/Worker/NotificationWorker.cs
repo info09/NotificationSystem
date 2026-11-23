@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
@@ -7,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
+using System.Text.Json;
 
 namespace Worker;
 
@@ -20,6 +20,7 @@ public sealed class NotificationWorker : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly RabbitMqOptions _options;
     private readonly ILogger<NotificationWorker> _logger;
+    private readonly SemaphoreSlim _channelSemaphore = new(1, 1);
 
     /// <summary>
     /// Khởi tạo NotificationWorker.
@@ -63,19 +64,21 @@ public sealed class NotificationWorker : BackgroundService
 
     private async Task ConsumeAsync(CancellationToken stoppingToken)
     {
+        var concurrency = Math.Max(1, _options.ConsumerConcurrency);
         var factory = new ConnectionFactory
         {
             HostName = _options.Host,
             Port = _options.Port,
             UserName = _options.UserName,
             Password = _options.Password,
-            VirtualHost = _options.VirtualHost
+            VirtualHost = _options.VirtualHost,
+            ConsumerDispatchConcurrency = (ushort)concurrency
         };
 
         await using var connection = await factory.CreateConnectionAsync(stoppingToken);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-        await channel.BasicQosAsync(0, 1, false, stoppingToken);
+        await channel.BasicQosAsync(0, (ushort)concurrency, false, stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += (_, ea) => HandleMessageAsync(channel, ea, stoppingToken);
@@ -94,26 +97,19 @@ public sealed class NotificationWorker : BackgroundService
         if (messageId == Guid.Empty)
         {
             _logger.LogWarning("Bỏ qua Thông điệp không có MessageId hợp lệ. DeliveryTag={DeliveryTag}", ea.DeliveryTag);
-            await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);
+            await AckAsync(channel, ea.DeliveryTag, cancellationToken);
             return;
         }
 
         try
         {
-            var processed = await TryProcessAsync(messageId, ea, cancellationToken);
-            if (processed)
-            {
-                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);
-            }
-            else
-            {
-                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken);
-            }
+            await TryProcessAsync(messageId, ea, cancellationToken);
+            await AckAsync(channel, ea.DeliveryTag, cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Xử lý Thông điệp thất bại. MessageId={MessageId}, DeliveryTag={DeliveryTag}", messageId, ea.DeliveryTag);
-            await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken);
+            await NackAsync(channel, ea.DeliveryTag, cancellationToken);
         }
     }
 
@@ -176,6 +172,32 @@ public sealed class NotificationWorker : BackgroundService
 
         _logger.LogInformation("Đã xử lý an toàn Thông điệp. MessageId={MessageId}, ConsumerName={ConsumerName}", messageId, ConsumerName);
         return true;
+    }
+
+    private async Task AckAsync(IChannel channel, ulong deliveryTag, CancellationToken cancellationToken)
+    {
+        await _channelSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await channel.BasicAckAsync(deliveryTag, multiple: false, cancellationToken);
+        }
+        finally
+        {
+            _channelSemaphore.Release();
+        }
+    }
+
+    private async Task NackAsync(IChannel channel, ulong deliveryTag, CancellationToken cancellationToken)
+    {
+        await _channelSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await channel.BasicNackAsync(deliveryTag, multiple: false, requeue: false, cancellationToken);
+        }
+        finally
+        {
+            _channelSemaphore.Release();
+        }
     }
 
     internal static Guid ResolveMessageId(BasicDeliverEventArgs ea)
