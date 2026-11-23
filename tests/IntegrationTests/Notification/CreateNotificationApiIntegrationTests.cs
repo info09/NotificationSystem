@@ -184,6 +184,9 @@ public sealed class CreateNotificationApiIntegrationTests : IAsyncLifetime
         Assert.Single(outboxMessages);
         Assert.Equal("NotificationCreated", outboxMessages[0].EventType);
         Assert.Equal("Pending", outboxMessages[0].Status.ToString());
+        Assert.Equal(0, outboxMessages[0].RetryCount);
+        Assert.True(outboxMessages[0].NextAttemptAtUtc <= DateTime.UtcNow.AddMinutes(1));
+        Assert.Null(outboxMessages[0].LastError);
         Assert.Contains(payload!.NotificationId.ToString(), outboxMessages[0].Payload);
     }
 

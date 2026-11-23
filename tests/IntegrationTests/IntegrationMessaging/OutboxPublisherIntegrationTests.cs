@@ -117,6 +117,41 @@ public sealed class OutboxPublisherIntegrationTests : IAsyncLifetime
         Assert.True(persisted.NextAttemptAtUtc > DateTime.UtcNow.AddSeconds(-1));
     }
 
+    [Fact]
+    public async Task PublishPendingMessagesAsync_WhenNextAttemptIsInFuture_SkipsMessage()
+    {
+        await using var dbContext = CreateDbContext();
+        await dbContext.Database.EnsureCreatedAsync();
+
+        var outboxMessage = OutboxMessage.CreatePending(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "NotificationCreated",
+            JsonSerializer.Serialize(new { channel = "Email", notificationId = Guid.NewGuid() }),
+            DateTime.UtcNow);
+        outboxMessage.MarkPublishFailed("temporary", DateTime.UtcNow, DateTime.UtcNow.AddMinutes(10), maxRetryCount: 5);
+
+        dbContext.OutboxMessages.Add(outboxMessage);
+        await dbContext.SaveChangesAsync();
+
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+
+        var backgroundService = new OutboxPublisherBackgroundService(
+            BuildScopeFactory(),
+            new RabbitMqMessagePublisher(options),
+            NullLogger<OutboxPublisherBackgroundService>.Instance);
+
+        var publishedCount = await backgroundService.PublishPendingMessagesAsync(CancellationToken.None);
+
+        Assert.Equal(0, publishedCount);
+
+        await using var verifyContext = CreateDbContext();
+        var persisted = await verifyContext.OutboxMessages.SingleAsync();
+        Assert.Equal(OutboxMessageStatus.Pending, persisted.Status);
+        Assert.Equal(1, persisted.RetryCount);
+    }
+
     private IOptions<RabbitMqOptions> CreateRabbitMqOptions() =>
         Options.Create(new RabbitMqOptions
         {
