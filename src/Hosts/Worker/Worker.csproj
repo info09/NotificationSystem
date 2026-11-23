@@ -22,4 +22,10 @@
     <ProjectReference Include="..\..\Modules\Notification\Presentation\Notification.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\TemplateConfiguration\Presentation\TemplateConfiguration.Presentation.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UnitTests" />
+    <InternalsVisibleTo Include="IntegrationTests" />
+    <InternalsVisibleTo Include="E2ETests" />
+  </ItemGroup>
 </Project>

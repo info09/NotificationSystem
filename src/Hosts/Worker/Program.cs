@@ -3,29 +3,44 @@ using BuildingBlocks.Observability.Logging;
 using BuildingBlocks.Observability.OpenTelemetry;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
-using Worker;
 using Worker.Modules;
 
-var builder = Host.CreateApplicationBuilder(args);
-builder.UseStructuredLogging();
-builder.AddOpenTelemetryObservability();
+namespace Worker;
 
-builder.Services.AddModules(builder.Configuration);
-
-builder.Services.AddHostedService<PlaceholderWorker>();
-
-var host = builder.Build();
-
-var hostEnvironment = host.Services.GetRequiredService<IHostEnvironment>();
-var webHostEnvironment = host.Services.GetService<IWebHostEnvironment>()
-    ?? new WorkerHostEnvironmentAdapter(hostEnvironment);
-
-foreach (var module in host.Services.GetServices<IModuleInitializer>())
+/// <summary>
+/// Điểm vào của ứng dụng Worker.
+/// </summary>
+public partial class Program
 {
-    module.Configure(host.Services, webHostEnvironment);
-}
+    /// <summary>
+    /// Khởi động host Worker.
+    /// </summary>
+    /// <param name="args">Đối số dòng lệnh.</param>
+    public static void Main(string[] args)
+    {
+        var builder = Host.CreateApplicationBuilder(args);
+        builder.UseStructuredLogging();
+        builder.AddOpenTelemetryObservability();
 
-host.Run();
+        builder.Services.AddModules(builder.Configuration);
+
+        builder.Services.AddHostedService<OutboxPublisherBackgroundService>();
+        builder.Services.AddHostedService<PlaceholderWorker>();
+
+        var host = builder.Build();
+
+        var hostEnvironment = host.Services.GetRequiredService<IHostEnvironment>();
+        var webHostEnvironment = host.Services.GetService<IWebHostEnvironment>()
+            ?? new WorkerHostEnvironmentAdapter(hostEnvironment);
+
+        foreach (var module in host.Services.GetServices<IModuleInitializer>())
+        {
+            module.Configure(host.Services, webHostEnvironment);
+        }
+
+        host.Run();
+    }
+}
 
 /// <summary>
 /// Bộ chuyển đổi IHostEnvironment cho ngữ cảnh Worker.

@@ -39,6 +39,7 @@ public static class RabbitMqMessagingServiceCollectionExtensions
             });
 
         services.AddSingleton<IRabbitMqTopologyInitializer, RabbitMqTopologyInitializer>();
+        services.AddSingleton<IRabbitMqMessagePublisher, RabbitMqMessagePublisher>();
 
         return services;
     }

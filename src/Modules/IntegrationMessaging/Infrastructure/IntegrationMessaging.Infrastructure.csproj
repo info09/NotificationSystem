@@ -14,4 +14,10 @@
     <ProjectReference Include="..\Application\IntegrationMessaging.Application.csproj" />
     <ProjectReference Include="..\Domain\IntegrationMessaging.Domain.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UnitTests" />
+    <InternalsVisibleTo Include="IntegrationTests" />
+    <InternalsVisibleTo Include="E2ETests" />
+  </ItemGroup>
 </Project>

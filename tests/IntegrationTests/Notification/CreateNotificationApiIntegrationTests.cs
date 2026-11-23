@@ -44,9 +44,9 @@ public sealed class CreateNotificationApiIntegrationTests : IAsyncLifetime
         using (var scope = _factory.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
-            await dbContext.Database.EnsureCreatedAsync();
+            await dbContext.Database.MigrateAsync();
             var integrationDbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
-            await integrationDbContext.Database.EnsureCreatedAsync();
+            await integrationDbContext.Database.MigrateAsync();
         }
 
         _client = _factory.CreateClient();
