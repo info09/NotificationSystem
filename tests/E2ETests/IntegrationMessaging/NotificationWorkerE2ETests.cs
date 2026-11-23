@@ -97,7 +97,16 @@ public sealed class NotificationWorkerE2ETests : IAsyncLifetime
         var worker = CreateWorker(options);
         await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
 
-        var dlqMessage = await channel.BasicGetAsync(RabbitMqTopologyNames.EmailDeadLetterQueue, autoAck: true);
+        BasicGetResult? dlqMessage = null;
+        for (var i = 0; i < 20 && dlqMessage is null; i++)
+        {
+            dlqMessage = await channel.BasicGetAsync(RabbitMqTopologyNames.EmailDeadLetterQueue, autoAck: true);
+            if (dlqMessage is null)
+            {
+                await Task.Delay(100);
+            }
+        }
+
         Assert.NotNull(dlqMessage);
     }
 
