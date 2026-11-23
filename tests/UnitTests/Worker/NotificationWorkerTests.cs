@@ -30,6 +30,18 @@ public sealed class NotificationWorkerTests
         Assert.Equal(Guid.Empty, result);
     }
 
+    [Fact]
+    public void ResolveNotificationId_WithValidPayload_ReturnsNotificationId()
+    {
+        var notificationId = Guid.NewGuid();
+        var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new { notificationId, channel = "Email" });
+        var ea = CreateDeliveryEventArgs(Guid.NewGuid().ToString(), body);
+
+        var result = NotificationWorker.ResolveNotificationId(ea);
+
+        Assert.Equal(notificationId, result);
+    }
+
     private static BasicDeliverEventArgs CreateDeliveryEventArgs(string? messageId, byte[] body)
     {
         var properties = new BasicProperties

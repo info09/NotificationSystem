@@ -6,11 +6,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Notification.Application.Notifications;
+using Notification.Infrastructure.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using Worker;
+using DomainNotification = global::Notification.Domain.Notification;
+using NotificationChannel = global::Notification.Domain.NotificationChannel;
+using NotificationStatus = global::Notification.Domain.NotificationStatus;
 
 namespace IntegrationTests.IntegrationMessaging;
 
@@ -91,13 +96,64 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         Assert.Equal(1, count);
     }
 
-    private NotificationWorker CreateWorker(IOptions<RabbitMqOptions> options)
+    [Fact]
+    public async Task HandleMessageAsync_WithNewMessage_UpdatesNotificationStatusToSent()
+    {
+        var options = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(options).InitializeAsync();
+        await using var integrationDbContext = CreateDbContext();
+        await integrationDbContext.Database.MigrateAsync();
+        await using var notificationDbContext = CreateNotificationDbContext();
+        await notificationDbContext.Database.MigrateAsync();
+
+        var notification = DomainNotification.Create(
+            Guid.NewGuid(),
+            new global::Notification.Domain.Recipient("user@example.com"),
+            NotificationChannel.Email,
+            "Xin chao",
+            null,
+            "scope-1",
+            "key-1",
+            DateTime.UtcNow);
+        notificationDbContext.Notifications.Add(notification);
+        await notificationDbContext.SaveChangesAsync();
+
+        var messageId = Guid.NewGuid();
+        await PublishTestMessageAsync(options.Value, RabbitMqTopologyNames.EmailQueue, "notification.email.created", messageId, notification.Id);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(options.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var worker = CreateWorker(options, useRealNotificationRepository: true);
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
+        await using var verifyNotificationDbContext = CreateNotificationDbContext();
+        var persisted = await verifyNotificationDbContext.Notifications.AsNoTracking().SingleAsync(x => x.Id == notification.Id);
+        Assert.Equal(NotificationStatus.Sent, persisted.Status);
+    }
+
+    private NotificationWorker CreateWorker(IOptions<RabbitMqOptions> options, INotificationRepository? notificationRepository = null, bool useRealNotificationRepository = false)
     {
         var services = new ServiceCollection();
         services.AddDbContext<IntegrationMessagingDbContext>(dbOptions =>
             dbOptions.UseNpgsql(
                 _postgreSqlContainer.GetConnectionString(),
                 npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "integration_messaging")));
+
+        if (useRealNotificationRepository)
+        {
+            services.AddDbContext<NotificationDbContext>(dbOptions =>
+                dbOptions.UseNpgsql(
+                    _postgreSqlContainer.GetConnectionString(),
+                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "notification")));
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+        }
+        else
+        {
+            services.AddScoped<INotificationRepository>(_ => notificationRepository ?? new NoOpNotificationRepository());
+        }
+
         var provider = services.BuildServiceProvider();
 
         return new NotificationWorker(
@@ -127,13 +183,24 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         return new IntegrationMessagingDbContext(options);
     }
 
-    private static async Task PublishTestMessageAsync(RabbitMqOptions options, string queue, string routingKey, Guid messageId)
+    private NotificationDbContext CreateNotificationDbContext()
+    {
+        var options = new DbContextOptionsBuilder<NotificationDbContext>()
+            .UseNpgsql(
+                _postgreSqlContainer.GetConnectionString(),
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "notification"))
+            .Options;
+
+        return new NotificationDbContext(options);
+    }
+
+    private static async Task PublishTestMessageAsync(RabbitMqOptions options, string queue, string routingKey, Guid messageId, Guid? notificationId = null)
     {
         var factory = CreateConnectionFactory(options);
         await using var connection = await factory.CreateConnectionAsync();
         await using var channel = await connection.CreateChannelAsync();
 
-        var payload = JsonSerializer.Serialize(new { channel = "Email", notificationId = Guid.NewGuid() });
+        var payload = JsonSerializer.Serialize(new { channel = "Email", notificationId = notificationId ?? Guid.NewGuid() });
         var properties = new BasicProperties
         {
             Persistent = true,
@@ -179,4 +246,17 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
             Password = options.Password,
             VirtualHost = options.VirtualHost
         };
+
+    private sealed class NoOpNotificationRepository : INotificationRepository
+    {
+        public Task<DomainNotification> AddAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.FromResult(entity);
+        public Task DeleteAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<IEnumerable<DomainNotification>> FindAsync(System.Linq.Expressions.Expression<Func<DomainNotification, bool>> predicate, CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<DomainNotification>());
+        public Task<IEnumerable<DomainNotification>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult(Enumerable.Empty<DomainNotification>());
+        public Task<DomainNotification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult<DomainNotification?>(null);
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
+        public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(NotificationStatus? status, NotificationChannel? channel, DateTime? createdFromUtc, DateTime? createdToUtc, int page, int pageSize, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<DomainNotification>)Array.Empty<DomainNotification>(), 0));
+        public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<DomainNotification?>(null);
+    }
 }

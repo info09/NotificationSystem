@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
@@ -128,7 +129,20 @@ public sealed class NotificationWorker : BackgroundService
         if (alreadyProcessed)
         {
             _logger.LogInformation("Bỏ qua Thông điệp trùng. MessageId={MessageId}, ConsumerName={ConsumerName}", messageId, ConsumerName);
+            await TryFinalizeProcessedNotificationAsync(scope, ea, cancellationToken);
             return false;
+        }
+
+        var notificationId = ResolveNotificationId(ea);
+        var notificationRepository = scope.ServiceProvider.GetRequiredService<Notification.Application.Notifications.INotificationRepository>();
+        var notification = notificationId == Guid.Empty
+            ? null
+            : await notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+
+        if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Pending)
+        {
+            notification.MarkProcessing();
+            await notificationRepository.SaveChangesAsync(cancellationToken);
         }
 
         var eventType = ResolveEventType(ea);
@@ -138,8 +152,6 @@ public sealed class NotificationWorker : BackgroundService
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Đã xử lý an toàn Thông điệp. MessageId={MessageId}, ConsumerName={ConsumerName}", messageId, ConsumerName);
-            return true;
         }
         catch (DbUpdateException ex)
         {
@@ -155,6 +167,15 @@ public sealed class NotificationWorker : BackgroundService
 
             throw;
         }
+
+        if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Processing)
+        {
+            notification.MarkSent();
+            await notificationRepository.SaveChangesAsync(cancellationToken);
+        }
+
+        _logger.LogInformation("Đã xử lý an toàn Thông điệp. MessageId={MessageId}, ConsumerName={ConsumerName}", messageId, ConsumerName);
+        return true;
     }
 
     internal static Guid ResolveMessageId(BasicDeliverEventArgs ea)
@@ -162,6 +183,31 @@ public sealed class NotificationWorker : BackgroundService
         if (Guid.TryParse(ea.BasicProperties.MessageId, out var messageId))
         {
             return messageId;
+        }
+
+        return Guid.Empty;
+    }
+
+    internal static Guid ResolveNotificationId(BasicDeliverEventArgs ea)
+    {
+        var body = Encoding.UTF8.GetString(ea.Body.ToArray());
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return Guid.Empty;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("notificationId", out var notificationIdElement)
+                && Guid.TryParse(notificationIdElement.GetString(), out var notificationId))
+            {
+                return notificationId;
+            }
+        }
+        catch (JsonException)
+        {
+            return Guid.Empty;
         }
 
         return Guid.Empty;
@@ -176,5 +222,22 @@ public sealed class NotificationWorker : BackgroundService
         }
 
         return "NotificationCreated";
+    }
+
+    private async Task TryFinalizeProcessedNotificationAsync(IServiceScope scope, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
+    {
+        var notificationId = ResolveNotificationId(ea);
+        if (notificationId == Guid.Empty)
+        {
+            return;
+        }
+
+        var notificationRepository = scope.ServiceProvider.GetRequiredService<Notification.Application.Notifications.INotificationRepository>();
+        var notification = await notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+        if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Processing)
+        {
+            notification.MarkSent();
+            await notificationRepository.SaveChangesAsync(cancellationToken);
+        }
     }
 }
