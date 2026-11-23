@@ -1,3 +1,8 @@
+using Delivery.Application.Abstractions;
+using Delivery.Application.InAppNotifications.CreateInAppNotification;
+using Delivery.Application.InAppNotifications.GetInAppNotificationById;
+using Delivery.Application.InAppNotifications.GetInAppNotifications;
+using Delivery.Application.InAppNotifications.GetUnreadInAppNotificationCount;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +37,12 @@ public static class DeliveryPersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly(typeof(DeliveryDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "delivery")));
+
+        services.AddScoped<IInAppNotificationRepository, InAppNotificationRepository>();
+        services.AddScoped<GetInAppNotificationsUseCase>();
+        services.AddScoped<GetInAppNotificationByIdUseCase>();
+        services.AddScoped<GetUnreadInAppNotificationCountUseCase>();
+        services.AddScoped<CreateInAppNotificationUseCase>();
 
         return services;
     }
