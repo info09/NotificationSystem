@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { GetNotificationsResponse, NotificationItem, NotificationListQuery } from './notification.models';
+import { GetNotificationsResponse, NotificationDeliveryHistoryResponse, NotificationItem, NotificationListQuery } from './notification.models';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -30,5 +30,12 @@ export class NotificationService {
 
   getNotificationById(id: string): Observable<NotificationItem> {
     return this.http.get<NotificationItem>(`/api/notifications/${id}`);
+  }
+
+  getNotificationDeliveryHistory(notificationId: string, page = 1, pageSize = 20): Observable<NotificationDeliveryHistoryResponse> {
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('pageSize', String(pageSize));
+    return this.http.get<NotificationDeliveryHistoryResponse>(`/api/notifications/${notificationId}/delivery-history`, { params });
   }
 }

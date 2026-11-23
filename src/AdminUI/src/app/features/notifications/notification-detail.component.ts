@@ -4,7 +4,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../core/notifications/notification.service';
-import { NotificationItem } from '../../core/notifications/notification.models';
+import {
+  NotificationDeliveryHistoryResponse,
+  NotificationItem
+} from '../../core/notifications/notification.models';
 
 type ViewState = 'loading' | 'success' | 'error';
 
@@ -78,6 +81,84 @@ type ViewState = 'loading' | 'success' | 'error';
           </div>
         </dl>
       </div>
+
+      <div class="card history-card">
+        <div class="card-header">
+          <div>
+            <h2>Nhật ký gửi thông báo &amp; Lần thử gửi</h2>
+            <p class="muted">Theo dõi kết quả gửi, lỗi, số lần thử lại và Mã tương quan.</p>
+          </div>
+          <button *ngIf="historyState === 'error'" type="button" class="secondary" (click)="retryHistory()">Thử lại</button>
+        </div>
+
+        <div *ngIf="historyState === 'loading'" class="history-loading" aria-busy="true" aria-live="polite">
+          <div class="skeleton line" *ngFor="let row of skeletonRows"></div>
+        </div>
+
+        <div *ngIf="historyState === 'error'" class="status-box status-error" role="alert">
+          <p>{{ historyErrorMessage }}</p>
+        </div>
+
+        <div *ngIf="historyState === 'success' && isHistoryEmpty" class="status-box">
+          <p>Chưa có Nhật ký gửi thông báo hoặc Lần thử gửi cho Thông báo này.</p>
+        </div>
+
+        <ng-container *ngIf="historyState === 'success' && deliveryHistory && !isHistoryEmpty">
+          <h3 class="section-title">Nhật ký gửi thông báo</h3>
+          <div class="table-wrap" *ngIf="deliveryHistory.logs.length > 0; else emptyLogs">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Kênh</th>
+                  <th>Kết quả</th>
+                  <th>Số lần thử lại</th>
+                  <th>Mã tương quan</th>
+                  <th>Thời gian</th>
+                  <th>Lỗi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let log of deliveryHistory.logs">
+                  <td>{{ displayChannel(log.channel) }}</td>
+                  <td><span class="badge" [ngClass]="resultClass(log.result)">{{ displayResult(log.result) }}</span></td>
+                  <td>{{ log.retryCount }}</td>
+                  <td class="mono">{{ log.correlationId || '—' }}</td>
+                  <td>{{ formatDate(log.createdAtUtc) }}</td>
+                  <td>{{ log.errorMessage || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #emptyLogs><p class="muted">Chưa có Nhật ký gửi thông báo.</p></ng-template>
+
+          <h3 class="section-title">Lần thử gửi</h3>
+          <div class="table-wrap" *ngIf="deliveryHistory.attempts.items.length > 0; else emptyAttempts">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Lần thử</th>
+                  <th>Kênh</th>
+                  <th>Kết quả</th>
+                  <th>Mã tương quan</th>
+                  <th>Thời gian</th>
+                  <th>Lỗi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let attempt of deliveryHistory.attempts.items">
+                  <td>#{{ attempt.attemptNumber }}</td>
+                  <td>{{ displayChannel(attempt.channel) }}</td>
+                  <td><span class="badge" [ngClass]="resultClass(attempt.result)">{{ displayResult(attempt.result) }}</span></td>
+                  <td class="mono">{{ attempt.correlationId || '—' }}</td>
+                  <td>{{ formatDate(attempt.attemptedAtUtc) }}</td>
+                  <td>{{ attempt.errorMessage || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ng-template #emptyAttempts><p class="muted">Chưa có Lần thử gửi.</p></ng-template>
+        </ng-container>
+      </div>
     </section>
   `,
   styles: [`
@@ -117,6 +198,15 @@ type ViewState = 'loading' | 'success' | 'error';
     .skeleton.title { height: 24px; width: 260px; margin-bottom: 16px; }
     .skeleton.line { height: 18px; margin-bottom: 12px; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .history-card { margin-top: 16px; }
+    .section-title { margin: 16px 0 8px; font-size: 15px; font-weight: 600; color: #0f172a; }
+    .table-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .history-table th, .history-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .history-table th { background: #f8fafc; color: #475569; font-weight: 600; font-size: 13px; white-space: nowrap; }
+    .history-table tr:last-child td { border-bottom: none; }
+    .secondary { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; font-family: inherit; }
+    .secondary:hover { background: #f1f5f9; }
   `]
 })
 export class NotificationDetailComponent implements OnInit {
@@ -130,6 +220,12 @@ export class NotificationDetailComponent implements OnInit {
   notification: NotificationItem | null = null;
   private notificationId = '';
 
+  historyState: ViewState = 'loading';
+  historyErrorMessage = '';
+  deliveryHistory: NotificationDeliveryHistoryResponse | null = null;
+  historyPage = 1;
+  readonly historyPageSize = 20;
+
   ngOnInit(): void {
     this.notificationId = this.route.snapshot.paramMap.get('id') ?? '';
     this.loadNotification();
@@ -137,6 +233,10 @@ export class NotificationDetailComponent implements OnInit {
 
   retry(): void {
     this.loadNotification();
+  }
+
+  retryHistory(): void {
+    this.loadDeliveryHistory();
   }
 
   displayChannel(channel: string): string {
@@ -191,16 +291,47 @@ export class NotificationDetailComponent implements OnInit {
     return date.toLocaleString('vi-VN', { hour12: false });
   }
 
+  displayResult(result: string): string {
+    switch (result) {
+      case 'Success':
+        return 'Thành công';
+      case 'Failed':
+        return 'Thất bại';
+      default:
+        return result || '—';
+    }
+  }
+
+  resultClass(result: string): string {
+    switch (result) {
+      case 'Success':
+        return 'badge-sent';
+      case 'Failed':
+        return 'badge-failed';
+      default:
+        return 'badge-default';
+    }
+  }
+
+  get isHistoryEmpty(): boolean {
+    return !!this.deliveryHistory
+      && this.deliveryHistory.logs.length === 0
+      && this.deliveryHistory.attempts.items.length === 0;
+  }
+
   private loadNotification(): void {
     if (!this.notificationId) {
       this.state = 'error';
       this.errorMessage = 'Mã Thông báo không hợp lệ.';
+      this.historyState = 'error';
+      this.historyErrorMessage = 'Mã Thông báo không hợp lệ.';
       return;
     }
 
     this.state = 'loading';
     this.errorMessage = '';
     this.notification = null;
+    this.loadDeliveryHistory();
 
     this.notificationService
       .getNotificationById(this.notificationId)
@@ -213,6 +344,29 @@ export class NotificationDetailComponent implements OnInit {
         error: (error: unknown) => {
           this.state = 'error';
           this.errorMessage = this.resolveErrorMessage(error);
+        }
+      });
+  }
+
+  private loadDeliveryHistory(): void {
+    if (!this.notificationId) {
+      return;
+    }
+
+    this.historyState = 'loading';
+    this.historyErrorMessage = '';
+    this.deliveryHistory = null;
+
+    this.notificationService
+      .getNotificationDeliveryHistory(this.notificationId, this.historyPage, this.historyPageSize)
+      .subscribe({
+        next: (history) => {
+          this.deliveryHistory = history;
+          this.historyState = 'success';
+        },
+        error: (error: unknown) => {
+          this.historyState = 'error';
+          this.historyErrorMessage = this.resolveHistoryErrorMessage(error);
         }
       });
   }
@@ -238,5 +392,25 @@ export class NotificationDetailComponent implements OnInit {
       return 'Không tải được chi tiết Thông báo. Vui lòng thử lại.';
     }
     return 'Không tải được chi tiết Thông báo. Vui lòng thử lại.';
+  }
+
+  private resolveHistoryErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 401 || error.status === 403) {
+        return 'Không có quyền truy cập lịch sử gửi Thông báo.';
+      }
+      if (error.status === 0) {
+        return 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
+      }
+      const payload = error.error as { detail?: string; title?: string } | null;
+      if (payload?.detail) {
+        return payload.detail;
+      }
+      if (payload?.title) {
+        return payload.title;
+      }
+      return 'Không tải được lịch sử gửi Thông báo. Vui lòng thử lại.';
+    }
+    return 'Không tải được lịch sử gửi Thông báo. Vui lòng thử lại.';
   }
 }

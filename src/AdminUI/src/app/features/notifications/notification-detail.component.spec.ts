@@ -10,7 +10,11 @@ describe('NotificationDetailComponent', () => {
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
 
   async function setup(id: string | null) {
-    notificationServiceSpy = jasmine.createSpyObj<NotificationService>('NotificationService', ['getNotificationById']);
+    notificationServiceSpy = jasmine.createSpyObj<NotificationService>('NotificationService', ['getNotificationById', 'getNotificationDeliveryHistory']);
+    notificationServiceSpy.getNotificationDeliveryHistory.and.returnValue(of({
+      logs: [],
+      attempts: { items: [], totalCount: 0, page: 1, pageSize: 20 }
+    }));
 
     await TestBed.configureTestingModule({
       imports: [NotificationDetailComponent],
@@ -72,5 +76,52 @@ describe('NotificationDetailComponent', () => {
 
     expect(component.state).toBe('error');
     expect(component.errorMessage).toContain('không hợp lệ');
+  });
+
+  it('should render delivery history success state', async () => {
+    const id = '11111111-1111-1111-1111-111111111111';
+    await setup(id);
+    notificationServiceSpy.getNotificationById.and.returnValue(of({
+      id,
+      recipient: 'user@example.com',
+      channel: 'Email',
+      status: 'Sent',
+      content: 'Hello',
+      notificationTemplateId: null,
+      createdAt: '2026-04-03T00:00:00Z'
+    }));
+    notificationServiceSpy.getNotificationDeliveryHistory.and.returnValue(of({
+      logs: [{ id: 'l1', notificationId: id, channel: 'Email', result: 'Success', errorMessage: null, retryCount: 0, correlationId: 'corr', createdAtUtc: '2026-04-03T00:00:00Z' }],
+      attempts: { items: [{ id: 'a1', notificationId: id, channel: 'Email', attemptNumber: 1, result: 'Success', errorMessage: null, correlationId: 'corr', attemptedAtUtc: '2026-04-03T00:00:00Z' }], totalCount: 1, page: 1, pageSize: 20 }
+    }));
+
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.historyState).toBe('success');
+    expect(component.deliveryHistory?.logs.length).toBe(1);
+  });
+
+  it('should render delivery history error state', async () => {
+    const id = '11111111-1111-1111-1111-111111111111';
+    await setup(id);
+    notificationServiceSpy.getNotificationById.and.returnValue(of({
+      id,
+      recipient: 'user@example.com',
+      channel: 'Email',
+      status: 'Sent',
+      content: 'Hello',
+      notificationTemplateId: null,
+      createdAt: '2026-04-03T00:00:00Z'
+    }));
+    notificationServiceSpy.getNotificationDeliveryHistory.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, statusText: 'Server Error' }))
+    );
+
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.historyState).toBe('error');
+    expect(component.historyErrorMessage).toContain('Không tải được lịch sử gửi Thông báo');
   });
 });
