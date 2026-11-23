@@ -106,16 +106,33 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
               <tr *ngIf="selectedMessageId === item.messageId" class="detail-row">
                 <td colspan="7">
                   <div class="detail-panel">
-                    <h2>Chi tiết tóm tắt</h2>
+                    <h2>Chi tiết DLQ</h2>
                     <dl class="detail-grid">
                       <dt>Queue</dt><dd>{{ item.queueName }}</dd>
+                      <dt>MessageId</dt><dd class="mono">{{ item.messageId || '—' }}</dd>
+                      <dt>NotificationId</dt><dd class="mono">{{ item.notificationId || '—' }}</dd>
+                      <dt>Kênh</dt><dd>{{ displayChannel(item.channel) }}</dd>
                       <dt>Routing key</dt><dd>{{ item.routingKey || '—' }}</dd>
                       <dt>Event type</dt><dd>{{ item.eventType || '—' }}</dd>
-                      <dt>Mã tương quan/MessageId</dt><dd class="mono">{{ item.messageId || '—' }}</dd>
+                      <dt>Lý do</dt><dd>{{ item.reason || '—' }}</dd>
+                      <dt>Dead-letter lúc</dt><dd>{{ formatDate(item.deadLetteredAtUtc) }}</dd>
+                      <dt>Số lần</dt><dd>{{ item.deathCount ?? '—' }}</dd>
                     </dl>
                     <div class="payload-block">
                       <h3>Payload</h3>
                       <pre>{{ item.payload || '—' }}</pre>
+                    </div>
+
+                    <div class="detail-actions">
+                      <button type="button" class="primary" (click)="openResendModal(item)">Gửi lại</button>
+                    </div>
+
+                    <div *ngIf="resendSuccessMessage && selectedMessageId === item.messageId" class="inline-success" role="status">
+                      {{ resendSuccessMessage }}
+                    </div>
+                    <div *ngIf="resendErrorMessage && selectedMessageId === item.messageId" class="inline-error" role="alert">
+                      <p>{{ resendErrorMessage }}</p>
+                      <button type="button" class="secondary" (click)="openResendModal(item)">Thử lại</button>
                     </div>
                   </div>
                 </td>
@@ -127,6 +144,28 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
         <div class="pagination" aria-label="Thông tin danh sách">
           <div class="pagination-info">
             Hiển thị: {{ filteredItems.length }} / {{ items.length }} mục (limit {{ filterForm.controls.limit.value }})
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="resendModalOpen" class="modal-backdrop" role="presentation">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resend-modal-title">
+          <h2 id="resend-modal-title">Xác nhận Gửi lại</h2>
+          <p>Bạn có chắc muốn gửi lại Thông điệp này từ Hàng đợi thư chết?</p>
+          <dl class="detail-grid modal-grid" *ngIf="resendCandidate">
+            <dt>Queue</dt><dd>{{ resendCandidate.queueName }}</dd>
+            <dt>MessageId</dt><dd class="mono">{{ resendCandidate.messageId }}</dd>
+            <dt>NotificationId</dt><dd class="mono">{{ resendCandidate.notificationId || '—' }}</dd>
+          </dl>
+
+          <div *ngIf="resendProcessing" class="modal-status" aria-live="polite">Đang gửi lại...</div>
+          <div *ngIf="resendErrorMessage && resendModalOpen" class="inline-error" role="alert">
+            <p>{{ resendErrorMessage }}</p>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="secondary" (click)="closeResendModal()" [disabled]="resendProcessing">Hủy</button>
+            <button type="button" class="primary" (click)="confirmResend()" [disabled]="resendProcessing">Xác nhận</button>
           </div>
         </div>
       </div>
@@ -165,6 +204,18 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
     .detail-grid dt { font-weight: 600; color: #475569; }
     .detail-grid dd { margin: 0; word-break: break-word; }
     .payload-block pre { margin: 0; padding: 12px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .detail-actions { margin-top: 16px; display: flex; gap: 8px; }
+    .inline-success { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 14px; }
+    .inline-error { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 14px; }
+    .inline-error p { margin: 0 0 8px; color: #991b1b; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+    .modal { background: #fff; border-radius: 8px; border: 1px solid #cbd5e1; padding: 20px; width: min(560px, 100%); }
+    .modal h2 { margin: 0 0 8px; font-size: 20px; }
+    .modal p { margin: 0 0 12px; color: #475569; font-size: 14px; }
+    .modal-grid { margin-bottom: 12px; }
+    .modal-status { margin: 8px 0; color: #1d4ed8; font-size: 14px; font-weight: 600; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-top: 1px solid #e2e8f0; }
     .pagination-info { color: #475569; font-size: 14px; }
     .skeleton { height: 44px; margin: 12px; border-radius: 6px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
@@ -183,6 +234,11 @@ export class DeadLetterQueueListComponent implements OnInit {
   items: DeadLetterQueueMessage[] = [];
   filteredItems: DeadLetterQueueMessage[] = [];
   selectedMessageId: string | null = null;
+  resendCandidate: DeadLetterQueueMessage | null = null;
+  resendModalOpen = false;
+  resendProcessing = false;
+  resendSuccessMessage = '';
+  resendErrorMessage = '';
 
   readonly filterForm = this.fb.nonNullable.group({
     queueName: ['notifications.email.dlq'],
@@ -242,11 +298,56 @@ export class DeadLetterQueueListComponent implements OnInit {
   }
 
   /**
-   * Bật/tắt phần chi tiết tóm tắt của Thông điệp.
+   * Mở modal xác nhận Gửi lại.
    * @param item Thông điệp DLQ.
    */
-  toggleDetail(item: DeadLetterQueueMessage): void {
-    this.selectedMessageId = this.selectedMessageId === item.messageId ? null : item.messageId;
+  openResendModal(item: DeadLetterQueueMessage): void {
+    this.resendCandidate = item;
+    this.resendModalOpen = true;
+    this.resendErrorMessage = '';
+    this.resendSuccessMessage = '';
+  }
+
+  /**
+   * Đóng modal xác nhận Gửi lại.
+   */
+  closeResendModal(): void {
+    if (this.resendProcessing) {
+      return;
+    }
+    this.resendModalOpen = false;
+    this.resendCandidate = null;
+  }
+
+  /**
+   * Xác nhận và thực hiện Gửi lại Thông điệp DLQ.
+   */
+  confirmResend(): void {
+    if (!this.resendCandidate || this.resendProcessing) {
+      return;
+    }
+
+    const candidate = this.resendCandidate;
+    this.resendProcessing = true;
+    this.resendErrorMessage = '';
+    this.resendSuccessMessage = '';
+
+    this.deadLetterQueueService
+      .resendMessage(candidate.queueName, candidate.messageId, { idempotencyKey: this.createIdempotencyKey() })
+      .pipe(finalize(() => {
+        this.resendProcessing = false;
+      }))
+      .subscribe({
+        next: (response) => {
+          this.resendSuccessMessage = `Gửi lại thành công. MessageId mới: ${response.resentMessageId}`;
+          this.resendModalOpen = false;
+          this.resendCandidate = null;
+          this.loadMessages();
+        },
+        error: (error: unknown) => {
+          this.resendErrorMessage = this.resolveErrorMessage(error, true);
+        }
+      });
   }
 
   /**
@@ -290,6 +391,8 @@ export class DeadLetterQueueListComponent implements OnInit {
     this.state = 'loading';
     this.errorMessage = '';
     this.selectedMessageId = null;
+    this.resendSuccessMessage = '';
+    this.resendErrorMessage = '';
     const value = this.filterForm.getRawValue();
 
     this.deadLetterQueueService
@@ -348,14 +451,33 @@ export class DeadLetterQueueListComponent implements OnInit {
   }
 
   /**
+   * Tạo khóa idempotency cho thao tác Gửi lại.
+   * @returns Khóa idempotency.
+   */
+  private createIdempotencyKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+
+    return 'idem-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  /**
    * Chuyển lỗi HTTP thành thông báo thân thiện.
    * @param error Lỗi cần xử lý.
+   * @param isResend Có phải lỗi từ thao tác Gửi lại hay không.
    * @returns Thông báo lỗi.
    */
-  private resolveErrorMessage(error: unknown): string {
+  private resolveErrorMessage(error: unknown, isResend = false): string {
+    const fallback = isResend
+      ? 'Không gửi lại được Thông điệp. Vui lòng thử lại.'
+      : 'Không tải được danh sách Hàng đợi thư chết. Vui lòng thử lại.';
+
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401 || error.status === 403) {
-        return 'Không có quyền truy cập Hàng đợi thư chết. Vui lòng kiểm tra phiên đăng nhập và quyền RBAC.';
+        return isResend
+          ? 'Không có quyền Gửi lại Thông điệp. Vui lòng kiểm tra phiên đăng nhập và quyền RBAC.'
+          : 'Không có quyền truy cập Hàng đợi thư chết. Vui lòng kiểm tra phiên đăng nhập và quyền RBAC.';
       }
       if (error.status === 0) {
         return 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
@@ -372,8 +494,8 @@ export class DeadLetterQueueListComponent implements OnInit {
       }
       if (payload?.detail) return payload.detail;
       if (payload?.title) return payload.title;
-      return 'Không tải được danh sách Hàng đợi thư chết. Vui lòng thử lại.';
+      return fallback;
     }
-    return 'Không tải được danh sách Hàng đợi thư chết. Vui lòng thử lại.';
+    return fallback;
   }
 }

@@ -9,7 +9,7 @@ describe('DeadLetterQueueListComponent', () => {
   let serviceSpy: jasmine.SpyObj<DeadLetterQueueService>;
 
   beforeEach(async () => {
-    serviceSpy = jasmine.createSpyObj<DeadLetterQueueService>('DeadLetterQueueService', ['getMessages']);
+    serviceSpy = jasmine.createSpyObj<DeadLetterQueueService>('DeadLetterQueueService', ['getMessages', 'resendMessage']);
 
     await TestBed.configureTestingModule({
       imports: [DeadLetterQueueListComponent],
@@ -71,5 +71,37 @@ describe('DeadLetterQueueListComponent', () => {
 
     expect(component.state).toBe('error');
     expect(component.errorMessage).toContain('Không tải được danh sách Hàng đợi thư chết');
+  });
+
+  it('should resend message and show success', () => {
+    const item = {
+      queueName: 'notifications.email.dlq',
+      messageId: 'msg-1',
+      notificationId: '11111111-1111-1111-1111-111111111111',
+      channel: 'Email',
+      routingKey: 'notification.email.created',
+      eventType: 'NotificationCreated',
+      reason: 'rejected',
+      deadLetteredAtUtc: '2026-04-03T00:00:00Z',
+      deathCount: 1,
+      payload: '{}'
+    };
+    serviceSpy.getMessages.and.returnValue(of({ queueName: 'notifications.email.dlq', count: 1, items: [item] }));
+    serviceSpy.resendMessage.and.returnValue(of({
+      queueName: 'notifications.email.dlq',
+      messageId: 'msg-1',
+      resentMessageId: '22222222-2222-2222-2222-222222222222',
+      notificationId: item.notificationId,
+      status: 'Resent'
+    }));
+
+    const component = createComponent();
+    fixture.detectChanges();
+
+    component.openResendModal(item);
+    component.confirmResend();
+
+    expect(serviceSpy.resendMessage).toHaveBeenCalled();
+    expect(component.resendSuccessMessage).toContain('Gửi lại thành công');
   });
 });

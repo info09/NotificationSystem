@@ -50,4 +50,21 @@ describe('DeadLetterQueueService', () => {
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
   });
+
+  it('should resend dead letter message with idempotency key', () => {
+    service.resendMessage('notifications.email.dlq', 'msg-1', { idempotencyKey: 'idem-1' }).subscribe((response) => {
+      expect(response.status).toBe('Resent');
+    });
+
+    const req = httpMock.expectOne('/api/admin/dead-letter-queues/notifications.email.dlq/messages/msg-1/resend');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ idempotencyKey: 'idem-1' });
+    req.flush({
+      queueName: 'notifications.email.dlq',
+      messageId: 'msg-1',
+      resentMessageId: '22222222-2222-2222-2222-222222222222',
+      notificationId: '11111111-1111-1111-1111-111111111111',
+      status: 'Resent'
+    });
+  });
 });

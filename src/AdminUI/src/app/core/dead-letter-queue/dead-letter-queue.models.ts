@@ -16,3 +16,15 @@ export interface GetDeadLetterQueueMessagesResponse {
   items: DeadLetterQueueMessage[];
   count: number;
 }
+
+export interface ResendDeadLetterMessageRequest {
+  idempotencyKey: string;
+}
+
+export interface ResendDeadLetterMessageResponse {
+  queueName: string;
+  messageId: string;
+  resentMessageId: string;
+  notificationId: string | null;
+  status: string;
+}
