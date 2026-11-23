@@ -1,10 +1,12 @@
 ﻿using BuildingBlocks.Observability;
 using BuildingBlocks.Observability.DataContext;
+using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace IntegrationMessaging.Presentation;
 
@@ -24,6 +26,8 @@ public class IntegrationMessagingModuleInitializer : IModuleInitializer
         {
             app.ApplyMigrations<IntegrationMessagingDbContext>();
         }
+
+        InitializeTopologySafely(app);
     }
 
     /// <summary>
@@ -34,5 +38,25 @@ public class IntegrationMessagingModuleInitializer : IModuleInitializer
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddIntegrationMessagingPersistence(configuration);
+        services.AddIntegrationMessagingRabbitMq(configuration);
+    }
+
+    /// <summary>
+    /// Khởi tạo topology RabbitMQ và ghi log cảnh báo nếu thất bại.
+    /// </summary>
+    /// <param name="app">Service provider của ứng dụng.</param>
+    private static void InitializeTopologySafely(IServiceProvider app)
+    {
+        try
+        {
+            var initializer = app.GetRequiredService<IRabbitMqTopologyInitializer>();
+            initializer.InitializeAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            var loggerFactory = app.GetService<ILoggerFactory>();
+            var logger = loggerFactory?.CreateLogger<IntegrationMessagingModuleInitializer>();
+            logger?.LogWarning(ex, "Khởi tạo topology RabbitMQ thất bại. Ứng dụng sẽ tiếp tục khởi động.");
+        }
     }
 }

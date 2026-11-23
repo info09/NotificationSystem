@@ -14,7 +14,7 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
     /// <param name="builder">Builder cấu hình thực thể.</param>
     public void Configure(EntityTypeBuilder<OutboxMessageRecord> builder)
     {
-        builder.ToTable("OutboxMessages", "integration_messaging");
+        builder.ToTable("OutboxMessages", "integration_messaging", t => t.ExcludeFromMigrations());
 
         builder.HasKey(x => x.Id);
 

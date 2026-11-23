@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
     <ProjectReference Include="..\Application\IntegrationMessaging.Application.csproj" />
     <ProjectReference Include="..\Domain\IntegrationMessaging.Domain.csproj" />
