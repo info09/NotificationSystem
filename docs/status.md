@@ -80,11 +80,11 @@
 - **Mục tiêu:** Bảo đảm tính nhất quán khi phát hành `Message` qua `RabbitMQ` bằng `TransactionalOutbox`/`OutboxMessage`.
 - **FR/NFR liên quan:** FR-03, FR-04, NFR-02, NFR-04, NFR-07.
 - **Stories:**
-  - [ ] **ST-P4-01** — Thiết kế/triển khai entity & persistence `OutboxMessage` và tích hợp ghi outbox trong cùng transaction DB với nghiệp vụ.
-  - [ ] **ST-P4-02** — Cấu hình `RabbitMQ` topology MVP (`notifications.topic`, `notifications.email.q`, `notifications.inapp.q`, DLQ tương ứng, routing keys).
-  - [ ] **ST-P4-03** — Triển khai Outbox Publisher (BackgroundService) đọc `OutboxMessage` chưa publish, publish `Message` và cập nhật trạng thái an toàn.
-  - [ ] **ST-P4-04** — Bổ sung cơ chế retry/xử lý lỗi publish outbox theo chính sách an toàn (không mất bản ghi đã commit).
-  - [ ] **ST-P4-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `TransactionalOutbox`, publish và topology `RabbitMQ`.
+  - [x] **ST-P4-01** — Thiết kế/triển khai entity & persistence `OutboxMessage` và tích hợp ghi outbox trong cùng transaction DB với nghiệp vụ.
+  - [x] **ST-P4-02** — Cấu hình `RabbitMQ` topology MVP (`notifications.topic`, `notifications.email.q`, `notifications.inapp.q`, DLQ tương ứng, routing keys).
+  - [x] **ST-P4-03** — Triển khai Outbox Publisher (BackgroundService) đọc `OutboxMessage` chưa publish, publish `Message` và cập nhật trạng thái an toàn.
+  - [x] **ST-P4-04** — Bổ sung cơ chế retry/xử lý lỗi publish outbox theo chính sách an toàn (không mất bản ghi đã commit).
+  - [x] **ST-P4-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `TransactionalOutbox`, publish và topology `RabbitMQ`.
 
 ### Phase 5 — `NotificationWorker`, `InboxPattern`/`InboxMessage` & consume
 - **Mục tiêu:** Xử lý `Message` nền với at-least-once + idempotent (`InboxPattern`/`InboxMessage`, `MessageId`), chuyển trạng thái và kiểm soát concurrency.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 4 — `IntegrationMessaging`: `TransactionalOutbox`, `OutboxMessage` & `RabbitMQ` publish.
-- **Story đang làm:** **ST-P4-01** — Thiết kế/triển khai entity & persistence `OutboxMessage` và tích hợp ghi outbox trong cùng transaction DB với nghiệp vụ.
-- **Story tiếp theo đề xuất:** **ST-P4-02** — Cấu hình `RabbitMQ` topology MVP (`notifications.topic`, `notifications.email.q`, `notifications.inapp.q`, DLQ tương ứng, routing keys).
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận đánh dấu hoàn thành **Phase 3**; đã tick Done **ST-P3-05**, **ST-P3-06**, **ST-P3-07** (AdminUI danh sách/chi tiết `Thông báo`, bổ sung spec test UI và rà soát test tạo/idempotency/truy vấn liên quan). Chuyển sang **Phase 4 / ST-P4-01**.
+- **Phase đang làm:** Phase 5 — `NotificationWorker`, `InboxPattern`/`InboxMessage` & consume.
+- **Story đang làm:** **ST-P5-01** — Triển khai entity & persistence `InboxMessage`/`InboxPattern` với ràng buộc unique theo `MessageId` và ngữ cảnh xử lý cần thiết.
+- **Story tiếp theo đề xuất:** **ST-P5-02** — Triển khai `NotificationWorker` consume `Queue`, kiểm tra inbox/idempotency và `ack` sau xử lý an toàn.
+- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 4**; đã tick Done **ST-P4-01**..**ST-P4-05** (`TransactionalOutbox`/`OutboxMessage`, RabbitMQ topology MVP, Outbox Publisher, retry/backoff an toàn, bổ sung kiểm thử unit/integration/e2e liên quan). Chuyển sang **Phase 5 / ST-P5-01**.
 
 ## 4. Deferred Work
 
