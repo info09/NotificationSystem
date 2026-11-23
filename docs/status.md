@@ -101,12 +101,12 @@
 - **FR/NFR liên quan:** FR-08, FR-09, NFR-02, NFR-04, NFR-05.
 - **UI (theo `docs/ux.md`):** `Hàng đợi thư chết` / `DeadLetterQueue` (danh sách, chi tiết) và thao tác `Gửi lại` / `Resend`.
 - **Stories:**
-  - [ ] **ST-P6-01** — Triển khai phân loại lỗi retryable/non-retryable và chính sách `Retry` tối đa 3 lần với `ExponentialBackoff` + jitter.
-  - [ ] **ST-P6-02** — Triển khai chuyển `Message` vào `DeadLetterQueue` khi vượt ngưỡng/không xử lý được theo chính sách.
-  - [ ] **ST-P6-03** — Triển khai API truy vấn `DeadLetterQueue` và luồng `Resend` idempotent theo `RBAC` (kèm `AuditLog` thao tác nhạy cảm).
-  - [ ] **ST-P6-04** — Dựng `AdminUI` danh sách `Hàng đợi thư chết` (lọc/chi tiết tóm tắt, loading/empty/error/success).
-  - [ ] **ST-P6-05** — Dựng `AdminUI` chi tiết DLQ và thao tác `Gửi lại` (modal xác nhận, trạng thái xử lý, kết quả success/error).
-  - [ ] **ST-P6-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan retry, DLQ và `Resend`.
+  - [x] **ST-P6-01** — Triển khai phân loại lỗi retryable/non-retryable và chính sách `Retry` tối đa 3 lần với `ExponentialBackoff` + jitter.
+  - [x] **ST-P6-02** — Triển khai chuyển `Message` vào `DeadLetterQueue` khi vượt ngưỡng/không xử lý được theo chính sách.
+  - [x] **ST-P6-03** — Triển khai API truy vấn `DeadLetterQueue` và luồng `Resend` idempotent theo `RBAC` (kèm `AuditLog` thao tác nhạy cảm).
+  - [x] **ST-P6-04** — Dựng `AdminUI` danh sách `Hàng đợi thư chết` (lọc/chi tiết tóm tắt, loading/empty/error/success).
+  - [x] **ST-P6-05** — Dựng `AdminUI` chi tiết DLQ và thao tác `Gửi lại` (modal xác nhận, trạng thái xử lý, kết quả success/error).
+  - [x] **ST-P6-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan retry, DLQ và `Resend`.
 
 ### Phase 7 — Kênh `Email` & `Thông báo trong ứng dụng` (`InAppNotification`)
 - **Mục tiêu:** Gửi `Notification` qua `Email` và `InAppNotification` theo abstraction kênh, hỗ trợ pull/polling và `ReadStatus`.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 6 — `Retry`, `ExponentialBackoff`, `DeadLetterQueue` & `Resend`.
-- **Story đang làm:** **ST-P6-06** — Hoàn thiện kiểm thử unit/integration/e2e liên quan retry, DLQ và `Resend`.
-- **Story tiếp theo đề xuất:** **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
-- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P6-01/02/03/04/05/06 (retry/DLQ worker, DLQ query/resend API + AuditLog, AdminUI DLQ, bổ sung test retry/DLQ/resend/idempotency/RBAC). Chưa tick Done do chưa có xác nhận pass 3 tầng từ Đại ca.
+- **Phase đang làm:** Phase 7 — Kênh `Email` & `Thông báo trong ứng dụng` (`InAppNotification`).
+- **Story đang làm:** **ST-P7-01** — Triển khai domain `Email`/abstraction `EmailProvider` và cấu hình `SmtpClient` + Mailpit cho môi trường dev.
+- **Story tiếp theo đề xuất:** **ST-P7-02** — Triển khai `NotificationDispatcher`/abstraction kênh (strategy/factory) để mở rộng không sửa luồng cốt lõi.
+- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 6**; đã tick Done **ST-P6-01**..**ST-P6-06** (retry/DLQ worker, DLQ query/resend API + AuditLog, AdminUI DLQ, kiểm thử liên quan). Chuyển sang **Phase 7 / ST-P7-01**.
 
 ## 4. Deferred Work
 
