@@ -72,9 +72,9 @@
   - [x] **ST-P3-02** — Triển khai application/use case và persistence cho tạo/truy vấn `Notification` theo Clean Architecture.
   - [x] **ST-P3-03** — Triển khai API tạo `Notification` từ `CreateNotificationRequest` (JWT + RBAC, validation, trả `notificationId`) với xử lý `IdempotencyKey` chống tạo trùng.
   - [x] **ST-P3-04** — Triển khai API truy vấn danh sách/chi tiết `Notification` (lọc trạng thái/kênh/thời gian, phân trang) theo quyền.
-  - [ ] **ST-P3-05** — Dựng `AdminUI` danh sách `Thông báo` (bảng, bộ lọc, phân trang, loading/empty/error/success).
-  - [ ] **ST-P3-06** — Dựng `AdminUI` chi tiết `Thông báo` cơ bản (thông tin, `Trạng thái thông báo`, `Mã tương quan`, loading/empty/error/success).
-  - [ ] **ST-P3-07** — Hoàn thiện kiểm thử unit/integration/e2e liên quan tạo, idempotency, truy vấn và UI `Thông báo`.
+  - [x] **ST-P3-05** — Dựng `AdminUI` danh sách `Thông báo` (bảng, bộ lọc, phân trang, loading/empty/error/success).
+  - [x] **ST-P3-06** — Dựng `AdminUI` chi tiết `Thông báo` cơ bản (thông tin, `Trạng thái thông báo`, `Mã tương quan`, loading/empty/error/success).
+  - [x] **ST-P3-07** — Hoàn thiện kiểm thử unit/integration/e2e liên quan tạo, idempotency, truy vấn và UI `Thông báo`.
 
 ### Phase 4 — `IntegrationMessaging`: `TransactionalOutbox`, `OutboxMessage` & `RabbitMQ` publish
 - **Mục tiêu:** Bảo đảm tính nhất quán khi phát hành `Message` qua `RabbitMQ` bằng `TransactionalOutbox`/`OutboxMessage`.
@@ -192,10 +192,10 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 3 — Module `Notification`: `CreateNotificationRequest`, `IdempotencyKey` & tra cứu `Thông báo`.
-- **Story đang làm:** **ST-P3-05** — Dựng `AdminUI` danh sách `Thông báo` (bảng, bộ lọc, phân trang, loading/empty/error/success).
-- **Story tiếp theo đề xuất:** **ST-P3-06** — Dựng `AdminUI` chi tiết `Thông báo` cơ bản (thông tin, `Trạng thái thông báo`, `Mã tương quan`, loading/empty/error/success).
-- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận đã pass **unit + integration + e2e** liên quan; đã tick Done **ST-P3-03**, **ST-P3-04** (API tạo/truy vấn `Notification`, idempotency, lọc/phân trang theo quyền, refactor logic vào Application và các chỉnh sửa/chuẩn hóa liên quan). Chuyển sang **ST-P3-05**.
+- **Phase đang làm:** Phase 4 — `IntegrationMessaging`: `TransactionalOutbox`, `OutboxMessage` & `RabbitMQ` publish.
+- **Story đang làm:** **ST-P4-01** — Thiết kế/triển khai entity & persistence `OutboxMessage` và tích hợp ghi outbox trong cùng transaction DB với nghiệp vụ.
+- **Story tiếp theo đề xuất:** **ST-P4-02** — Cấu hình `RabbitMQ` topology MVP (`notifications.topic`, `notifications.email.q`, `notifications.inapp.q`, DLQ tương ứng, routing keys).
+- **Cập nhật lần cuối:** 2026-04-03 — Đại ca xác nhận đánh dấu hoàn thành **Phase 3**; đã tick Done **ST-P3-05**, **ST-P3-06**, **ST-P3-07** (AdminUI danh sách/chi tiết `Thông báo`, bổ sung spec test UI và rà soát test tạo/idempotency/truy vấn liên quan). Chuyển sang **Phase 4 / ST-P4-01**.
 
 ## 4. Deferred Work
 

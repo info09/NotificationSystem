@@ -4,15 +4,28 @@ using Recipient = global::Notification.Domain.Recipient;
 
 namespace Notification.Application.Notifications.CreateNotification;
 
+/// <summary>
+/// Use case xử lý tạo Thông báo.
+/// </summary>
 public sealed class CreateNotificationUseCase
 {
     private readonly INotificationRepository _notificationRepository;
 
+    /// <summary>
+    /// Khởi tạo use case với repository Thông báo.
+    /// </summary>
+    /// <param name="notificationRepository">Repository Thông báo.</param>
     public CreateNotificationUseCase(INotificationRepository notificationRepository)
     {
         _notificationRepository = notificationRepository;
     }
 
+    /// <summary>
+    /// Xử lý yêu cầu tạo Thông báo từ tầng Application.
+    /// </summary>
+    /// <param name="request">Yêu cầu tạo Thông báo.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả tạo Thông báo.</returns>
     public async Task<NotificationAppResult<CreateNotificationResponseDto>> HandleAsync(
         CreateNotificationAppRequest? request,
         CancellationToken cancellationToken)
@@ -94,6 +107,12 @@ public sealed class CreateNotificationUseCase
         }
     }
 
+    /// <summary>
+    /// Tạo Thông báo mới hoặc trả về Thông báo đã tồn tại theo idempotency.
+    /// </summary>
+    /// <param name="command">Lệnh tạo Thông báo.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả tạo Thông báo.</returns>
     private async Task<CreateNotificationResult> CreateAsync(CreateNotificationCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);

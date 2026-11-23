@@ -4,8 +4,16 @@ using Serilog.Context;
 
 namespace BuildingBlocks.Observability.Correlation;
 
+/// <summary>
+/// Middleware xử lý mã tương quan, mã thông điệp và mã truy vết cho mỗi HTTP request.
+/// </summary>
+/// <param name="next">Delegate tiếp theo trong pipeline.</param>
 public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
+    /// <summary>
+    /// Xử lý request, gán mã tương quan vào ngữ cảnh/log/response và chuyển tiếp pipeline.
+    /// </summary>
+    /// <param name="context">Ngữ cảnh HTTP hiện tại.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -59,6 +67,12 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
         }
     }
 
+    /// <summary>
+    /// Lấy giá trị header đầu tiên theo tên.
+    /// </summary>
+    /// <param name="context">Ngữ cảnh HTTP hiện tại.</param>
+    /// <param name="headerName">Tên header cần lấy.</param>
+    /// <returns>Giá trị header nếu có; ngược lại null.</returns>
     private static string? GetFirstHeaderValue(HttpContext context, string headerName)
     {
         if (!context.Request.Headers.TryGetValue(headerName, out var values))
@@ -70,6 +84,12 @@ public sealed class CorrelationIdMiddleware(RequestDelegate next)
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
+    /// <summary>
+    /// Đẩy thuộc tính vào ngữ cảnh log nếu giá trị không rỗng.
+    /// </summary>
+    /// <param name="propertyName">Tên thuộc tính log.</param>
+    /// <param name="value">Giá trị thuộc tính.</param>
+    /// <returns>Đối tượng disposable để hoàn tác ngữ cảnh log, hoặc null.</returns>
     private static IDisposable? PushPropertyIfNotEmpty(string propertyName, string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : LogContext.PushProperty(propertyName, value);

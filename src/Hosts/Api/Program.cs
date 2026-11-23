@@ -55,4 +55,7 @@ foreach (var module in app.Services.GetServices<IModuleInitializer>())
 
 app.Run();
 
+/// <summary>
+/// Điểm vào của ứng dụng API, dùng cho cấu hình host và kiểm thử tích hợp.
+/// </summary>
 public partial class Program { }

@@ -5,8 +5,15 @@ using Recipient = global::Notification.Domain.Recipient;
 
 namespace Notification.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Cấu hình ánh xạ EF Core cho thực thể Thông báo.
+/// </summary>
 public sealed class NotificationConfiguration : IEntityTypeConfiguration<DomainNotification>
 {
+    /// <summary>
+    /// Cấu hình bảng, cột, chuyển đổi và chỉ mục cho thực thể Thông báo.
+    /// </summary>
+    /// <param name="builder">Builder cấu hình thực thể.</param>
     public void Configure(EntityTypeBuilder<DomainNotification> builder)
     {
         builder.ToTable("Notifications");

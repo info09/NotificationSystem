@@ -5,10 +5,15 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Notification.Infrastructure.Persistence.Migrations
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Migration tạo bảng lưu trữ Thông báo cho module Notification.
+    /// </summary>
     public partial class AddNotifications : Migration
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Áp dụng migration tạo schema, bảng và chỉ mục cho Thông báo.
+        /// </summary>
+        /// <param name="migrationBuilder">Builder dùng để tạo thao tác migration.</param>
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
@@ -60,7 +65,10 @@ namespace Notification.Infrastructure.Persistence.Migrations
                 column: "CreatedAt");
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Hoàn tác migration bằng cách xóa bảng Thông báo.
+        /// </summary>
+        /// <param name="migrationBuilder">Builder dùng để tạo thao tác migration.</param>
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

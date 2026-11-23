@@ -5,8 +5,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace IdentityAccess.Presentation;
 
+/// <summary>
+/// Phương thức mở rộng đăng ký cấu hình phân quyền RBAC cho module IdentityAccess.
+/// </summary>
 public static class RbacAuthorizationExtensions
 {
+    /// <summary>
+    /// Đăng ký policy RBAC và các handler phân quyền.
+    /// </summary>
+    /// <param name="services">Tập hợp dịch vụ của ứng dụng.</param>
+    /// <returns>Tập hợp dịch vụ để chuỗi cấu hình.</returns>
     public static IServiceCollection AddIdentityAccessRbacAuthorization(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);

@@ -3,14 +3,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BuildingBlocks.Observability.DataContext;
 
+/// <summary>
+/// Phương thức mở rộng hỗ trợ thao tác DbContext dùng chung.
+/// </summary>
 public static class DbContextExtensions
 {
     /// <summary>
-    /// Applies any pending migrations to the database automatically.
-    /// Should be called after the app is built, before running.
+    /// Áp dụng các migration đang chờ cho cơ sở dữ liệu.
     /// </summary>
-    /// <param name="services">The service provider to resolve DbContext from.</param>
-    /// <typeparam name="TContext">The DbContext type, typically IdentityDbContext.</typeparam>
+    /// <typeparam name="TContext">Kiểu DbContext cần áp dụng migration.</typeparam>
+    /// <param name="services">Service provider dùng để tạo scope và resolve DbContext.</param>
     public static void ApplyMigrations<TContext>(this IServiceProvider services)
         where TContext : DbContext
     {

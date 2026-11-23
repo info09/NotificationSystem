@@ -8,8 +8,17 @@ using Notification.Application.Notifications.GetNotifications;
 
 namespace Notification.Infrastructure.Persistence;
 
+/// <summary>
+/// Phương thức mở rộng đăng ký persistence và use case cho module Notification.
+/// </summary>
 public static class NotificationPersistenceServiceCollectionExtensions
 {
+    /// <summary>
+    /// Đăng ký DbContext, repository và use case của module Notification.
+    /// </summary>
+    /// <param name="services">Tập hợp dịch vụ của ứng dụng.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
+    /// <returns>Tập hợp dịch vụ để chuỗi cấu hình.</returns>
     public static IServiceCollection AddNotificationPersistence(
         this IServiceCollection services,
         IConfiguration configuration)

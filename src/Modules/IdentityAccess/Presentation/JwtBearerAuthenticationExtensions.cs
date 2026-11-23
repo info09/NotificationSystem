@@ -7,8 +7,17 @@ using System.Text;
 
 namespace IdentityAccess.Presentation;
 
+/// <summary>
+/// Phương thức mở rộng cấu hình xác thực JWT Bearer cho module IdentityAccess.
+/// </summary>
 public static class JwtBearerAuthenticationExtensions
 {
+    /// <summary>
+    /// Đăng ký xác thực JWT Bearer và cấu hình kiểm tra token.
+    /// </summary>
+    /// <param name="services">Tập hợp dịch vụ của ứng dụng.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
+    /// <returns>Tập hợp dịch vụ để chuỗi cấu hình.</returns>
     public static IServiceCollection AddIdentityAccessJwtBearerAuthentication(
         this IServiceCollection services,
         IConfiguration configuration)

@@ -4,8 +4,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace IntegrationMessaging.Infrastructure.Persistence;
 
+/// <summary>
+/// Phương thức mở rộng đăng ký persistence cho module IntegrationMessaging.
+/// </summary>
 public static class IntegrationMessagingPersistenceServiceCollectionExtensions
 {
+    /// <summary>
+    /// Đăng ký DbContext và các thành phần persistence của module IntegrationMessaging.
+    /// </summary>
+    /// <param name="services">Tập hợp dịch vụ của ứng dụng.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
+    /// <returns>Tập hợp dịch vụ để chuỗi cấu hình.</returns>
     public static IServiceCollection AddIntegrationMessagingPersistence(
         this IServiceCollection services,
         IConfiguration configuration)

@@ -7,15 +7,23 @@ using NotificationStatus = global::Notification.Domain.NotificationStatus;
 
 namespace Notification.Infrastructure.Persistence;
 
+/// <summary>
+/// Repository triển khai truy cập dữ liệu Thông báo bằng EF Core.
+/// </summary>
 public sealed class NotificationRepository : RepositoryBase<DomainNotification>, INotificationRepository
 {
     private readonly NotificationDbContext _dbContext;
 
+    /// <summary>
+    /// Khởi tạo repository với <see cref="NotificationDbContext"/>.
+    /// </summary>
+    /// <param name="dbContext">DbContext của module Notification.</param>
     public NotificationRepository(NotificationDbContext dbContext) : base(dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <inheritdoc />
     public async Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(
         NotificationStatus? status,
         NotificationChannel? channel,
@@ -65,6 +73,7 @@ public sealed class NotificationRepository : RepositoryBase<DomainNotification>,
         return (items, totalCount);
     }
 
+    /// <inheritdoc />
     public async Task<DomainNotification?> GetByIdForScopeAsync(
         Guid id,
         string? scopeRestriction,

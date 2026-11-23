@@ -3,9 +3,17 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace IntegrationMessaging.Infrastructure.Persistence;
 
+/// <summary>
+/// Factory tạo <see cref="IntegrationMessagingDbContext"/> tại thời điểm thiết kế cho EF Core.
+/// </summary>
 public sealed class IntegrationMessagingDbContextFactory
     : IDesignTimeDbContextFactory<IntegrationMessagingDbContext>
 {
+    /// <summary>
+    /// Tạo DbContext dùng cho lệnh EF Core design-time.
+    /// </summary>
+    /// <param name="args">Tham số dòng lệnh.</param>
+    /// <returns>Đối tượng <see cref="IntegrationMessagingDbContext"/>.</returns>
     public IntegrationMessagingDbContext CreateDbContext(string[] args)
     {
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Database")

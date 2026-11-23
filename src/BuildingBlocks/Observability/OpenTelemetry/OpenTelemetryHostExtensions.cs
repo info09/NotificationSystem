@@ -8,11 +8,27 @@ using OpenTelemetry.Trace;
 
 namespace BuildingBlocks.Observability.OpenTelemetry;
 
+/// <summary>
+/// Phương thức mở rộng cấu hình OpenTelemetry cho ứng dụng.
+/// </summary>
 public static class OpenTelemetryHostExtensions
 {
+    /// <summary>
+    /// Tên nguồn hoạt động cho worker.
+    /// </summary>
     public const string WorkerActivitySourceName = "NotificationSystem.Worker";
+
+    /// <summary>
+    /// Tên nguồn hoạt động cho messaging.
+    /// </summary>
     public const string MessagingActivitySourceName = "NotificationSystem.Messaging";
 
+    /// <summary>
+    /// Đăng ký và cấu hình tracing/metrics OpenTelemetry theo cấu hình ứng dụng.
+    /// </summary>
+    /// <param name="builder">Builder của host ứng dụng.</param>
+    /// <param name="instrumentAspNetCore">Có bật instrumentation cho ASP.NET Core hay không.</param>
+    /// <returns>Builder để chuỗi cấu hình.</returns>
     public static IHostApplicationBuilder AddOpenTelemetryObservability(
         this IHostApplicationBuilder builder,
         bool instrumentAspNetCore = false)
@@ -92,6 +108,11 @@ public static class OpenTelemetryHostExtensions
         return builder;
     }
 
+    /// <summary>
+    /// Cấu hình exporter cho tracing.
+    /// </summary>
+    /// <param name="tracing">Builder cấu hình tracing.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
     private static void ConfigureTracingExporters(TracerProviderBuilder tracing, IConfiguration configuration)
     {
         var otlpEndpoint = configuration["OpenTelemetry:Exporter:Otlp:Endpoint"];
@@ -106,6 +127,11 @@ public static class OpenTelemetryHostExtensions
         }
     }
 
+    /// <summary>
+    /// Cấu hình exporter cho metrics.
+    /// </summary>
+    /// <param name="metrics">Builder cấu hình metrics.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
     private static void ConfigureMetricsExporters(MeterProviderBuilder metrics, IConfiguration configuration)
     {
         var otlpEndpoint = configuration["OpenTelemetry:Exporter:Otlp:Endpoint"];
@@ -120,6 +146,12 @@ public static class OpenTelemetryHostExtensions
         }
     }
 
+    /// <summary>
+    /// Cấu hình OTLP exporter theo endpoint và protocol.
+    /// </summary>
+    /// <param name="options">Tùy chọn OTLP exporter.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
+    /// <param name="endpoint">Endpoint OTLP.</param>
     private static void ConfigureOtlpExporter(OtlpExporterOptions options, IConfiguration configuration, string endpoint)
     {
         options.Endpoint = new Uri(endpoint);
@@ -131,6 +163,13 @@ public static class OpenTelemetryHostExtensions
         }
     }
 
+    /// <summary>
+    /// Đọc giá trị boolean từ cấu hình với giá trị mặc định.
+    /// </summary>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
+    /// <param name="key">Khóa cấu hình.</param>
+    /// <param name="defaultValue">Giá trị mặc định.</param>
+    /// <returns>Giá trị boolean đã được xác định.</returns>
     private static bool IsEnabled(IConfiguration configuration, string key, bool defaultValue)
     {
         var value = configuration[key];

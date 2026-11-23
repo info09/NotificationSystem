@@ -2,8 +2,14 @@ using BuildingBlocks.SharedKernel.Entity;
 
 namespace Notification.Domain;
 
+/// <summary>
+/// Thực thể domain đại diện cho Thông báo.
+/// </summary>
 public sealed class Notification : Entity
 {
+    /// <summary>
+    /// Khởi tạo thực thể Thông báo cho ORM.
+    /// </summary>
     private Notification()
     {
         Recipient = null!;
@@ -11,6 +17,18 @@ public sealed class Notification : Entity
         IdempotencyKey = string.Empty;
     }
 
+    /// <summary>
+    /// Khởi tạo thực thể Thông báo với đầy đủ dữ liệu.
+    /// </summary>
+    /// <param name="id">Mã định danh Thông báo.</param>
+    /// <param name="recipient">Người nhận Thông báo.</param>
+    /// <param name="channel">Kênh gửi Thông báo.</param>
+    /// <param name="status">Trạng thái Thông báo.</param>
+    /// <param name="content">Nội dung Thông báo.</param>
+    /// <param name="notificationTemplateId">Mã Mẫu thông báo liên kết.</param>
+    /// <param name="idempotencyScope">Phạm vi idempotency.</param>
+    /// <param name="idempotencyKey">Khóa idempotency.</param>
+    /// <param name="createdAt">Thời điểm tạo Thông báo.</param>
     private Notification(
         Guid id,
         Recipient recipient,
@@ -33,22 +51,58 @@ public sealed class Notification : Entity
         CreatedAt = createdAt;
     }
 
+    /// <summary>
+    /// Người nhận Thông báo.
+    /// </summary>
     public Recipient Recipient { get; private set; }
 
+    /// <summary>
+    /// Kênh gửi Thông báo.
+    /// </summary>
     public NotificationChannel Channel { get; private set; }
 
+    /// <summary>
+    /// Trạng thái hiện tại của Thông báo.
+    /// </summary>
     public NotificationStatus Status { get; private set; }
 
+    /// <summary>
+    /// Nội dung Thông báo.
+    /// </summary>
     public string? Content { get; private set; }
 
+    /// <summary>
+    /// Mã Mẫu thông báo liên kết.
+    /// </summary>
     public Guid? NotificationTemplateId { get; private set; }
 
+    /// <summary>
+    /// Phạm vi idempotency của yêu cầu tạo Thông báo.
+    /// </summary>
     public string IdempotencyScope { get; private set; }
 
+    /// <summary>
+    /// Khóa idempotency của yêu cầu tạo Thông báo.
+    /// </summary>
     public string IdempotencyKey { get; private set; }
 
+    /// <summary>
+    /// Thời điểm tạo Thông báo (UTC).
+    /// </summary>
     public DateTime CreatedAt { get; private set; }
 
+    /// <summary>
+    /// Tạo mới thực thể Thông báo ở trạng thái Chờ xử lý.
+    /// </summary>
+    /// <param name="id">Mã định danh Thông báo.</param>
+    /// <param name="recipient">Người nhận Thông báo.</param>
+    /// <param name="channel">Kênh gửi Thông báo.</param>
+    /// <param name="content">Nội dung Thông báo.</param>
+    /// <param name="notificationTemplateId">Mã Mẫu thông báo liên kết.</param>
+    /// <param name="idempotencyScope">Phạm vi idempotency.</param>
+    /// <param name="idempotencyKey">Khóa idempotency.</param>
+    /// <param name="createdAt">Thời điểm tạo, mặc định là UTC hiện tại.</param>
+    /// <returns>Thực thể Thông báo vừa được tạo.</returns>
     public static Notification Create(
         Guid id,
         Recipient recipient,
@@ -88,6 +142,9 @@ public sealed class Notification : Entity
             createdAt ?? DateTime.UtcNow);
     }
 
+    /// <summary>
+    /// Chuyển Thông báo sang trạng thái Đang xử lý.
+    /// </summary>
     public void MarkProcessing()
     {
         if (Status != NotificationStatus.Pending)
@@ -98,6 +155,9 @@ public sealed class Notification : Entity
         Status = NotificationStatus.Processing;
     }
 
+    /// <summary>
+    /// Chuyển Thông báo sang trạng thái Đã gửi.
+    /// </summary>
     public void MarkSent()
     {
         if (Status != NotificationStatus.Processing)
@@ -108,6 +168,9 @@ public sealed class Notification : Entity
         Status = NotificationStatus.Sent;
     }
 
+    /// <summary>
+    /// Chuyển Thông báo sang trạng thái Thất bại.
+    /// </summary>
     public void MarkFailed()
     {
         if (Status != NotificationStatus.Processing)

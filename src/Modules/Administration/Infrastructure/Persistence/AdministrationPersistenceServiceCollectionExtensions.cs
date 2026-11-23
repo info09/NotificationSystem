@@ -4,8 +4,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Administration.Infrastructure.Persistence;
 
+/// <summary>
+/// Phương thức mở rộng đăng ký persistence cho module Administration.
+/// </summary>
 public static class AdministrationPersistenceServiceCollectionExtensions
 {
+    /// <summary>
+    /// Đăng ký DbContext và các thành phần persistence của module Administration.
+    /// </summary>
+    /// <param name="services">Tập hợp dịch vụ của ứng dụng.</param>
+    /// <param name="configuration">Cấu hình ứng dụng.</param>
+    /// <returns>Tập hợp dịch vụ để chuỗi cấu hình.</returns>
     public static IServiceCollection AddAdministrationPersistence(
         this IServiceCollection services,
         IConfiguration configuration)

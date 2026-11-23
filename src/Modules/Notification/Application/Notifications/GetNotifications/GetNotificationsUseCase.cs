@@ -3,17 +3,30 @@ using NotificationStatus = global::Notification.Domain.NotificationStatus;
 
 namespace Notification.Application.Notifications.GetNotifications;
 
+/// <summary>
+/// Use case xử lý lấy danh sách Thông báo.
+/// </summary>
 public sealed class GetNotificationsUseCase
 {
     private const int MaxPageSize = 100;
 
     private readonly INotificationRepository _notificationRepository;
 
+    /// <summary>
+    /// Khởi tạo use case với repository Thông báo.
+    /// </summary>
+    /// <param name="notificationRepository">Repository Thông báo.</param>
     public GetNotificationsUseCase(INotificationRepository notificationRepository)
     {
         _notificationRepository = notificationRepository;
     }
 
+    /// <summary>
+    /// Xử lý yêu cầu lấy danh sách Thông báo có lọc và phân trang.
+    /// </summary>
+    /// <param name="request">Yêu cầu lấy danh sách Thông báo.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả danh sách Thông báo.</returns>
     public async Task<NotificationAppResult<GetNotificationsResponseDto>> HandleAsync(
         GetNotificationsAppRequest request,
         CancellationToken cancellationToken)
