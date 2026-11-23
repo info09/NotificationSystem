@@ -41,6 +41,7 @@ public static class DeliveryPersistenceServiceCollectionExtensions
                     .MigrationsHistoryTable("__EFMigrationsHistory", "delivery")));
 
         services.AddScoped<IInAppNotificationRepository, InAppNotificationRepository>();
+        services.AddScoped<IDeliveryLogRecorder, DeliveryLogRecorder>();
         services.AddScoped<GetInAppNotificationsUseCase>();
         services.AddScoped<GetInAppNotificationByIdUseCase>();
         services.AddScoped<GetUnreadInAppNotificationCountUseCase>();

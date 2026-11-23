@@ -193,9 +193,9 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 8 — `NotificationDeliveryLog`, `DeliveryAttempt` & truy vết.
-- **Story đang làm:** **ST-P8-01** — Thiết kế và triển khai domain `NotificationDeliveryLog` (thành công/thất bại, kênh, thời gian, lỗi).
-- **Story tiếp theo đề xuất:** **ST-P8-02** — Thiết kế và triển khai domain `DeliveryAttempt` gắn với `Notification`, `Retry`, `ExponentialBackoff`.
-- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 7**; đã tick Done **ST-P7-01**..**ST-P7-06**. Chuyển sang **Phase 8 / ST-P8-01**.
+- **Story đang làm:** **ST-P8-02** — Ghi nhận `DeliveryAttempt`/`NotificationDeliveryLog` trong luồng gửi, `Retry` và kết quả xử lý kênh (đã implement, chờ Đại ca xác nhận test pass để tick Done ST-P8-01/ST-P8-02).
+- **Story tiếp theo đề xuất:** **ST-P8-03** — Triển khai API truy vấn lịch sử/truy vết theo `Notification` (lọc/phân trang theo quyền, retention cấu hình).
+- **Cập nhật lần cuối:** 2026-11-23 — Đã implement ST-P8-01/ST-P8-02; chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
 
 ## 4. Deferred Work
 

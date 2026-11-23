@@ -119,7 +119,7 @@ public sealed class NotificationWorker : BackgroundService
         {
             try
             {
-                await TryProcessAsync(messageId, ea, cancellationToken);
+                await TryProcessAsync(messageId, ea, attempt + 1, cancellationToken);
                 await AckAsync(channel, ea.DeliveryTag, cancellationToken);
                 return;
             }
@@ -146,9 +146,10 @@ public sealed class NotificationWorker : BackgroundService
     /// </summary>
     /// <param name="messageId">Mã định danh Thông điệp.</param>
     /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <param name="attemptNumber">Số thứ tự lần thử xử lý.</param>
     /// <param name="cancellationToken">Token hủy thao tác.</param>
     /// <returns><c>true</c> nếu xử lý mới thành công; <c>false</c> nếu là bản ghi trùng.</returns>
-    private async Task<bool> TryProcessAsync(Guid messageId, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
+    private async Task<bool> TryProcessAsync(Guid messageId, BasicDeliverEventArgs ea, int attemptNumber, CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
@@ -179,14 +180,43 @@ public sealed class NotificationWorker : BackgroundService
         if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Processing)
         {
             var dispatcher = scope.ServiceProvider.GetRequiredService<INotificationChannelDispatcher>();
-            await dispatcher.DispatchAsync(
-                new NotificationChannelDispatchRequest(
-                    notification.Id,
-                    notification.Channel.ToString(),
-                    notification.Recipient.Value,
-                    notification.Content,
-                    notification.NotificationTemplateId),
-                cancellationToken);
+            var deliveryLogRecorder = scope.ServiceProvider.GetRequiredService<IDeliveryLogRecorder>();
+            try
+            {
+                await dispatcher.DispatchAsync(
+                    new NotificationChannelDispatchRequest(
+                        notification.Id,
+                        notification.Channel.ToString(),
+                        notification.Recipient.Value,
+                        notification.Content,
+                        notification.NotificationTemplateId),
+                    cancellationToken);
+
+                await deliveryLogRecorder.RecordAttemptAsync(
+                    new RecordDeliveryAttemptRequest(
+                        notification.Id,
+                        notification.Channel.ToString(),
+                        attemptNumber,
+                        Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Success,
+                        null,
+                        messageId.ToString(),
+                        DateTime.UtcNow),
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                await deliveryLogRecorder.RecordAttemptAsync(
+                    new RecordDeliveryAttemptRequest(
+                        notification.Id,
+                        notification.Channel.ToString(),
+                        attemptNumber,
+                        Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Failed,
+                        ex.Message,
+                        messageId.ToString(),
+                        DateTime.UtcNow),
+                    cancellationToken);
+                throw;
+            }
         }
 
         var eventType = ResolveEventType(ea);

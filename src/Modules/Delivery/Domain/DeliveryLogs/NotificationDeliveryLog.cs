@@ -117,4 +117,28 @@ public sealed class NotificationDeliveryLog : Entity
             string.IsNullOrWhiteSpace(correlationId) ? null : correlationId.Trim(),
             createdAtUtc ?? DateTime.UtcNow);
     }
+
+    /// <summary>
+    /// Cập nhật kết quả gửi gần nhất cho Nhật ký gửi thông báo.
+    /// </summary>
+    /// <param name="result">Kết quả gửi.</param>
+    /// <param name="errorMessage">Thông tin lỗi.</param>
+    /// <param name="retryCount">Số lần thử lại.</param>
+    /// <param name="correlationId">Mã tương quan.</param>
+    public void Update(
+        DeliveryAttemptResult result,
+        string? errorMessage,
+        int retryCount,
+        string? correlationId)
+    {
+        if (retryCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(retryCount), "Retry count must be greater than or equal to 0.");
+        }
+
+        Result = result;
+        ErrorMessage = string.IsNullOrWhiteSpace(errorMessage) ? null : errorMessage.Trim();
+        RetryCount = retryCount;
+        CorrelationId = string.IsNullOrWhiteSpace(correlationId) ? null : correlationId.Trim();
+    }
 }

@@ -263,6 +263,19 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         var inApp = await verifyDeliveryDbContext.InAppNotifications.AsNoTracking()
             .SingleAsync(x => x.NotificationId == notification.Id && x.RecipientUserId == "user-1");
         Assert.Equal(global::Delivery.Domain.InAppNotifications.ReadStatus.Unread, inApp.ReadStatus);
+
+        var attempt = await verifyDeliveryDbContext.DeliveryAttempts.AsNoTracking()
+            .SingleAsync(x => x.NotificationId == notification.Id);
+        Assert.Equal(1, attempt.AttemptNumber);
+        Assert.Equal(global::Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Success, attempt.Result);
+        Assert.Equal("InApp", attempt.Channel);
+        Assert.Equal(messageId.ToString(), attempt.CorrelationId);
+
+        var log = await verifyDeliveryDbContext.NotificationDeliveryLogs.AsNoTracking()
+            .SingleAsync(x => x.NotificationId == notification.Id && x.Channel == "InApp");
+        Assert.Equal(global::Delivery.Domain.DeliveryLogs.DeliveryAttemptResult.Success, log.Result);
+        Assert.Equal(0, log.RetryCount);
+        Assert.Equal(messageId.ToString(), log.CorrelationId);
     }
 
     [Fact]
