@@ -5,7 +5,6 @@ using IdentityAccess.Domain.IntegrationClientCredentials;
 using IdentityAccess.Domain.UserAccounts;
 using IdentityAccess.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,7 +43,6 @@ public class IdentityAccessModuleInitializer : IModuleInitializer
         var changed = false;
 
         var hasAdmin = dbContext.UserAccounts
-            .AsNoTracking()
             .Any(x => x.Role == UserRole.SystemAdministrator && x.Status != UserAccountStatus.Deleted);
 
         if (!hasAdmin)
@@ -61,7 +59,6 @@ public class IdentityAccessModuleInitializer : IModuleInitializer
         }
 
         var hasOperator = dbContext.UserAccounts
-            .AsNoTracking()
             .Any(x => x.UserName == "operator");
 
         if (!hasOperator)
@@ -79,7 +76,6 @@ public class IdentityAccessModuleInitializer : IModuleInitializer
 
         var integrationClientId = Guid.Parse("00000000-0000-0000-0000-000000000003");
         var hasIntegrationClient = dbContext.UserAccounts
-            .AsNoTracking()
             .Any(x => x.Id == integrationClientId);
 
         if (!hasIntegrationClient)
@@ -97,7 +93,6 @@ public class IdentityAccessModuleInitializer : IModuleInitializer
 
         const string devClientId = "dev-client-id";
         var hasCredential = dbContext.IntegrationClientCredentials
-            .AsNoTracking()
             .Any(x => x.ClientId == devClientId);
 
         if (!hasCredential)

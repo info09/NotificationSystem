@@ -73,7 +73,7 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
     /// Đọc và publish các bản ghi Outbox đang chờ.
     /// </summary>
     /// <param name="cancellationToken">Token hủy thao tác.</param>
-    internal async Task<int> PublishPendingMessagesAsync(CancellationToken cancellationToken)
+    public async Task<int> PublishPendingMessagesAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
@@ -140,7 +140,7 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
     /// <param name="retryCount">Số lần thử thất bại sau khi cập nhật.</param>
     /// <param name="attemptedAtUtc">Thời điểm thử hiện tại (UTC).</param>
     /// <returns>Thời điểm thử lại tiếp theo (UTC).</returns>
-    internal static DateTime CalculateNextAttemptAtUtc(int retryCount, DateTime attemptedAtUtc)
+    public static DateTime CalculateNextAttemptAtUtc(int retryCount, DateTime attemptedAtUtc)
     {
         var exponent = Math.Clamp(retryCount - 1, 0, 10);
         var delaySeconds = BaseRetryDelay.TotalSeconds * Math.Pow(2, exponent);
@@ -153,7 +153,7 @@ public sealed class OutboxPublisherBackgroundService : BackgroundService
     /// </summary>
     /// <param name="message">Bản ghi Outbox.</param>
     /// <returns>Routing key hoặc null nếu không xác định được.</returns>
-    internal static string? ResolveRoutingKey(OutboxMessage message)
+    public static string? ResolveRoutingKey(OutboxMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
 

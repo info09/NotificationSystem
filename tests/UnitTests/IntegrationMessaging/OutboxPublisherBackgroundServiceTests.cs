@@ -1,5 +1,5 @@
 using IntegrationMessaging.Domain;
-using Worker;
+using Worker.Outbox;
 
 namespace UnitTests.IntegrationMessaging;
 

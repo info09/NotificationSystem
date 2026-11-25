@@ -1,3 +1,4 @@
+using IdentityAccess.Application;
 using IdentityAccess.Application.Abstractions;
 using IdentityAccess.Application.UserAccounts;
 using IdentityAccess.Domain.UserAccounts;
@@ -19,7 +20,7 @@ public sealed class CreateUserAccountUseCaseTests
 
         var result = await useCase.HandleAsync(request, CancellationToken.None);
 
-        Assert.Equal(IdentityAccess.Application.IdentityAccessAppStatus.Created, result.Status);
+        Assert.Equal(IdentityAccessAppStatus.Created, result.Status);
         Assert.NotNull(result.Value);
         Assert.Equal("admin1", result.Value!.UserName);
         Assert.Equal("SystemAdministrator", result.Value.Role);
@@ -36,7 +37,7 @@ public sealed class CreateUserAccountUseCaseTests
 
         var result = await useCase.HandleAsync(request, CancellationToken.None);
 
-        Assert.Equal(IdentityAccess.Application.IdentityAccessAppStatus.ValidationError, result.Status);
+        Assert.Equal(IdentityAccessAppStatus.ValidationError, result.Status);
         Assert.NotNull(result.ValidationErrors);
         Assert.Contains("password", result.ValidationErrors!.Keys);
     }
@@ -50,7 +51,7 @@ public sealed class CreateUserAccountUseCaseTests
 
         var result = await useCase.HandleAsync(request, CancellationToken.None);
 
-        Assert.Equal(IdentityAccess.Application.IdentityAccessAppStatus.Conflict, result.Status);
+        Assert.Equal(IdentityAccessAppStatus.Conflict, result.Status);
     }
 
     [Fact]
@@ -62,7 +63,7 @@ public sealed class CreateUserAccountUseCaseTests
 
         var result = await useCase.HandleAsync(request, CancellationToken.None);
 
-        Assert.Equal(IdentityAccess.Application.IdentityAccessAppStatus.Created, result.Status);
+        Assert.Equal(IdentityAccessAppStatus.Created, result.Status);
         Assert.Null(repository.AddedAccount!.PasswordHash);
     }
 
