@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
@@ -5,7 +6,7 @@ import { AuthService } from '../auth/auth.service';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <div class="layout">
       <header class="header">
@@ -15,6 +16,7 @@ import { AuthService } from '../auth/auth.service';
             <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tổng quan</a>
             <a routerLink="/notifications" routerLinkActive="active">Thông báo</a>
             <a routerLink="/dead-letter-queues" routerLinkActive="active">Hàng đợi thư chết</a>
+            <a *ngIf="authService.isSystemAdministrator()" routerLink="/user-accounts" routerLinkActive="active">Tài khoản người dùng</a>
           </nav>
         </div>
         <button type="button" class="logout-button" (click)="onLogout()">Đăng xuất</button>
@@ -41,7 +43,7 @@ import { AuthService } from '../auth/auth.service';
   `]
 })
 export class MainLayoutComponent {
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   onLogout(): void {

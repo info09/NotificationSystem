@@ -4,6 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { LoginRequest, LoginResponse } from './auth.models';
 
 const ACCESS_TOKEN_STORAGE_KEY = 'adminui.access_token';
+const ROLE_CLAIM_KEYS = ['role', 'roles', 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -29,5 +30,53 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return !!this.getAccessToken();
+  }
+
+  getRoles(): string[] {
+    const token = this.getAccessToken();
+    if (!token) {
+      return [];
+    }
+
+    const payload = this.decodePayload(token);
+    if (!payload) {
+      return [];
+    }
+
+    for (const key of ROLE_CLAIM_KEYS) {
+      const value = payload[key];
+      if (typeof value === 'string' && value.trim()) {
+        return [value];
+      }
+      if (Array.isArray(value)) {
+        return value.filter((item): item is string => typeof item === 'string' && !!item.trim());
+      }
+    }
+
+    return [];
+  }
+
+  hasRole(role: string): boolean {
+    return this.getRoles().some((item) => item.toLowerCase() === role.toLowerCase());
+  }
+
+  isSystemAdministrator(): boolean {
+    return this.hasRole('SystemAdministrator');
+  }
+
+  private decodePayload(token: string): Record<string, unknown> | null {
+    const parts = token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+
+    try {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+      const json = atob(padded);
+      return JSON.parse(json) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
   }
 }

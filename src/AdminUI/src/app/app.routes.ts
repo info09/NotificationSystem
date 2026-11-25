@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
+import { systemAdminGuard } from './core/auth/system-admin.guard';
 
 export const routes: Routes = [
   {
@@ -39,6 +40,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dead-letter-queue/dead-letter-queue-list.component').then(
             (m) => m.DeadLetterQueueListComponent
+          )
+      },
+      {
+        path: 'user-accounts',
+        canActivate: [systemAdminGuard],
+        loadComponent: () =>
+          import('./features/user-accounts/user-accounts.component').then(
+            (m) => m.UserAccountsComponent
           )
       },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }

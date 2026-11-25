@@ -298,6 +298,17 @@ export class DeadLetterQueueListComponent implements OnInit {
   }
 
   /**
+   * Bật/tắt hiển thị chi tiết Thông điệp DLQ.
+   * @param item Thông điệp DLQ.
+   */
+  toggleDetail(item: DeadLetterQueueMessage): void {
+    const messageId = item.messageId || null;
+    this.selectedMessageId = this.selectedMessageId === messageId ? null : messageId;
+    this.resendSuccessMessage = '';
+    this.resendErrorMessage = '';
+  }
+
+  /**
    * Mở modal xác nhận Gửi lại.
    * @param item Thông điệp DLQ.
    */
