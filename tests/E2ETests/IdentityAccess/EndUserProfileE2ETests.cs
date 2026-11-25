@@ -1,19 +1,20 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Claims;
-using System.Text;
 using Delivery.Infrastructure.Persistence;
 using IdentityAccess.Domain;
 using IdentityAccess.Infrastructure.Persistence;
 using IntegrationMessaging.Infrastructure.Persistence;
+using IntegrationTests;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Notification.Infrastructure.Persistence;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text;
 using Testcontainers.PostgreSql;
 
 namespace E2ETests.IdentityAccess;

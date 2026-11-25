@@ -6,7 +6,7 @@ namespace IdentityAccess.Application.UserAccounts;
 /// <summary>
 /// Cung cấp hàm băm xác định cho Mã đặt lại mật khẩu.
 /// </summary>
-internal static class PasswordResetTokenHashing
+public static class PasswordResetTokenHashing
 {
     /// <summary>
     /// Tạo giá trị băm SHA256 cho token.
