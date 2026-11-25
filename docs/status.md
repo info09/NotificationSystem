@@ -181,23 +181,23 @@
 - **FR/NFR liên quan:** Bổ sung phạm vi PRD (quản lý user/credential, phát `JWT`, đặt lại mật khẩu, hồ sơ `EndUser`); FR-01, FR-15, FR-16, NFR-05, NFR-06, NFR-07.
 - **UI (theo `docs/ux.md`, bổ sung):** `Đăng nhập` / `Login` (credential nội bộ), quên/đặt lại mật khẩu, quản trị tài khoản & vai trò, quản trị `IntegrationClient` (client credentials), quản trị hồ sơ `EndUser`.
 - **Stories:**
-  - [ ] **ST-P13-01** — Cập nhật tài liệu liên quan (`docs/prd.md`, `docs/domain-glossary.md`, `docs/architecture.md`, `docs/ux.md`, `docs/deploy.md`, `docs/decisions.md`) và thiết kế/lập schema & migration trong module `IdentityAccess` cho tài khoản/vai trò, credential, client credentials `IntegrationClient`, `PasswordResetToken`, và hồ sơ `EndUser` (khóa theo định danh hệ thống nguồn).
-  - [ ] **ST-P13-02** — Triển khai quản trị tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient`: tạo/sửa/khóa/mở khóa/xóa (theo chính sách), gán vai trò, lưu mật khẩu/secret an toàn (hash) và API bảo vệ `RBAC`.
-  - [ ] **ST-P13-03** — Triển khai quản lý client credentials cho `IntegrationClient` (cấp/rotate/vô hiệu hóa, không lộ secret sau khi tạo) và endpoint client credentials để phát `JwtBearer` theo cấu hình hiện có.
-  - [ ] **ST-P13-04** — Triển khai đăng nhập `AdminUI` bằng credential nội bộ (xác thực, phát `JWT`, claims/role) và tích hợp với `Đăng xuất`/guard/điều hướng hiện có.
-  - [ ] **ST-P13-05** — Triển khai luồng tự đặt lại mật khẩu: yêu cầu reset, tạo token/link một lần có hạn, gửi email, xác nhận và cập nhật mật khẩu; xử lý bảo mật cơ bản (không lộ thông tin nhạy cảm, chống lạm dụng ở mức khả thi).
-  - [ ] **ST-P13-06** — Triển khai quản lý hồ sơ `EndUser` (tạo/sửa/khóa/mở khóa, tra cứu theo định danh nguồn) và contract/port để module `Notification`/`InAppNotification` tham chiếu theo nghiệp vụ.
-  - [ ] **ST-P13-07** — Dựng `AdminUI` quản trị tài khoản & `IntegrationClient` (danh sách, tạo/sửa, khóa/xóa, gán vai trò, quản lý client credentials) theo `RBAC`, gồm trạng thái loading/empty/error/success.
-  - [ ] **ST-P13-08** — Dựng `AdminUI` luồng quên/đặt lại mật khẩu và màn hình quản lý hồ sơ `EndUser` (loading/empty/error/success).
-  - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
+  - [x] **ST-P13-01** — Cập nhật tài liệu liên quan (`docs/prd.md`, `docs/domain-glossary.md`, `docs/architecture.md`, `docs/ux.md`, `docs/deploy.md`, `docs/decisions.md`) và thiết kế/lập schema & migration trong module `IdentityAccess` cho tài khoản/vai trò, credential, client credentials `IntegrationClient`, `PasswordResetToken`, và hồ sơ `EndUser` (khóa theo định danh hệ thống nguồn).
+  - [x] **ST-P13-02** — Triển khai quản trị tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient`: tạo/sửa/khóa/mở khóa/xóa (theo chính sách), gán vai trò, lưu mật khẩu/secret an toàn (hash) và API bảo vệ `RBAC`.
+  - [x] **ST-P13-03** — Triển khai quản lý client credentials cho `IntegrationClient` (cấp/rotate/vô hiệu hóa, không lộ secret sau khi tạo) và endpoint client credentials để phát `JwtBearer` theo cấu hình hiện có.
+  - [x] **ST-P13-04** — Triển khai đăng nhập `AdminUI` bằng credential nội bộ (xác thực, phát `JWT`, claims/role) và tích hợp với `Đăng xuất`/guard/điều hướng hiện có.
+  - [x] **ST-P13-05** — Triển khai luồng tự đặt lại mật khẩu: yêu cầu reset, tạo token/link một lần có hạn, gửi email, xác nhận và cập nhật mật khẩu; xử lý bảo mật cơ bản (không lộ thông tin nhạy cảm, chống lạm dụng ở mức khả thi).
+  - [x] **ST-P13-06** — Triển khai quản lý hồ sơ `EndUser` (tạo/sửa/khóa/mở khóa, tra cứu theo định danh nguồn) và contract/port để module `Notification`/`InAppNotification` tham chiếu theo nghiệp vụ.
+  - [x] **ST-P13-07** — Dựng `AdminUI` quản trị tài khoản & `IntegrationClient` (danh sách, tạo/sửa, khóa/xóa, gán vai trò, quản lý client credentials) theo `RBAC`, gồm trạng thái loading/empty/error/success.
+  - [x] **ST-P13-08** — Dựng `AdminUI` luồng quên/đặt lại mật khẩu và màn hình quản lý hồ sơ `EndUser` (loading/empty/error/success).
+  - [x] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 13 — Quản lý user & credential (`IdentityAccess`, `EndUser`) (được Đại ca ưu tiên làm trước Phase 9).
-- **Story đang làm:** **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT`, reset mật khẩu, hồ sơ `EndUser` và UI tương ứng (đã bổ sung test, chờ Đại ca xác nhận test pass để tick Done).
-- **Story tiếp theo đề xuất:** Không còn story mở trong Phase 13; chờ Đại ca xác nhận test pass để tick Done các story P13.
-- **Chờ xác nhận test pass:** **ST-P13-01**, **ST-P13-02**, **ST-P13-03**, **ST-P13-04**, **ST-P13-05**, **ST-P13-06**, **ST-P13-07**, **ST-P13-08** (đã implement).
+- **Phase đang làm:** Phase 13 hoàn thành (Đại ca xác nhận). Phase tiếp theo theo roadmap: quay lại **Phase 9 / ST-P9-01** (đang tạm hoãn theo chỉ đạo trước đó).
+- **Story đang làm:** Không có story đang mở trong Phase 13.
+- **Story tiếp theo đề xuất:** **ST-P9-01** — Chuẩn hóa `ProblemDetails`, mã lỗi nghiệp vụ và hợp đồng lỗi cho các endpoint chính.
+- **Chờ xác nhận test pass:** Không có.
 - **Tạm hoãn song song:** Phase 9 / **ST-P9-01** (chờ quay lại sau Phase 13 theo chỉ đạo của Đại ca).
-- **Cập nhật lần cuối:** 2026-11-25 — Đã bổ sung ST-P13-09 (E2E: `PasswordResetE2ETests`, `UserAccountManagementE2ETests`; rà soát coverage unit/integration/e2e cho user/credential/JWT/login/reset/EndUserProfile và AdminUI specs). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận pass liên quan.
+- **Cập nhật lần cuối:** 2026-11-25 — Đại ca xác nhận đánh dấu Done Phase 13 (ST-P13-01..ST-P13-09).
 
 ## 4. Deferred Work
 
