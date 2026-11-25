@@ -46,6 +46,14 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
             .WithTags("IdentityAccess")
             .AllowAnonymous();
 
+        endpoints.MapPost("/api/auth/password-reset/request", HandleRequestPasswordResetAsync)
+            .WithTags("IdentityAccess")
+            .AllowAnonymous();
+
+        endpoints.MapPost("/api/auth/password-reset/confirm", HandleConfirmPasswordResetAsync)
+            .WithTags("IdentityAccess")
+            .AllowAnonymous();
+
         return endpoints;
     }
 
@@ -291,6 +299,44 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu gửi email đặt lại mật khẩu.
+    /// </summary>
+    /// <param name="request">Yêu cầu đặt lại mật khẩu.</param>
+    /// <param name="useCase">Use case yêu cầu đặt lại mật khẩu.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleRequestPasswordResetAsync(
+        RequestPasswordResetRequest? request,
+        RequestPasswordResetUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new RequestPasswordResetAppRequest(request.Identifier);
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu xác nhận đặt lại mật khẩu.
+    /// </summary>
+    /// <param name="request">Yêu cầu xác nhận đặt lại mật khẩu.</param>
+    /// <param name="useCase">Use case xác nhận đặt lại mật khẩu.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleConfirmPasswordResetAsync(
+        ConfirmPasswordResetRequest? request,
+        ConfirmPasswordResetUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new ConfirmPasswordResetAppRequest(request.Token, request.NewPassword);
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
     /// Tạo ngữ cảnh người gọi từ claims.
     /// </summary>
     /// <param name="user">Thông tin người dùng hiện tại.</param>
@@ -386,3 +432,16 @@ public sealed record IssueClientCredentialsTokenRequest(
 public sealed record LoginRequest(
     string? UserName,
     string? Password);
+
+/// <summary>
+/// Yêu cầu gửi email đặt lại mật khẩu.
+/// </summary>
+/// <param name="Identifier">Email hoặc tên đăng nhập.</param>
+public sealed record RequestPasswordResetRequest(string? Identifier);
+
+/// <summary>
+/// Yêu cầu xác nhận đặt lại mật khẩu.
+/// </summary>
+/// <param name="Token">Token đặt lại mật khẩu.</param>
+/// <param name="NewPassword">Mật khẩu mới.</param>
+public sealed record ConfirmPasswordResetRequest(string? Token, string? NewPassword);

@@ -141,3 +141,28 @@ public sealed record LoginAppRequest(string? UserName, string? Password);
 /// <param name="TokenType">Loại token.</param>
 /// <param name="ExpiresIn">Thời gian hết hạn tính theo giây.</param>
 public sealed record LoginResponse(string AccessToken, string TokenType, int ExpiresIn);
+
+/// <summary>
+/// Yêu cầu gửi email đặt lại mật khẩu.
+/// </summary>
+/// <param name="Identifier">Email hoặc tên đăng nhập.</param>
+public sealed record RequestPasswordResetAppRequest(string? Identifier);
+
+/// <summary>
+/// Phản hồi yêu cầu đặt lại mật khẩu.
+/// </summary>
+/// <param name="Accepted">Trạng thái đã tiếp nhận yêu cầu.</param>
+public sealed record RequestPasswordResetResponse(bool Accepted);
+
+/// <summary>
+/// Yêu cầu xác nhận đặt lại mật khẩu.
+/// </summary>
+/// <param name="Token">Token đặt lại mật khẩu.</param>
+/// <param name="NewPassword">Mật khẩu mới.</param>
+public sealed record ConfirmPasswordResetAppRequest(string? Token, string? NewPassword);
+
+/// <summary>
+/// Phản hồi xác nhận đặt lại mật khẩu.
+/// </summary>
+/// <param name="Reset">Trạng thái đặt lại mật khẩu.</param>
+public sealed record ConfirmPasswordResetResponse(bool Reset);

@@ -82,6 +82,7 @@ public sealed class CreateUserAccountUseCaseTests
 
         public Task<UserAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult<UserAccount?>(null);
         public Task<UserAccount?> GetByUserNameAsync(string userName, CancellationToken cancellationToken) => Task.FromResult<UserAccount?>(null);
+        public Task<UserAccount?> GetByEmailAsync(string email, CancellationToken cancellationToken) => Task.FromResult<UserAccount?>(null);
         public Task<(IReadOnlyList<UserAccount> Items, int TotalCount)> GetPagedAsync(UserAccountStatus? status, UserRole? role, int page, int pageSize, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<UserAccount>)Array.Empty<UserAccount>(), 0));
         public Task<bool> ExistsByUserNameAsync(string userName, Guid? excludeId, CancellationToken cancellationToken) => Task.FromResult(UserNameExists);
         public Task<bool> ExistsByEmailAsync(string email, Guid? excludeId, CancellationToken cancellationToken) => Task.FromResult(EmailExists);

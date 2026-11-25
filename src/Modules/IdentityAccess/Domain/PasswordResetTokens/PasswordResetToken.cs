@@ -95,4 +95,31 @@ public sealed class PasswordResetToken : Entity
             null,
             createdAtUtc ?? DateTime.UtcNow);
     }
+
+    /// <summary>
+    /// Kiểm tra token đã hết hạn hay chưa.
+    /// </summary>
+    /// <param name="utcNow">Thời điểm hiện tại UTC.</param>
+    /// <returns><c>true</c> nếu đã hết hạn; ngược lại <c>false</c>.</returns>
+    public bool IsExpired(DateTime utcNow) => utcNow >= ExpiresAtUtc;
+
+    /// <summary>
+    /// Kiểm tra token đã được sử dụng hay chưa.
+    /// </summary>
+    /// <returns><c>true</c> nếu đã sử dụng; ngược lại <c>false</c>.</returns>
+    public bool IsUsed() => UsedAtUtc.HasValue;
+
+    /// <summary>
+    /// Đánh dấu token đã được sử dụng.
+    /// </summary>
+    /// <param name="usedAtUtc">Thời điểm sử dụng.</param>
+    public void MarkUsed(DateTime? usedAtUtc = null)
+    {
+        if (UsedAtUtc.HasValue)
+        {
+            return;
+        }
+
+        UsedAtUtc = usedAtUtc ?? DateTime.UtcNow;
+    }
 }

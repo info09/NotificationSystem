@@ -34,6 +34,13 @@ public sealed class UserAccountRepository : IUserAccountRepository
     }
 
     /// <inheritdoc />
+    public async Task<UserAccount?> GetByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        var normalized = email.Trim();
+        return await _dbContext.UserAccounts.FirstOrDefaultAsync(x => x.Email == normalized, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<(IReadOnlyList<UserAccount> Items, int TotalCount)> GetPagedAsync(
         UserAccountStatus? status,
         UserRole? role,

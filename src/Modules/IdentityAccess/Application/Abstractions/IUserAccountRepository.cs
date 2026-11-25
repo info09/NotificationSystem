@@ -24,6 +24,14 @@ public interface IUserAccountRepository
     Task<UserAccount?> GetByUserNameAsync(string userName, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Lấy Tài khoản người dùng theo email.
+    /// </summary>
+    /// <param name="email">Email.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Tài khoản người dùng hoặc <c>null</c>.</returns>
+    Task<UserAccount?> GetByEmailAsync(string email, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Lấy danh sách Tài khoản người dùng có phân trang.
     /// </summary>
     /// <param name="status">Trạng thái cần lọc.</param>
