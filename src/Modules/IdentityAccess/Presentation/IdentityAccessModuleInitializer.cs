@@ -1,7 +1,10 @@
 ﻿using BuildingBlocks.Observability;
 using BuildingBlocks.Observability.DataContext;
+using IdentityAccess.Application.Abstractions;
+using IdentityAccess.Domain.UserAccounts;
 using IdentityAccess.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,7 +26,41 @@ public class IdentityAccessModuleInitializer : IModuleInitializer
         if (env.IsDevelopment())
         {
             app.ApplyMigrations<IdentityAccessDbContext>();
+            SeedDevelopmentData(app);
         }
+    }
+
+    /// <summary>
+    /// Seed dữ liệu phát triển mặc định cho module IdentityAccess.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider của ứng dụng.</param>
+    private static void SeedDevelopmentData(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IdentityAccessDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<ICredentialHasher>();
+
+        var hasAdmin = dbContext.UserAccounts
+            .AsNoTracking()
+            .Any(x => x.Role == UserRole.SystemAdministrator && x.Status != UserAccountStatus.Deleted);
+
+        if (hasAdmin)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var admin = UserAccount.Create(
+            Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            "admin",
+            "admin@local.dev",
+            "System Administrator",
+            UserRole.SystemAdministrator,
+            hasher.Hash("Admin@123"),
+            now);
+
+        dbContext.UserAccounts.Add(admin);
+        dbContext.SaveChanges();
     }
 
     /// <summary>
