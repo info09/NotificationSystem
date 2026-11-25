@@ -137,7 +137,7 @@
 - **Stories:**
   - [ ] **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
   - [ ] **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success). (đã implement, chờ Đại ca xác nhận test pass)
-  - [ ] **ST-P9-03** — Chuẩn hóa component/pattern UI (table, filter, modal, toast, empty state, skeleton, badge trạng thái) theo `docs/ux.md`.
+  - [ ] **ST-P9-03** — Chuẩn hóa component/pattern UI (table, filter, modal, toast, empty state, skeleton, badge trạng thái) theo `docs/ux.md`. (đã implement, chờ Đại ca xác nhận test pass)
   - [ ] **ST-P9-04** — Chuẩn hóa thuật ngữ hiển thị theo `docs/domain-glossary.md` và responsive tối thiểu trên các màn hình `AdminUI` MVP.
   - [ ] **ST-P9-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `Tổng quan` và trải nghiệm vận hành.
 
@@ -195,11 +195,11 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 9 — `AdminUI` `Tổng quan` (`Dashboard`) & hoàn thiện vận hành.
-- **Story đang làm:** **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success) (đã implement, chờ Đại ca xác nhận test pass).
+- **Story đang làm:** **ST-P9-03** — Chuẩn hóa component/pattern UI (table, filter, modal, toast, empty state, skeleton, badge trạng thái) theo `docs/ux.md` (đã implement, chờ Đại ca xác nhận test pass).
 - **Story tiếp theo đề xuất:** **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
-- **Chờ xác nhận test pass:** **ST-P9-02**, **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
+- **Chờ xác nhận test pass:** **ST-P9-02**, **ST-P9-03**, **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
 - **Tạm hoãn song song:** Không có.
-- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P9-02 Dashboard AdminUI (thẻ tổng hợp trạng thái thông báo, DLQ, health readiness; lối tắt/làm mới; loading/empty/error/success theo khối; thêm proxy `/health`; hỗ trợ query param lọc notifications). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận unit/integration/e2e liên quan pass.
+- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P9-03 (tạo shared UI components: `status-badge`, `empty-state`, `error-state`, `loading-skeleton`, `ui-modal`, `toast` service/container; thêm base style `styles.css`; refactor dashboard, notifications-list, dead-letter-queue-list dùng pattern chung). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận unit/integration/e2e liên quan pass.
 
 ## 4. Deferred Work
 

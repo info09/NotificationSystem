@@ -6,6 +6,9 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, map } from 'rxjs/operators';
 import { DeadLetterQueueService } from '../../core/dead-letter-queue/dead-letter-queue.service';
 import { NotificationService } from '../../core/notifications/notification.service';
+import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
+import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
 
 type BlockState = 'loading' | 'success' | 'empty' | 'error';
 
@@ -25,7 +28,7 @@ interface DlqSummaryItem {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent],
   template: `
     <section class="page" aria-labelledby="dashboard-title">
       <header class="page-header">
@@ -46,19 +49,9 @@ interface DlqSummaryItem {
             <a routerLink="/notifications" class="link">Xem Thông báo</a>
           </div>
 
-          <div *ngIf="notificationsState === 'loading'" class="skeleton-grid" aria-busy="true" aria-live="polite">
-            <div class="skeleton card-skeleton" *ngFor="let item of skeletonCards"></div>
-          </div>
-
-          <div *ngIf="notificationsState === 'error'" class="status-box status-error" role="alert">
-            <p>{{ notificationsError }}</p>
-            <button type="button" class="secondary" (click)="loadNotificationSummary()">Thử lại</button>
-          </div>
-
-          <div *ngIf="notificationsState === 'empty'" class="status-box status-empty">
-            <h3>Chưa có dữ liệu</h3>
-            <p>Chưa có Thông báo trong hệ thống.</p>
-          </div>
+          <app-loading-skeleton *ngIf="notificationsState === 'loading'" [rows]="4" variant="card"></app-loading-skeleton>
+          <app-error-state *ngIf="notificationsState === 'error'" [message]="notificationsError" (retry)="loadNotificationSummary()"></app-error-state>
+          <app-empty-state *ngIf="notificationsState === 'empty'" title="Chưa có dữ liệu" description="Chưa có Thông báo trong hệ thống."></app-empty-state>
 
           <div *ngIf="notificationsState === 'success'" class="summary-cards">
             <a
@@ -83,19 +76,9 @@ interface DlqSummaryItem {
             <a routerLink="/dead-letter-queues" class="link">Xem DLQ</a>
           </div>
 
-          <div *ngIf="dlqState === 'loading'" class="skeleton-grid" aria-busy="true" aria-live="polite">
-            <div class="skeleton card-skeleton" *ngFor="let item of [1, 2]"></div>
-          </div>
-
-          <div *ngIf="dlqState === 'error'" class="status-box status-error" role="alert">
-            <p>{{ dlqError }}</p>
-            <button type="button" class="secondary" (click)="loadDlqSummary()">Thử lại</button>
-          </div>
-
-          <div *ngIf="dlqState === 'empty'" class="status-box status-empty">
-            <h3>Chưa có dữ liệu</h3>
-            <p>Không có dữ liệu Hàng đợi thư chết.</p>
-          </div>
+          <app-loading-skeleton *ngIf="dlqState === 'loading'" [rows]="2" variant="card"></app-loading-skeleton>
+          <app-error-state *ngIf="dlqState === 'error'" [message]="dlqError" (retry)="loadDlqSummary()"></app-error-state>
+          <app-empty-state *ngIf="dlqState === 'empty'" title="Chưa có dữ liệu" description="Không có dữ liệu Hàng đợi thư chết."></app-empty-state>
 
           <div *ngIf="dlqState === 'success'" class="summary-cards">
             <a
@@ -123,20 +106,9 @@ interface DlqSummaryItem {
             </div>
           </div>
 
-          <div *ngIf="healthState === 'loading'" class="skeleton-list" aria-busy="true" aria-live="polite">
-            <div class="skeleton line-skeleton"></div>
-            <div class="skeleton line-skeleton short"></div>
-          </div>
-
-          <div *ngIf="healthState === 'error'" class="status-box status-error" role="alert">
-            <p>{{ healthError }}</p>
-            <button type="button" class="secondary" (click)="loadHealth()">Thử lại</button>
-          </div>
-
-          <div *ngIf="healthState === 'empty'" class="status-box status-empty">
-            <h3>Chưa có dữ liệu</h3>
-            <p>Không nhận được dữ liệu Kiểm tra sức khỏe.</p>
-          </div>
+          <app-loading-skeleton *ngIf="healthState === 'loading'" [rows]="2" variant="line"></app-loading-skeleton>
+          <app-error-state *ngIf="healthState === 'error'" [message]="healthError" (retry)="loadHealth()"></app-error-state>
+          <app-empty-state *ngIf="healthState === 'empty'" title="Chưa có dữ liệu" description="Không nhận được dữ liệu Kiểm tra sức khỏe."></app-empty-state>
 
           <div *ngIf="healthState === 'success'" class="health-block">
             <div class="health-status" [ngClass]="healthToneClass">
@@ -170,24 +142,9 @@ interface DlqSummaryItem {
     .tone-info { border-color: #93c5fd; background: #eff6ff; }
     .tone-success { border-color: #86efac; background: #f0fdf4; }
     .tone-danger { border-color: #fca5a5; background: #fef2f2; }
-    .status-box { border-radius: 8px; padding: 16px; }
-    .status-box h3 { margin: 0 0 4px; font-size: 16px; }
-    .status-box p { margin: 0 0 12px; font-size: 14px; }
-    .status-box p:last-child { margin-bottom: 0; }
-    .status-error { background: #fee2e2; color: #991b1b; }
-    .status-empty { background: #f1f5f9; color: #475569; }
-    .primary, .secondary { border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; border: 1px solid transparent; }
-    .primary { background: #2563eb; color: #ffffff; }
+    .primary { border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-family: inherit; }
     .primary:hover { background: #1d4ed8; }
-    .secondary { background: #ffffff; color: #0f172a; border-color: #cbd5e1; }
-    .secondary:hover { background: #f8fafc; }
-    .primary:focus, .secondary:focus, .link:focus, .summary-card:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
-    .skeleton-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%); background-size: 400% 100%; animation: shimmer 1.2s infinite; border-radius: 6px; }
-    .card-skeleton { height: 84px; }
-    .skeleton-list { display: grid; gap: 10px; }
-    .line-skeleton { height: 20px; width: 220px; }
-    .line-skeleton.short { width: 320px; max-width: 100%; }
+    .primary:focus, .link:focus, .summary-card:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
     .health-block { display: grid; gap: 8px; }
     .health-status { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; width: fit-content; padding: 8px 12px; border-radius: 999px; }
     .health-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
@@ -195,7 +152,6 @@ interface DlqSummaryItem {
     .health-warn { color: #92400e; background: #fef3c7; }
     .health-bad { color: #991b1b; background: #fee2e2; }
     .health-detail { margin: 0; color: #475569; font-size: 14px; }
-    @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
     @media (max-width: 640px) {
       .page-header, .panel-header { flex-direction: column; align-items: stretch; }
     }
@@ -205,8 +161,6 @@ export class DashboardComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly deadLetterQueueService = inject(DeadLetterQueueService);
   private readonly http = inject(HttpClient);
-
-  readonly skeletonCards = [1, 2, 3, 4];
 
   notificationsState: BlockState = 'loading';
   notificationsError = 'Không thể tải tóm tắt Thông báo.';

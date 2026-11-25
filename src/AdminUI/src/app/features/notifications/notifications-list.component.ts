@@ -6,13 +6,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { GetNotificationsResponse, NotificationItem } from '../../core/notifications/notification.models';
+import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
+import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
+import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 
 type ViewState = 'loading' | 'success' | 'empty' | 'error';
 
 @Component({
   selector: 'app-notifications-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, StatusBadgeComponent],
   template: `
     <section class="page" aria-labelledby="notifications-title">
       <header class="page-header">
@@ -59,20 +63,21 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
         </div>
       </form>
 
-      <div *ngIf="state === 'error'" class="status-box status-error" role="alert">
-        <p>{{ errorMessage }}</p>
-        <button type="button" class="primary" (click)="retry()">Thử lại</button>
+      <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="retry()"></app-error-state>
+
+      <div *ngIf="state === 'loading'" class="table-wrap">
+        <div style="padding: 12px;">
+          <app-loading-skeleton [rows]="6" variant="line"></app-loading-skeleton>
+        </div>
       </div>
 
-      <div *ngIf="state === 'loading'" class="table-wrap" aria-busy="true" aria-live="polite">
-        <div class="skeleton" *ngFor="let row of skeletonRows"></div>
-      </div>
-
-      <div *ngIf="state === 'empty'" class="status-box status-empty">
-        <h2>Không có kết quả phù hợp</h2>
-        <p>Chưa có Thông báo theo bộ lọc hiện tại. Vui lòng điều chỉnh hoặc xóa bộ lọc.</p>
-        <button type="button" class="secondary" (click)="onClearFilters()">Xóa bộ lọc</button>
-      </div>
+      <app-empty-state
+        *ngIf="state === 'empty'"
+        title="Không có kết quả phù hợp"
+        description="Chưa có Thông báo theo bộ lọc hiện tại. Vui lòng điều chỉnh hoặc xóa bộ lọc."
+        actionLabel="Xóa bộ lọc"
+        (action)="onClearFilters()"
+      ></app-empty-state>
 
       <div *ngIf="state === 'success'" class="table-wrap">
         <table class="data-table">
@@ -94,9 +99,7 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
               <td>{{ item.recipient }}</td>
               <td>{{ displayChannel(item.channel) }}</td>
               <td>
-                <span class="badge" [ngClass]="statusClass(item.status)">
-                  {{ displayStatus(item.status) }}
-                </span>
+                <app-status-badge [label]="displayStatus(item.status)" [tone]="statusTone(item.status)"></app-status-badge>
               </td>
               <td>{{ formatDate(item.createdAt) }}</td>
               <td class="content-cell" [title]="item.content || ''">{{ item.content || '—' }}</td>
@@ -290,6 +293,21 @@ export class NotificationsListComponent implements OnInit {
         return 'badge-failed';
       default:
         return 'badge-default';
+    }
+  }
+
+  statusTone(status: string): 'pending' | 'processing' | 'sent' | 'failed' | 'default' {
+    switch (status) {
+      case 'Pending':
+        return 'pending';
+      case 'Processing':
+        return 'processing';
+      case 'Sent':
+        return 'sent';
+      case 'Failed':
+        return 'failed';
+      default:
+        return 'default';
     }
   }
 

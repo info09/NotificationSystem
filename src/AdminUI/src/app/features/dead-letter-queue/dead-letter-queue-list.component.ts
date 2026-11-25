@@ -5,13 +5,18 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { DeadLetterQueueService } from '../../core/dead-letter-queue/dead-letter-queue.service';
 import { DeadLetterQueueMessage } from '../../core/dead-letter-queue/dead-letter-queue.models';
+import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
+import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
+import { UiModalComponent } from '../../shared/ui/modal/ui-modal.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 
 type ViewState = 'loading' | 'success' | 'empty' | 'error';
 
 @Component({
   selector: 'app-dead-letter-queue-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, UiModalComponent],
   template: `
     <section class="page" aria-labelledby="dlq-title">
       <header class="page-header">
@@ -60,20 +65,21 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
         </div>
       </form>
 
-      <div *ngIf="state === 'error'" class="status-box status-error" role="alert">
-        <p>{{ errorMessage }}</p>
-        <button type="button" class="primary" (click)="retry()">Thử lại</button>
+      <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="retry()"></app-error-state>
+
+      <div *ngIf="state === 'loading'" class="table-wrap">
+        <div style="padding: 12px;">
+          <app-loading-skeleton [rows]="6" variant="line"></app-loading-skeleton>
+        </div>
       </div>
 
-      <div *ngIf="state === 'loading'" class="table-wrap" aria-busy="true" aria-live="polite">
-        <div class="skeleton" *ngFor="let row of skeletonRows"></div>
-      </div>
-
-      <div *ngIf="state === 'empty'" class="status-box status-empty">
-        <h2>Không có Thông điệp trong Hàng đợi thư chết</h2>
-        <p>Hiện không có mục lỗi theo bộ lọc hiện tại. Đây là trạng thái tốt.</p>
-        <button type="button" class="secondary" (click)="onClearFilters()">Xóa bộ lọc</button>
-      </div>
+      <app-empty-state
+        *ngIf="state === 'empty'"
+        title="Không có Thông điệp trong Hàng đợi thư chết"
+        description="Hiện không có mục lỗi theo bộ lọc hiện tại. Đây là trạng thái tốt."
+        actionLabel="Xóa bộ lọc"
+        (action)="onClearFilters()"
+      ></app-empty-state>
 
       <div *ngIf="state === 'success'" class="table-wrap">
         <table class="data-table">
@@ -148,27 +154,26 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
         </div>
       </div>
 
-      <div *ngIf="resendModalOpen" class="modal-backdrop" role="presentation">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resend-modal-title">
-          <h2 id="resend-modal-title">Xác nhận Gửi lại</h2>
-          <p>Bạn có chắc muốn gửi lại Thông điệp này từ Hàng đợi thư chết?</p>
-          <dl class="detail-grid modal-grid" *ngIf="resendCandidate">
-            <dt>Queue</dt><dd>{{ resendCandidate.queueName }}</dd>
-            <dt>MessageId</dt><dd class="mono">{{ resendCandidate.messageId }}</dd>
-            <dt>NotificationId</dt><dd class="mono">{{ resendCandidate.notificationId || '—' }}</dd>
-          </dl>
-
-          <div *ngIf="resendProcessing" class="modal-status" aria-live="polite">Đang gửi lại...</div>
-          <div *ngIf="resendErrorMessage && resendModalOpen" class="inline-error" role="alert">
-            <p>{{ resendErrorMessage }}</p>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" class="secondary" (click)="closeResendModal()" [disabled]="resendProcessing">Hủy</button>
-            <button type="button" class="primary" (click)="confirmResend()" [disabled]="resendProcessing">Xác nhận</button>
-          </div>
+      <app-ui-modal
+        [open]="resendModalOpen"
+        title="Xác nhận Gửi lại"
+        description="Bạn có chắc muốn gửi lại Thông điệp này từ Hàng đợi thư chết?"
+        confirmLabel="Xác nhận"
+        cancelLabel="Hủy"
+        [processing]="resendProcessing"
+        (confirm)="confirmResend()"
+        (cancel)="closeResendModal()"
+      >
+        <dl class="detail-grid modal-grid" *ngIf="resendCandidate">
+          <dt>Queue</dt><dd>{{ resendCandidate.queueName }}</dd>
+          <dt>MessageId</dt><dd class="mono">{{ resendCandidate.messageId }}</dd>
+          <dt>NotificationId</dt><dd class="mono">{{ resendCandidate.notificationId || '—' }}</dd>
+        </dl>
+        <div *ngIf="resendProcessing" class="modal-status" aria-live="polite">Đang gửi lại...</div>
+        <div *ngIf="resendErrorMessage" class="inline-error" role="alert">
+          <p>{{ resendErrorMessage }}</p>
         </div>
-      </div>
+      </app-ui-modal>
     </section>
   `,
   styles: [`
@@ -226,6 +231,7 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
 export class DeadLetterQueueListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly deadLetterQueueService = inject(DeadLetterQueueService);
+  private readonly toastService = inject(ToastService);
 
   readonly skeletonRows = Array.from({ length: 6 });
 
@@ -350,7 +356,9 @@ export class DeadLetterQueueListComponent implements OnInit {
       }))
       .subscribe({
         next: (response) => {
-          this.resendSuccessMessage = `Gửi lại thành công. MessageId mới: ${response.resentMessageId}`;
+          const message = `Gửi lại thành công. MessageId mới: ${response.resentMessageId}`;
+          this.resendSuccessMessage = message;
+          this.toastService.success(message);
           this.resendModalOpen = false;
           this.resendCandidate = null;
           this.loadMessages();
