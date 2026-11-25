@@ -54,6 +54,7 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
         services.AddScoped<RotateIntegrationClientCredentialUseCase>();
         services.AddScoped<RevokeIntegrationClientCredentialUseCase>();
         services.AddScoped<IssueClientCredentialsTokenUseCase>();
+        services.AddScoped<LoginUseCase>();
 
         return services;
     }

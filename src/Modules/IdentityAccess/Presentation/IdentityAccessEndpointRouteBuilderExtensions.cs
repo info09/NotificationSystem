@@ -42,6 +42,10 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
             .WithTags("IdentityAccess")
             .AllowAnonymous();
 
+        endpoints.MapPost("/api/auth/login", HandleLoginAsync)
+            .WithTags("IdentityAccess")
+            .AllowAnonymous();
+
         return endpoints;
     }
 
@@ -268,6 +272,25 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu đăng nhập bằng credential nội bộ.
+    /// </summary>
+    /// <param name="request">Yêu cầu đăng nhập.</param>
+    /// <param name="useCase">Use case đăng nhập.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleLoginAsync(
+        LoginRequest? request,
+        LoginUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new LoginAppRequest(request.UserName, request.Password);
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
     /// Tạo ngữ cảnh người gọi từ claims.
     /// </summary>
     /// <param name="user">Thông tin người dùng hiện tại.</param>
@@ -354,3 +377,12 @@ public sealed record CreateIntegrationClientCredentialRequest(
 public sealed record IssueClientCredentialsTokenRequest(
     string? ClientId,
     string? ClientSecret);
+
+/// <summary>
+/// Yêu cầu đăng nhập bằng credential nội bộ.
+/// </summary>
+/// <param name="UserName">Tên đăng nhập.</param>
+/// <param name="Password">Mật khẩu.</param>
+public sealed record LoginRequest(
+    string? UserName,
+    string? Password);

@@ -57,17 +57,16 @@ public sealed class AuthenticationFlowE2ETests : IClassFixture<WebApplicationFac
     }
 
     [Fact]
-    public async Task LoginEndpoint_WhenNotImplemented_ReturnsNotFound()
+    public async Task LoginEndpoint_WhenImplemented_IsNotNotFound()
     {
-        // ST-P1-04 scaffolds AdminUI login flow calling POST /api/auth/login.
-        // Backend credential login/token issuance is planned in Phase 13 (ST-P13-04).
+        // ST-P13-04 đã triển khai endpoint đăng nhập credential nội bộ.
         var response = await _client.PostAsJsonAsync("/api/auth/login", new
         {
             userName = "admin",
             password = "password"
         });
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.NotEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private sealed class AlwaysHealthyHealthCheck : IHealthCheck

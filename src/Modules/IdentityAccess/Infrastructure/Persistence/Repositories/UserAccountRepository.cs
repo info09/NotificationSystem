@@ -27,6 +27,13 @@ public sealed class UserAccountRepository : IUserAccountRepository
     }
 
     /// <inheritdoc />
+    public async Task<UserAccount?> GetByUserNameAsync(string userName, CancellationToken cancellationToken)
+    {
+        var normalized = userName.Trim();
+        return await _dbContext.UserAccounts.FirstOrDefaultAsync(x => x.UserName == normalized, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<(IReadOnlyList<UserAccount> Items, int TotalCount)> GetPagedAsync(
         UserAccountStatus? status,
         UserRole? role,

@@ -126,3 +126,18 @@ public sealed record CreatedIntegrationClientCredentialResponse(
 public sealed record RotatedIntegrationClientCredentialResponse(
     IntegrationClientCredentialDto Credential,
     string ClientSecret);
+
+/// <summary>
+/// Yêu cầu đăng nhập bằng credential nội bộ.
+/// </summary>
+/// <param name="UserName">Tên đăng nhập.</param>
+/// <param name="Password">Mật khẩu.</param>
+public sealed record LoginAppRequest(string? UserName, string? Password);
+
+/// <summary>
+/// Phản hồi đăng nhập thành công.
+/// </summary>
+/// <param name="AccessToken">JWT truy cập.</param>
+/// <param name="TokenType">Loại token.</param>
+/// <param name="ExpiresIn">Thời gian hết hạn tính theo giây.</param>
+public sealed record LoginResponse(string AccessToken, string TokenType, int ExpiresIn);
