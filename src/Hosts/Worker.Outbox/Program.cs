@@ -1,0 +1,78 @@
+using BuildingBlocks.Observability;
+using BuildingBlocks.Observability.Logging;
+using BuildingBlocks.Observability.OpenTelemetry;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
+using Worker.Outbox;
+
+var builder = Host.CreateApplicationBuilder(args);
+
+builder.UseStructuredLogging();
+builder.AddOpenTelemetryObservability();
+
+
+builder.Services.AddHostedService<OutboxPublisherBackgroundService>();
+
+var host = builder.Build();
+host.Run();
+
+var hostEnvironment = host.Services.GetRequiredService<IHostEnvironment>();
+var webHostEnvironment = host.Services.GetService<IWebHostEnvironment>()
+    ?? new WorkerHostEnvironmentAdapter(hostEnvironment);
+
+foreach (var module in host.Services.GetServices<IModuleInitializer>())
+{
+    module.Configure(host.Services, webHostEnvironment);
+}
+
+host.Run();
+
+/// <summary>
+/// Bộ chuyển đổi IHostEnvironment cho ngữ cảnh Worker.
+/// </summary>
+internal sealed class WorkerHostEnvironmentAdapter : IWebHostEnvironment
+{
+    /// <summary>
+    /// Khởi tạo adapter từ IHostEnvironment.
+    /// </summary>
+    /// <param name="environment">Môi trường host hiện tại.</param>
+    public WorkerHostEnvironmentAdapter(IHostEnvironment environment)
+    {
+        ApplicationName = environment.ApplicationName;
+        EnvironmentName = environment.EnvironmentName;
+        ContentRootPath = environment.ContentRootPath;
+        ContentRootFileProvider = environment.ContentRootFileProvider;
+        WebRootPath = environment.ContentRootPath;
+        WebRootFileProvider = new NullFileProvider();
+    }
+
+    /// <summary>
+    /// Tên ứng dụng.
+    /// </summary>
+    public string ApplicationName { get; set; }
+
+    /// <summary>
+    /// Nhà cung cấp file cho web root.
+    /// </summary>
+    public IFileProvider WebRootFileProvider { get; set; }
+
+    /// <summary>
+    /// Đường dẫn web root.
+    /// </summary>
+    public string WebRootPath { get; set; }
+
+    /// <summary>
+    /// Tên môi trường.
+    /// </summary>
+    public string EnvironmentName { get; set; }
+
+    /// <summary>
+    /// Đường dẫn content root.
+    /// </summary>
+    public string ContentRootPath { get; set; }
+
+    /// <summary>
+    /// Nhà cung cấp file cho content root.
+    /// </summary>
+    public IFileProvider ContentRootFileProvider { get; set; }
+}

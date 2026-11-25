@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
@@ -8,9 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
-using Worker;
+using Worker.Outbox;
 
 namespace IntegrationTests.IntegrationMessaging;
 

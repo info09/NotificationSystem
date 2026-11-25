@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hosts\Api\Api.csproj" />
+    <ProjectReference Include="..\..\src\Hosts\Worker.Outbox\Worker.Outbox.csproj" />
     <ProjectReference Include="..\..\src\Hosts\Worker\Worker.csproj" />
   </ItemGroup>
 

@@ -4,7 +4,7 @@ using IntegrationMessaging.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
-namespace Worker;
+namespace Worker.Outbox;
 
 /// <summary>
 /// BackgroundService publish các Bản ghi Outbox chưa xử lý sang RabbitMQ.
