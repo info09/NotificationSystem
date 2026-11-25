@@ -71,9 +71,9 @@ interface DlqSummaryItem {
           <div class="panel-header">
             <div>
               <h2 id="dlq-summary-title">Hàng đợi thư chết</h2>
-              <p>Số Thông điệp cần chú ý trong DLQ.</p>
+              <p>Số Thông điệp cần chú ý trong Hàng đợi thư chết.</p>
             </div>
-            <a routerLink="/dead-letter-queues" class="link">Xem DLQ</a>
+            <a routerLink="/dead-letter-queues" class="link">Xem Hàng đợi thư chết</a>
           </div>
 
           <app-loading-skeleton *ngIf="dlqState === 'loading'" [rows]="2" variant="card"></app-loading-skeleton>
@@ -233,8 +233,8 @@ export class DashboardComponent implements OnInit {
     this.dlqError = 'Không thể tải tóm tắt Hàng đợi thư chết.';
 
     const queues: DlqSummaryItem[] = [
-      { queueName: 'notifications.email.dlq', label: 'Email DLQ', count: 0 },
-      { queueName: 'notifications.inapp.dlq', label: 'In-app DLQ', count: 0 }
+      { queueName: 'notifications.email.dlq', label: 'Email - Hàng đợi thư chết', count: 0 },
+      { queueName: 'notifications.inapp.dlq', label: 'In-app - Hàng đợi thư chết', count: 0 }
     ];
 
     forkJoin(

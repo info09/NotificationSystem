@@ -89,7 +89,7 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
               <th>NotificationId</th>
               <th>Kênh</th>
               <th>Lý do</th>
-              <th>Dead-letter lúc</th>
+              <th>Thời gian vào Hàng đợi thư chết</th>
               <th>Số lần</th>
               <th>Chi tiết</th>
             </tr>
@@ -112,16 +112,16 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
               <tr *ngIf="selectedMessageId === item.messageId" class="detail-row">
                 <td colspan="7">
                   <div class="detail-panel">
-                    <h2>Chi tiết DLQ</h2>
+                    <h2>Chi tiết Hàng đợi thư chết</h2>
                     <dl class="detail-grid">
-                      <dt>Queue</dt><dd>{{ item.queueName }}</dd>
+                      <dt>Hàng đợi thư chết</dt><dd>{{ item.queueName }}</dd>
                       <dt>MessageId</dt><dd class="mono">{{ item.messageId || '—' }}</dd>
                       <dt>NotificationId</dt><dd class="mono">{{ item.notificationId || '—' }}</dd>
                       <dt>Kênh</dt><dd>{{ displayChannel(item.channel) }}</dd>
                       <dt>Routing key</dt><dd>{{ item.routingKey || '—' }}</dd>
                       <dt>Event type</dt><dd>{{ item.eventType || '—' }}</dd>
                       <dt>Lý do</dt><dd>{{ item.reason || '—' }}</dd>
-                      <dt>Dead-letter lúc</dt><dd>{{ formatDate(item.deadLetteredAtUtc) }}</dd>
+                      <dt>Thời gian vào Hàng đợi thư chết</dt><dd>{{ formatDate(item.deadLetteredAtUtc) }}</dd>
                       <dt>Số lần</dt><dd>{{ item.deathCount ?? '—' }}</dd>
                     </dl>
                     <div class="payload-block">
@@ -165,7 +165,7 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
         (cancel)="closeResendModal()"
       >
         <dl class="detail-grid modal-grid" *ngIf="resendCandidate">
-          <dt>Queue</dt><dd>{{ resendCandidate.queueName }}</dd>
+          <dt>Hàng đợi thư chết</dt><dd>{{ resendCandidate.queueName }}</dd>
           <dt>MessageId</dt><dd class="mono">{{ resendCandidate.messageId }}</dd>
           <dt>NotificationId</dt><dd class="mono">{{ resendCandidate.notificationId || '—' }}</dd>
         </dl>

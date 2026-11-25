@@ -17,7 +17,7 @@ import { AuthService } from '../auth/auth.service';
             <a routerLink="/notifications" routerLinkActive="active">Thông báo</a>
             <a routerLink="/dead-letter-queues" routerLinkActive="active">Hàng đợi thư chết</a>
             <a *ngIf="authService.isSystemAdministrator()" routerLink="/user-accounts" routerLinkActive="active">Tài khoản người dùng</a>
-            <a *ngIf="authService.isSystemAdministrator()" routerLink="/end-user-profiles" routerLinkActive="active">Hồ sơ EndUser</a>
+            <a *ngIf="authService.isSystemAdministrator()" routerLink="/end-user-profiles" routerLinkActive="active">Hồ sơ người nhận EndUser</a>
           </nav>
         </div>
         <button type="button" class="logout-button" (click)="onLogout()">Đăng xuất</button>
