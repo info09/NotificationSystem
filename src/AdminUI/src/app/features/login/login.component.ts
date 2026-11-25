@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -11,7 +11,7 @@ type LoginViewState = 'idle' | 'submitting' | 'success' | 'error';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <main class="login-page">
       <section class="login-card" aria-labelledby="login-title">
@@ -58,6 +58,7 @@ type LoginViewState = 'idle' | 'submitting' | 'success' | 'error';
           </div>
 
           <div class="actions">
+            <a routerLink="/forgot-password" class="link">Quên mật khẩu?</a>
             <button type="submit" [disabled]="state === 'submitting'">
               {{ state === 'submitting' ? 'Đang đăng nhập...' : 'Đăng nhập' }}
             </button>
@@ -81,10 +82,11 @@ type LoginViewState = 'idle' | 'submitting' | 'success' | 'error';
     .status { margin: 8px 0 16px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
     .status-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
     .status-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .actions { display: flex; justify-content: flex-end; }
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     button { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
     button:hover:not(:disabled) { background: #1d4ed8; }
     button:disabled { opacity: 0.7; cursor: not-allowed; }
+    .link { color: #2563eb; text-decoration: none; font-size: 14px; }
     .hint { margin: 16px 0 0; color: #475569; font-size: 12px; }
   `]
 })

@@ -8,3 +8,20 @@ export interface LoginResponse {
   tokenType?: string;
   expiresIn?: number;
 }
+
+export interface RequestPasswordResetRequest {
+  identifier: string;
+}
+
+export interface RequestPasswordResetResponse {
+  accepted: boolean;
+}
+
+export interface ConfirmPasswordResetRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface ConfirmPasswordResetResponse {
+  reset: boolean;
+}

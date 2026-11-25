@@ -11,6 +11,18 @@ export const routes: Routes = [
       import('./features/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'forgot-password',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent)
+  },
+  {
+    path: 'reset-password',
+    canActivate: [guestGuard],
+    loadComponent: () =>
+      import('./features/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent)
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -48,6 +60,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/user-accounts/user-accounts.component').then(
             (m) => m.UserAccountsComponent
+          )
+      },
+      {
+        path: 'end-user-profiles',
+        canActivate: [systemAdminGuard],
+        loadComponent: () =>
+          import('./features/end-user-profiles/end-user-profiles.component').then(
+            (m) => m.EndUserProfilesComponent
           )
       },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }

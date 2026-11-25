@@ -1,7 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { LoginRequest, LoginResponse } from './auth.models';
+import {
+  ConfirmPasswordResetRequest,
+  ConfirmPasswordResetResponse,
+  LoginRequest,
+  LoginResponse,
+  RequestPasswordResetRequest,
+  RequestPasswordResetResponse
+} from './auth.models';
 
 const ACCESS_TOKEN_STORAGE_KEY = 'adminui.access_token';
 const ROLE_CLAIM_KEYS = ['role', 'roles', 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
@@ -18,6 +25,14 @@ export class AuthService {
         }
       })
     );
+  }
+
+  requestPasswordReset(request: RequestPasswordResetRequest): Observable<RequestPasswordResetResponse> {
+    return this.http.post<RequestPasswordResetResponse>('/api/auth/password-reset/request', request);
+  }
+
+  confirmPasswordReset(request: ConfirmPasswordResetRequest): Observable<ConfirmPasswordResetResponse> {
+    return this.http.post<ConfirmPasswordResetResponse>('/api/auth/password-reset/confirm', request);
   }
 
   logout(): void {
