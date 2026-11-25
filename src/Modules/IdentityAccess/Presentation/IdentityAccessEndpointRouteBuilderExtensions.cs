@@ -1,5 +1,6 @@
 using BuildingBlocks.SharedKernel.Constants;
 using IdentityAccess.Application;
+using IdentityAccess.Application.EndUserProfiles;
 using IdentityAccess.Application.UserAccounts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,18 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
         group.MapPost("/{id:guid}/credentials", HandleCreateCredentialAsync);
         group.MapPost("/{id:guid}/credentials/{credentialId:guid}/rotate", HandleRotateCredentialAsync);
         group.MapPost("/{id:guid}/credentials/{credentialId:guid}/revoke", HandleRevokeCredentialAsync);
+
+        var endUserProfilesGroup = endpoints.MapGroup("/api/admin/end-user-profiles")
+            .WithTags("IdentityAccess")
+            .RequireAuthorization(RbacPolicies.SystemAdministrator);
+
+        endUserProfilesGroup.MapGet("/", HandleGetEndUserProfilesAsync);
+        endUserProfilesGroup.MapGet("/by-external-id/{externalUserId}", HandleGetEndUserProfileByExternalUserIdAsync);
+        endUserProfilesGroup.MapGet("/{id:guid}", HandleGetEndUserProfileByIdAsync);
+        endUserProfilesGroup.MapPost("/", HandleCreateEndUserProfileAsync);
+        endUserProfilesGroup.MapPut("/{id:guid}", HandleUpdateEndUserProfileAsync);
+        endUserProfilesGroup.MapPost("/{id:guid}/lock", HandleLockEndUserProfileAsync);
+        endUserProfilesGroup.MapPost("/{id:guid}/unlock", HandleUnlockEndUserProfileAsync);
 
         endpoints.MapPost("/api/auth/client-credentials/token", HandleIssueClientCredentialsTokenAsync)
             .WithTags("IdentityAccess")
@@ -261,6 +274,134 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu truy vấn danh sách Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="useCase">Use case truy vấn danh sách.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <param name="status">Trạng thái lọc.</param>
+    /// <param name="externalUserId">Định danh hệ thống nguồn lọc.</param>
+    /// <param name="page">Số trang.</param>
+    /// <param name="pageSize">Kích thước trang.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetEndUserProfilesAsync(
+        GetEndUserProfilesUseCase useCase,
+        CancellationToken cancellationToken,
+        string? status = null,
+        string? externalUserId = null,
+        int page = 1,
+        int pageSize = 20)
+    {
+        var result = await useCase.HandleAsync(
+            new GetEndUserProfilesAppRequest(status, externalUserId, page, pageSize),
+            cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu lấy chi tiết Hồ sơ người nhận EndUser theo mã định danh.
+    /// </summary>
+    /// <param name="id">Mã định danh hồ sơ.</param>
+    /// <param name="useCase">Use case lấy chi tiết.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetEndUserProfileByIdAsync(
+        Guid id,
+        GetEndUserProfileByIdUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu tra cứu Hồ sơ người nhận EndUser theo định danh hệ thống nguồn.
+    /// </summary>
+    /// <param name="externalUserId">Định danh hệ thống nguồn.</param>
+    /// <param name="useCase">Use case tra cứu theo định danh nguồn.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetEndUserProfileByExternalUserIdAsync(
+        string externalUserId,
+        GetEndUserProfileByExternalUserIdUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(externalUserId, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu tạo Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="request">Yêu cầu tạo hồ sơ.</param>
+    /// <param name="useCase">Use case tạo hồ sơ.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleCreateEndUserProfileAsync(
+        CreateEndUserProfileRequest? request,
+        CreateEndUserProfileUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new CreateEndUserProfileAppRequest(request.ExternalUserId, request.DisplayName, request.Email, request.PhoneNumber);
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result, value => $"/api/admin/end-user-profiles/{value.Id}");
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu cập nhật Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="id">Mã định danh hồ sơ.</param>
+    /// <param name="request">Yêu cầu cập nhật.</param>
+    /// <param name="useCase">Use case cập nhật hồ sơ.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleUpdateEndUserProfileAsync(
+        Guid id,
+        UpdateEndUserProfileRequest? request,
+        UpdateEndUserProfileUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new UpdateEndUserProfileAppRequest(request.DisplayName, request.Email, request.PhoneNumber);
+        var result = await useCase.HandleAsync(id, appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu khóa Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="id">Mã định danh hồ sơ.</param>
+    /// <param name="useCase">Use case khóa hồ sơ.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleLockEndUserProfileAsync(
+        Guid id,
+        LockEndUserProfileUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu mở khóa Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="id">Mã định danh hồ sơ.</param>
+    /// <param name="useCase">Use case mở khóa hồ sơ.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleUnlockEndUserProfileAsync(
+        Guid id,
+        UnlockEndUserProfileUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
     /// Xử lý yêu cầu cấp JWT bằng client credentials.
     /// </summary>
     /// <param name="request">Yêu cầu cấp token.</param>
@@ -445,3 +586,27 @@ public sealed record RequestPasswordResetRequest(string? Identifier);
 /// <param name="Token">Token đặt lại mật khẩu.</param>
 /// <param name="NewPassword">Mật khẩu mới.</param>
 public sealed record ConfirmPasswordResetRequest(string? Token, string? NewPassword);
+
+/// <summary>
+/// Yêu cầu tạo Hồ sơ người nhận EndUser.
+/// </summary>
+/// <param name="ExternalUserId">Định danh hệ thống nguồn.</param>
+/// <param name="DisplayName">Tên hiển thị.</param>
+/// <param name="Email">Email liên hệ.</param>
+/// <param name="PhoneNumber">Số điện thoại liên hệ.</param>
+public sealed record CreateEndUserProfileRequest(
+    string? ExternalUserId,
+    string? DisplayName,
+    string? Email,
+    string? PhoneNumber);
+
+/// <summary>
+/// Yêu cầu cập nhật Hồ sơ người nhận EndUser.
+/// </summary>
+/// <param name="DisplayName">Tên hiển thị.</param>
+/// <param name="Email">Email liên hệ.</param>
+/// <param name="PhoneNumber">Số điện thoại liên hệ.</param>
+public sealed record UpdateEndUserProfileRequest(
+    string? DisplayName,
+    string? Email,
+    string? PhoneNumber);

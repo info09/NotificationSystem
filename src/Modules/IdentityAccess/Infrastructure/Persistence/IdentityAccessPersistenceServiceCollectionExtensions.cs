@@ -1,6 +1,9 @@
+using BuildingBlocks.SharedKernel.EndUserProfiles;
 using IdentityAccess.Application.Abstractions;
+using IdentityAccess.Application.EndUserProfiles;
 using IdentityAccess.Application.UserAccounts;
 using IdentityAccess.Infrastructure.Email;
+using IdentityAccess.Infrastructure.EndUserProfiles;
 using IdentityAccess.Infrastructure.Persistence.Repositories;
 using IdentityAccess.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +69,9 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<IIntegrationClientCredentialRepository, IntegrationClientCredentialRepository>();
         services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        services.AddScoped<IEndUserProfileRepository, EndUserProfileRepository>();
         services.AddScoped<IPasswordResetEmailSender, SmtpPasswordResetEmailSender>();
+        services.AddScoped<IEndUserProfileReferenceProvider, EndUserProfileReferenceProvider>();
 
         services.AddScoped<CreateUserAccountUseCase>();
         services.AddScoped<UpdateUserAccountUseCase>();
@@ -83,6 +88,13 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
         services.AddScoped<LoginUseCase>();
         services.AddScoped<RequestPasswordResetUseCase>();
         services.AddScoped<ConfirmPasswordResetUseCase>();
+        services.AddScoped<CreateEndUserProfileUseCase>();
+        services.AddScoped<UpdateEndUserProfileUseCase>();
+        services.AddScoped<GetEndUserProfileByIdUseCase>();
+        services.AddScoped<GetEndUserProfilesUseCase>();
+        services.AddScoped<GetEndUserProfileByExternalUserIdUseCase>();
+        services.AddScoped<LockEndUserProfileUseCase>();
+        services.AddScoped<UnlockEndUserProfileUseCase>();
 
         return services;
     }

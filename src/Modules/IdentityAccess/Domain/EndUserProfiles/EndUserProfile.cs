@@ -104,10 +104,68 @@ public sealed class EndUserProfile : Entity
             id,
             externalUserId.Trim(),
             displayName.Trim(),
-            string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
-            string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim(),
+            NormalizeOptional(email),
+            NormalizeOptional(phoneNumber),
             EndUserProfileStatus.Active,
             now,
             now);
     }
+
+    /// <summary>
+    /// Cập nhật thông tin Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="displayName">Tên hiển thị.</param>
+    /// <param name="email">Email liên hệ.</param>
+    /// <param name="phoneNumber">Số điện thoại liên hệ.</param>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void Update(string displayName, string? email, string? phoneNumber, DateTime? updatedAtUtc = null)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            throw new ArgumentException("Display name is required.", nameof(displayName));
+        }
+
+        DisplayName = displayName.Trim();
+        Email = NormalizeOptional(email);
+        PhoneNumber = NormalizeOptional(phoneNumber);
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Khóa Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void Lock(DateTime? updatedAtUtc = null)
+    {
+        if (Status == EndUserProfileStatus.Locked)
+        {
+            return;
+        }
+
+        Status = EndUserProfileStatus.Locked;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Mở khóa Hồ sơ người nhận EndUser.
+    /// </summary>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void Unlock(DateTime? updatedAtUtc = null)
+    {
+        if (Status == EndUserProfileStatus.Active)
+        {
+            return;
+        }
+
+        Status = EndUserProfileStatus.Active;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Chuẩn hóa giá trị chuỗi tùy chọn.
+    /// </summary>
+    /// <param name="value">Giá trị cần chuẩn hóa.</param>
+    /// <returns>Chuỗi đã chuẩn hóa hoặc <c>null</c>.</returns>
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

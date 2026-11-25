@@ -193,11 +193,11 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 13 — Quản lý user & credential (`IdentityAccess`, `EndUser`) (được Đại ca ưu tiên làm trước Phase 9).
-- **Story đang làm:** **ST-P13-05** — Triển khai luồng tự đặt lại mật khẩu (đã implement, chờ Đại ca xác nhận test pass để tick Done).
-- **Story tiếp theo đề xuất:** **ST-P13-06** — Triển khai quản lý hồ sơ `EndUser`.
-- **Chờ xác nhận test pass:** **ST-P13-01**, **ST-P13-02**, **ST-P13-03**, **ST-P13-04** (đã implement).
+- **Story đang làm:** **ST-P13-06** — Triển khai quản lý hồ sơ `EndUser` (đã implement, chờ Đại ca xác nhận test pass để tick Done).
+- **Story tiếp theo đề xuất:** **ST-P13-07** — Dựng `AdminUI` quản trị tài khoản & `IntegrationClient`.
+- **Chờ xác nhận test pass:** **ST-P13-01**, **ST-P13-02**, **ST-P13-03**, **ST-P13-04**, **ST-P13-05** (đã implement).
 - **Tạm hoãn song song:** Phase 9 / **ST-P9-01** (chờ quay lại sau Phase 13 theo chỉ đạo của Đại ca).
-- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P13-05 (request/confirm reset password, token một lần có hạn SHA256 hash, invalidate token cũ, gửi email SMTP, endpoint `/api/auth/password-reset/request|confirm`; bổ sung unit/integration tests). Chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
+- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P13-06 (domain behavior + repo/use cases/endpoints RBAC cho `EndUserProfile`, tra cứu theo `ExternalUserId`, contract/port `IEndUserProfileReferenceProvider` trong `BuildingBlocks.SharedKernel` + implementation IdentityAccess; bổ sung unit/integration/e2e tests). Chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
 
 ## 4. Deferred Work
 
