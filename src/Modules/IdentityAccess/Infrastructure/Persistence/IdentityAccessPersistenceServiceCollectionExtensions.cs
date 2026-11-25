@@ -1,3 +1,7 @@
+using IdentityAccess.Application.Abstractions;
+using IdentityAccess.Application.UserAccounts;
+using IdentityAccess.Infrastructure.Persistence.Repositories;
+using IdentityAccess.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +36,22 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly(typeof(IdentityAccessDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "identity_access")));
+
+        services.AddScoped<ICredentialHasher, Pbkdf2CredentialHasher>();
+        services.AddScoped<IUserAccountRepository, UserAccountRepository>();
+        services.AddScoped<IIntegrationClientCredentialRepository, IntegrationClientCredentialRepository>();
+
+        services.AddScoped<CreateUserAccountUseCase>();
+        services.AddScoped<UpdateUserAccountUseCase>();
+        services.AddScoped<GetUserAccountByIdUseCase>();
+        services.AddScoped<GetUserAccountsUseCase>();
+        services.AddScoped<LockUserAccountUseCase>();
+        services.AddScoped<UnlockUserAccountUseCase>();
+        services.AddScoped<DeleteUserAccountUseCase>();
+        services.AddScoped<CreateIntegrationClientCredentialUseCase>();
+        services.AddScoped<GetIntegrationClientCredentialsUseCase>();
+        services.AddScoped<RotateIntegrationClientCredentialUseCase>();
+        services.AddScoped<RevokeIntegrationClientCredentialUseCase>();
 
         return services;
     }

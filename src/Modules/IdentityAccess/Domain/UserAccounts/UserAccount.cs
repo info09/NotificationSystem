@@ -126,4 +126,96 @@ public sealed class UserAccount : Entity
             now,
             now);
     }
+
+    /// <summary>
+    /// Cập nhật thông tin cơ bản của Tài khoản người dùng.
+    /// </summary>
+    /// <param name="userName">Tên đăng nhập.</param>
+    /// <param name="email">Email.</param>
+    /// <param name="displayName">Tên hiển thị.</param>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void UpdateProfile(string userName, string email, string displayName, DateTime? updatedAtUtc = null)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            throw new ArgumentException("User name is required.", nameof(userName));
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email is required.", nameof(email));
+        }
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            throw new ArgumentException("Display name is required.", nameof(displayName));
+        }
+
+        UserName = userName.Trim();
+        Email = email.Trim();
+        DisplayName = displayName.Trim();
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Gán vai trò cho Tài khoản người dùng.
+    /// </summary>
+    /// <param name="role">Vai trò mới.</param>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void AssignRole(UserRole role, DateTime? updatedAtUtc = null)
+    {
+        Role = role;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Đặt giá trị băm mật khẩu.
+    /// </summary>
+    /// <param name="passwordHash">Giá trị băm mật khẩu.</param>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void SetPasswordHash(string? passwordHash, DateTime? updatedAtUtc = null)
+    {
+        PasswordHash = string.IsNullOrWhiteSpace(passwordHash) ? null : passwordHash;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Khóa Tài khoản người dùng.
+    /// </summary>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void Lock(DateTime? updatedAtUtc = null)
+    {
+        if (Status == UserAccountStatus.Deleted)
+        {
+            throw new InvalidOperationException("Cannot lock a deleted account.");
+        }
+
+        Status = UserAccountStatus.Locked;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Mở khóa Tài khoản người dùng.
+    /// </summary>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void Unlock(DateTime? updatedAtUtc = null)
+    {
+        if (Status == UserAccountStatus.Deleted)
+        {
+            throw new InvalidOperationException("Cannot unlock a deleted account.");
+        }
+
+        Status = UserAccountStatus.Active;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Đánh dấu Tài khoản người dùng là đã xóa.
+    /// </summary>
+    /// <param name="updatedAtUtc">Thời điểm cập nhật.</param>
+    public void MarkDeleted(DateTime? updatedAtUtc = null)
+    {
+        Status = UserAccountStatus.Deleted;
+        UpdatedAtUtc = updatedAtUtc ?? DateTime.UtcNow;
+    }
 }

@@ -122,4 +122,40 @@ public sealed class IntegrationClientCredential : Entity
             null,
             null);
     }
+
+    /// <summary>
+    /// Vô hiệu hóa Thông tin xác thực IntegrationClient.
+    /// </summary>
+    /// <param name="revokedAtUtc">Thời điểm vô hiệu hóa.</param>
+    public void Revoke(DateTime? revokedAtUtc = null)
+    {
+        if (Status == IntegrationClientCredentialStatus.Revoked)
+        {
+            return;
+        }
+
+        Status = IntegrationClientCredentialStatus.Revoked;
+        RevokedAtUtc = revokedAtUtc ?? DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Xoay secret cho Thông tin xác thực IntegrationClient.
+    /// </summary>
+    /// <param name="clientSecretHash">Giá trị băm secret mới.</param>
+    /// <param name="rotatedAtUtc">Thời điểm xoay secret.</param>
+    public void RotateSecret(string clientSecretHash, DateTime? rotatedAtUtc = null)
+    {
+        if (string.IsNullOrWhiteSpace(clientSecretHash))
+        {
+            throw new ArgumentException("ClientSecretHash is required.", nameof(clientSecretHash));
+        }
+
+        if (Status == IntegrationClientCredentialStatus.Revoked)
+        {
+            throw new InvalidOperationException("Cannot rotate secret for a revoked credential.");
+        }
+
+        ClientSecretHash = clientSecretHash;
+        LastRotatedAtUtc = rotatedAtUtc ?? DateTime.UtcNow;
+    }
 }

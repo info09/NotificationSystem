@@ -193,10 +193,10 @@
 
 ## 3. Trạng thái hiện tại
 - **Phase đang làm:** Phase 13 — Quản lý user & credential (`IdentityAccess`, `EndUser`) (được Đại ca ưu tiên làm trước Phase 9).
-- **Story đang làm:** **ST-P13-01** — Cập nhật tài liệu liên quan và thiết kế/lập schema & migration trong module `IdentityAccess` cho `UserAccount`, `IntegrationClientCredential`, `PasswordResetToken`, `EndUserProfile` (đã implement, chờ Đại ca xác nhận test pass để tick Done).
-- **Story tiếp theo đề xuất:** **ST-P13-02** — Triển khai quản trị tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient`.
+- **Story đang làm:** **ST-P13-02** — Triển khai quản trị tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient` (đã implement, chờ Đại ca xác nhận test pass để tick Done).
+- **Story tiếp theo đề xuất:** **ST-P13-03** — Triển khai phát hành `JWT` cho đăng nhập `AdminUI` (credential nội bộ) và cho `IntegrationClient` theo client credentials.
 - **Tạm hoãn song song:** Phase 9 / **ST-P9-01** (chờ quay lại sau Phase 13 theo chỉ đạo của Đại ca).
-- **Cập nhật lần cuối:** 2026-11-25 — Đại ca yêu cầu bắt đầu Phase 13 trước; đã implement ST-P13-01, chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
+- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P13-02 (API quản trị tài khoản/credential, hash credential, RBAC SystemAdministrator, unit/integration tests); chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
 
 ## 4. Deferred Work
 

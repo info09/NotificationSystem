@@ -6,6 +6,7 @@ using BuildingBlocks.Observability.Correlation;
 using BuildingBlocks.Observability.Logging;
 using BuildingBlocks.Observability.OpenTelemetry;
 using Delivery.Presentation;
+using IdentityAccess.Presentation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Notification.Infrastructure.Persistence;
 using Notification.Presentation;
@@ -50,6 +51,7 @@ app.MapScalarApiReference().AllowAnonymous();
 app.MapNotificationEndpoints();
 app.MapAdministrationEndpoints();
 app.MapDeliveryEndpoints();
+app.MapIdentityAccessEndpoints();
 
 // Gọi Configure của mỗi module
 foreach (var module in app.Services.GetServices<IModuleInitializer>())

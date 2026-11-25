@@ -13,5 +13,10 @@ public enum UserAccountStatus
     /// <summary>
     /// Tài khoản bị khóa.
     /// </summary>
-    Locked = 2
+    Locked = 2,
+
+    /// <summary>
+    /// Tài khoản đã bị xóa.
+    /// </summary>
+    Deleted = 3
 }
