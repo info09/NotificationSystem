@@ -192,10 +192,11 @@
   - [ ] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 9 — `AdminUI` `Tổng quan` (`Dashboard`) & hoàn thiện vận hành.
-- **Story đang làm:** **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
-- **Story tiếp theo đề xuất:** **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success).
-- **Cập nhật lần cuối:** 2026-11-23 — Đại ca xác nhận đánh dấu hoàn thành **Phase 8**; đã tick Done **ST-P8-01**..**ST-P8-05**. Chuyển sang **Phase 9 / ST-P9-01**.
+- **Phase đang làm:** Phase 13 — Quản lý user & credential (`IdentityAccess`, `EndUser`) (được Đại ca ưu tiên làm trước Phase 9).
+- **Story đang làm:** **ST-P13-01** — Cập nhật tài liệu liên quan và thiết kế/lập schema & migration trong module `IdentityAccess` cho `UserAccount`, `IntegrationClientCredential`, `PasswordResetToken`, `EndUserProfile` (đã implement, chờ Đại ca xác nhận test pass để tick Done).
+- **Story tiếp theo đề xuất:** **ST-P13-02** — Triển khai quản trị tài khoản `SystemAdministrator`/`BusinessOperator`/`IntegrationClient`.
+- **Tạm hoãn song song:** Phase 9 / **ST-P9-01** (chờ quay lại sau Phase 13 theo chỉ đạo của Đại ca).
+- **Cập nhật lần cuối:** 2026-11-25 — Đại ca yêu cầu bắt đầu Phase 13 trước; đã implement ST-P13-01, chưa tick Done do chưa có xác nhận pass unit/integration/e2e liên quan.
 
 ## 4. Deferred Work
 
