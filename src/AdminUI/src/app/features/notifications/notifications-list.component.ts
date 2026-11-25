@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../core/notifications/notification.service';
 import { GetNotificationsResponse, NotificationItem } from '../../core/notifications/notification.models';
@@ -168,6 +168,7 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
 export class NotificationsListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly notificationService = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly pageSize = 20;
   readonly skeletonRows = Array.from({ length: 6 });
@@ -193,6 +194,16 @@ export class NotificationsListComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    const status = this.route.snapshot.queryParamMap.get('status') ?? '';
+    const channel = this.route.snapshot.queryParamMap.get('channel') ?? '';
+    if (status || channel) {
+      this.filterForm.patchValue({ status, channel });
+      this.activeQuery = {
+        ...this.activeQuery,
+        status,
+        channel
+      };
+    }
     this.loadNotifications();
   }
 

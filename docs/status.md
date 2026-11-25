@@ -136,7 +136,7 @@
 - **UI (theo `docs/ux.md`):** `Tổng quan` / `Dashboard`, pattern UI vận hành nhất quán.
 - **Stories:**
   - [ ] **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
-  - [ ] **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success).
+  - [ ] **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success). (đã implement, chờ Đại ca xác nhận test pass)
   - [ ] **ST-P9-03** — Chuẩn hóa component/pattern UI (table, filter, modal, toast, empty state, skeleton, badge trạng thái) theo `docs/ux.md`.
   - [ ] **ST-P9-04** — Chuẩn hóa thuật ngữ hiển thị theo `docs/domain-glossary.md` và responsive tối thiểu trên các màn hình `AdminUI` MVP.
   - [ ] **ST-P9-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `Tổng quan` và trải nghiệm vận hành.
@@ -175,6 +175,8 @@
   - [ ] **ST-P12-05** — Chuẩn hóa tài liệu/artefact vận hành deploy (compose staging/production, env, backup/migration/rollback runbook) theo `docs/deploy.md`.
   - [ ] **ST-P12-06** — Xác minh deploy staging theo checklist (pre-check → build → migrate → deploy → smoke test/e2e) và ghi nhận kết quả.
   - [ ] **ST-P12-07** — Tổng hợp kết quả xác nhận FR/NFR/metric MVP, cập nhật hạn chế/rủi ro còn lại; **deploy production chỉ thực hiện khi có xác nhận rõ ràng từ người dùng trong cùng phiên**.
+  - [ ] **ST-P12-08** — Chuẩn hóa `ProblemDetails`, mã lỗi nghiệp vụ và hợp đồng lỗi cho các endpoint chính (đã implement: AddProblemDetails/exception/status code pages, `ApiProblemCodes`, ToHttpResult module, RBAC/JWT 401/403 có `code`; chờ Đại ca xác nhận test pass).
+  - [ ] **ST-P12-09** — Rà soát và hoàn thiện `Idempotency`/unique constraint xuyên suốt luồng (tạo, consume, resend, in-app) theo NFR-02 (đã implement: xác nhận unique index, bổ sung race handling CreateInAppNotification + Detach repo, thêm unit test race in-app; chờ Đại ca xác nhận test pass).
 
 ### Phase 13 — Quản lý user & credential (`IdentityAccess`, `EndUser`)
 - **Mục tiêu:** Cung cấp quản lý tài khoản/vai trò/credential trong app (sẵn sàng tích hợp IdP sau), phát `JwtBearer` cho đăng nhập và `IntegrationClient` (client credentials), luồng tự đặt lại mật khẩu, và quản lý hồ sơ `EndUser` nhận in-app theo thiết kế `docs/design-user-management.md`.
@@ -192,12 +194,12 @@
   - [x] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 9 — `ProblemDetails`, hợp đồng lỗi & tính đúng toàn vẹn.
-- **Story đang làm:** **ST-P9-01** — Chuẩn hóa `ProblemDetails`, mã lỗi nghiệp vụ và hợp đồng lỗi cho các endpoint chính (đã implement, chờ Đại ca xác nhận test pass để tick Done).
-- **Story tiếp theo đề xuất:** **ST-P9-02** — Rà soát và hoàn thiện đảm bảo `Idempotency`/unique constraint xuyên suốt luồng (tạo, consume, resend, in-app) theo NFR-02.
-- **Chờ xác nhận test pass:** **ST-P9-01** (đã implement).
+- **Phase đang làm:** Phase 9 — `AdminUI` `Tổng quan` (`Dashboard`) & hoàn thiện vận hành.
+- **Story đang làm:** **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success) (đã implement, chờ Đại ca xác nhận test pass).
+- **Story tiếp theo đề xuất:** **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
+- **Chờ xác nhận test pass:** **ST-P9-02**, **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
 - **Tạm hoãn song song:** Không có.
-- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P9-01 (chuẩn hóa ProblemDetails: AddProblemDetails + exception/status code pages, mã lỗi nghiệp vụ `code` trong extensions, cập nhật ToHttpResult các module, RBAC/JWT error handlers, ApiProblemCodes). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận pass liên quan.
+- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P9-02 Dashboard AdminUI (thẻ tổng hợp trạng thái thông báo, DLQ, health readiness; lối tắt/làm mới; loading/empty/error/success theo khối; thêm proxy `/health`; hỗ trợ query param lọc notifications). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận unit/integration/e2e liên quan pass.
 
 ## 4. Deferred Work
 
