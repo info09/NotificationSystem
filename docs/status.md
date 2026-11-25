@@ -192,12 +192,12 @@
   - [x] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 13 hoàn thành (Đại ca xác nhận). Phase tiếp theo theo roadmap: quay lại **Phase 9 / ST-P9-01** (đang tạm hoãn theo chỉ đạo trước đó).
-- **Story đang làm:** Không có story đang mở trong Phase 13.
-- **Story tiếp theo đề xuất:** **ST-P9-01** — Chuẩn hóa `ProblemDetails`, mã lỗi nghiệp vụ và hợp đồng lỗi cho các endpoint chính.
-- **Chờ xác nhận test pass:** Không có.
-- **Tạm hoãn song song:** Phase 9 / **ST-P9-01** (chờ quay lại sau Phase 13 theo chỉ đạo của Đại ca).
-- **Cập nhật lần cuối:** 2026-11-25 — Đại ca xác nhận đánh dấu Done Phase 13 (ST-P13-01..ST-P13-09).
+- **Phase đang làm:** Phase 9 — `ProblemDetails`, hợp đồng lỗi & tính đúng toàn vẹn.
+- **Story đang làm:** **ST-P9-01** — Chuẩn hóa `ProblemDetails`, mã lỗi nghiệp vụ và hợp đồng lỗi cho các endpoint chính (đã implement, chờ Đại ca xác nhận test pass để tick Done).
+- **Story tiếp theo đề xuất:** **ST-P9-02** — Rà soát và hoàn thiện đảm bảo `Idempotency`/unique constraint xuyên suốt luồng (tạo, consume, resend, in-app) theo NFR-02.
+- **Chờ xác nhận test pass:** **ST-P9-01** (đã implement).
+- **Tạm hoãn song song:** Không có.
+- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P9-01 (chuẩn hóa ProblemDetails: AddProblemDetails + exception/status code pages, mã lỗi nghiệp vụ `code` trong extensions, cập nhật ToHttpResult các module, RBAC/JWT error handlers, ApiProblemCodes). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận pass liên quan.
 
 ## 4. Deferred Work
 

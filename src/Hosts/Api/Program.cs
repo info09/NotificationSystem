@@ -20,6 +20,31 @@ builder.AddOpenTelemetryObservability(instrumentAspNetCore: true);
 
 builder.Services.AddModules(builder.Configuration);
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+        var correlationId = context.HttpContext.Request.Headers["X-Correlation-Id"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            context.ProblemDetails.Extensions["correlationId"] = correlationId;
+        }
+
+        if (!context.ProblemDetails.Extensions.ContainsKey("code"))
+        {
+            context.ProblemDetails.Extensions["code"] = context.ProblemDetails.Status switch
+            {
+                StatusCodes.Status400BadRequest => "validation_error",
+                StatusCodes.Status401Unauthorized => "unauthorized",
+                StatusCodes.Status403Forbidden => "forbidden",
+                StatusCodes.Status404NotFound => "not_found",
+                StatusCodes.Status409Conflict => "conflict",
+                _ => "unexpected_error"
+            };
+        }
+    };
+});
 
 builder.Services.AddSingleton<RabbitMqTcpHealthCheck>();
 builder.Services.AddHealthChecks()
@@ -29,6 +54,8 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.UseCorrelationId();
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
 
 app.UseAuthentication();

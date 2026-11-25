@@ -1,3 +1,4 @@
+using BuildingBlocks.SharedKernel.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http;
@@ -72,11 +73,16 @@ public sealed class RbacProblemDetailsAuthorizationMiddlewareResultHandler
         }
 
         context.Response.StatusCode = statusCode;
+        var code = statusCode == StatusCodes.Status401Unauthorized
+            ? ApiProblemCodes.Unauthorized
+            : ApiProblemCodes.Forbidden;
+
         await Results.Problem(
                 title: title,
                 detail: detail,
                 statusCode: statusCode,
-                instance: context.Request.Path)
+                instance: context.Request.Path,
+                extensions: new Dictionary<string, object?> { ["code"] = code })
             .ExecuteAsync(context);
     }
 }

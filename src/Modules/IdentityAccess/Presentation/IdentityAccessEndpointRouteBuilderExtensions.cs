@@ -1,3 +1,4 @@
+using BuildingBlocks.SharedKernel.Api;
 using BuildingBlocks.SharedKernel.Constants;
 using IdentityAccess.Application;
 using IdentityAccess.Application.EndUserProfiles;
@@ -508,11 +509,32 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
             IdentityAccessAppStatus.Created => createdLocationFactory is not null && result.Value is not null
                 ? Results.Created(createdLocationFactory(result.Value), result.Value)
                 : Results.Ok(result.Value),
-            IdentityAccessAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
-            IdentityAccessAppStatus.NotFound => Results.NotFound(),
-            IdentityAccessAppStatus.Conflict => Results.Conflict(),
-            IdentityAccessAppStatus.Unauthorized => Results.Unauthorized(),
-            _ => Results.Problem("Unexpected application result status.")
+            IdentityAccessAppStatus.ValidationError => Results.ValidationProblem(
+                result.ValidationErrors ?? new Dictionary<string, string[]>(),
+                title: "Validation Error",
+                detail: "One or more validation errors occurred.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.ValidationError }),
+            IdentityAccessAppStatus.NotFound => Results.Problem(
+                title: "Not Found",
+                detail: "The requested resource was not found.",
+                statusCode: StatusCodes.Status404NotFound,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.NotFound }),
+            IdentityAccessAppStatus.Conflict => Results.Problem(
+                title: "Conflict",
+                detail: "The request conflicts with the current state of the resource.",
+                statusCode: StatusCodes.Status409Conflict,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Conflict }),
+            IdentityAccessAppStatus.Unauthorized => Results.Problem(
+                title: "Unauthorized",
+                detail: "Authentication failed or credentials are invalid.",
+                statusCode: StatusCodes.Status401Unauthorized,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Unauthorized }),
+            _ => Results.Problem(
+                title: "Unexpected Error",
+                detail: "Unexpected application result status.",
+                statusCode: StatusCodes.Status500InternalServerError,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.UnexpectedError })
         };
     }
 }

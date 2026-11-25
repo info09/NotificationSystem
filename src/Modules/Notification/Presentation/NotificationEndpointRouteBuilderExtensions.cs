@@ -1,3 +1,4 @@
+using BuildingBlocks.SharedKernel.Api;
 using BuildingBlocks.SharedKernel.Constants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -159,9 +160,22 @@ public static class NotificationEndpointRouteBuilderExtensions
             NotificationAppStatus.Created => createdLocationFactory is not null && result.Value is not null
                 ? Results.Created(createdLocationFactory(result.Value), result.Value)
                 : Results.Ok(result.Value),
-            NotificationAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
-            NotificationAppStatus.NotFound => Results.NotFound(),
-            _ => Results.Problem("Unexpected application result status.")
+            NotificationAppStatus.ValidationError => Results.ValidationProblem(
+                result.ValidationErrors ?? new Dictionary<string, string[]>(),
+                title: "Validation Error",
+                detail: "One or more validation errors occurred.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.ValidationError }),
+            NotificationAppStatus.NotFound => Results.Problem(
+                title: "Not Found",
+                detail: "The requested resource was not found.",
+                statusCode: StatusCodes.Status404NotFound,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.NotFound }),
+            _ => Results.Problem(
+                title: "Unexpected Error",
+                detail: "Unexpected application result status.",
+                statusCode: StatusCodes.Status500InternalServerError,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.UnexpectedError })
         };
     }
 }

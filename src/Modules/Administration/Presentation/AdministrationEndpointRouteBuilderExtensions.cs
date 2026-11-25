@@ -1,5 +1,6 @@
 using Administration.Application;
 using Administration.Application.DeadLetterQueue;
+using BuildingBlocks.SharedKernel.Api;
 using BuildingBlocks.SharedKernel.Constants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -105,10 +106,27 @@ public static class AdministrationEndpointRouteBuilderExtensions
         {
             AdministrationAppStatus.Ok => Results.Ok(result.Value),
             AdministrationAppStatus.Created => Results.Ok(result.Value),
-            AdministrationAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
-            AdministrationAppStatus.NotFound => Results.NotFound(),
-            AdministrationAppStatus.Conflict => Results.Conflict(),
-            _ => Results.Problem("Unexpected application result status.")
+            AdministrationAppStatus.ValidationError => Results.ValidationProblem(
+                result.ValidationErrors ?? new Dictionary<string, string[]>(),
+                title: "Validation Error",
+                detail: "One or more validation errors occurred.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.ValidationError }),
+            AdministrationAppStatus.NotFound => Results.Problem(
+                title: "Not Found",
+                detail: "The requested resource was not found.",
+                statusCode: StatusCodes.Status404NotFound,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.NotFound }),
+            AdministrationAppStatus.Conflict => Results.Problem(
+                title: "Conflict",
+                detail: "The request conflicts with the current state of the resource.",
+                statusCode: StatusCodes.Status409Conflict,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Conflict }),
+            _ => Results.Problem(
+                title: "Unexpected Error",
+                detail: "Unexpected application result status.",
+                statusCode: StatusCodes.Status500InternalServerError,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.UnexpectedError })
         };
     }
 }

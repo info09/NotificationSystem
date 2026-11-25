@@ -1,3 +1,4 @@
+using BuildingBlocks.SharedKernel.Api;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -83,7 +84,8 @@ public static class JwtBearerAuthenticationExtensions
                                 title: "Unauthorized",
                                 detail: "Authentication is required to access this resource.",
                                 statusCode: StatusCodes.Status401Unauthorized,
-                                instance: context.HttpContext.Request.Path)
+                                instance: context.HttpContext.Request.Path,
+                                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Unauthorized })
                             .ExecuteAsync(context.HttpContext);
                     },
                     OnForbidden = async context =>
@@ -97,7 +99,8 @@ public static class JwtBearerAuthenticationExtensions
                                 title: "Forbidden",
                                 detail: "You do not have permission to access this resource.",
                                 statusCode: StatusCodes.Status403Forbidden,
-                                instance: context.HttpContext.Request.Path)
+                                instance: context.HttpContext.Request.Path,
+                                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Forbidden })
                             .ExecuteAsync(context.HttpContext);
                     }
                 };

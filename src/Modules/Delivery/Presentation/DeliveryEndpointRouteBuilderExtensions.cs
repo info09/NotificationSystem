@@ -1,3 +1,4 @@
+using BuildingBlocks.SharedKernel.Api;
 using BuildingBlocks.SharedKernel.Constants;
 using Delivery.Application.DeliveryLogs;
 using Delivery.Application.DeliveryLogs.GetNotificationDeliveryHistory;
@@ -179,10 +180,27 @@ public static class DeliveryEndpointRouteBuilderExtensions
         {
             InAppNotificationAppStatus.Ok => Results.Ok(result.Value),
             InAppNotificationAppStatus.Created => Results.Ok(result.Value),
-            InAppNotificationAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
-            InAppNotificationAppStatus.NotFound => Results.NotFound(),
-            InAppNotificationAppStatus.Forbidden => Results.Forbid(),
-            _ => Results.Problem("Unexpected application result status.")
+            InAppNotificationAppStatus.ValidationError => Results.ValidationProblem(
+                result.ValidationErrors ?? new Dictionary<string, string[]>(),
+                title: "Validation Error",
+                detail: "One or more validation errors occurred.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.ValidationError }),
+            InAppNotificationAppStatus.NotFound => Results.Problem(
+                title: "Not Found",
+                detail: "The requested resource was not found.",
+                statusCode: StatusCodes.Status404NotFound,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.NotFound }),
+            InAppNotificationAppStatus.Forbidden => Results.Problem(
+                title: "Forbidden",
+                detail: "You do not have permission to access this resource.",
+                statusCode: StatusCodes.Status403Forbidden,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Forbidden }),
+            _ => Results.Problem(
+                title: "Unexpected Error",
+                detail: "Unexpected application result status.",
+                statusCode: StatusCodes.Status500InternalServerError,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.UnexpectedError })
         };
     }
 
@@ -197,10 +215,27 @@ public static class DeliveryEndpointRouteBuilderExtensions
         return result.Status switch
         {
             DeliveryHistoryAppStatus.Ok => Results.Ok(result.Value),
-            DeliveryHistoryAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
-            DeliveryHistoryAppStatus.NotFound => Results.NotFound(),
-            DeliveryHistoryAppStatus.Forbidden => Results.Forbid(),
-            _ => Results.Problem("Unexpected application result status.")
+            DeliveryHistoryAppStatus.ValidationError => Results.ValidationProblem(
+                result.ValidationErrors ?? new Dictionary<string, string[]>(),
+                title: "Validation Error",
+                detail: "One or more validation errors occurred.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.ValidationError }),
+            DeliveryHistoryAppStatus.NotFound => Results.Problem(
+                title: "Not Found",
+                detail: "The requested resource was not found.",
+                statusCode: StatusCodes.Status404NotFound,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.NotFound }),
+            DeliveryHistoryAppStatus.Forbidden => Results.Problem(
+                title: "Forbidden",
+                detail: "You do not have permission to access this resource.",
+                statusCode: StatusCodes.Status403Forbidden,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.Forbidden }),
+            _ => Results.Problem(
+                title: "Unexpected Error",
+                detail: "Unexpected application result status.",
+                statusCode: StatusCodes.Status500InternalServerError,
+                extensions: new Dictionary<string, object?> { ["code"] = ApiProblemCodes.UnexpectedError })
         };
     }
 }
