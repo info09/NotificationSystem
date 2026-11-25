@@ -37,6 +37,7 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
                 npgsqlOptions.MigrationsAssembly(typeof(IdentityAccessDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "identity_access")));
 
+        services.AddSingleton<IJwtTokenIssuer, JwtTokenIssuer>();
         services.AddScoped<ICredentialHasher, Pbkdf2CredentialHasher>();
         services.AddScoped<IUserAccountRepository, UserAccountRepository>();
         services.AddScoped<IIntegrationClientCredentialRepository, IntegrationClientCredentialRepository>();
@@ -52,6 +53,7 @@ public static class IdentityAccessPersistenceServiceCollectionExtensions
         services.AddScoped<GetIntegrationClientCredentialsUseCase>();
         services.AddScoped<RotateIntegrationClientCredentialUseCase>();
         services.AddScoped<RevokeIntegrationClientCredentialUseCase>();
+        services.AddScoped<IssueClientCredentialsTokenUseCase>();
 
         return services;
     }

@@ -38,6 +38,10 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
         group.MapPost("/{id:guid}/credentials/{credentialId:guid}/rotate", HandleRotateCredentialAsync);
         group.MapPost("/{id:guid}/credentials/{credentialId:guid}/revoke", HandleRevokeCredentialAsync);
 
+        endpoints.MapPost("/api/auth/client-credentials/token", HandleIssueClientCredentialsTokenAsync)
+            .WithTags("IdentityAccess")
+            .AllowAnonymous();
+
         return endpoints;
     }
 
@@ -245,6 +249,25 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu cấp JWT bằng client credentials.
+    /// </summary>
+    /// <param name="request">Yêu cầu cấp token.</param>
+    /// <param name="useCase">Use case cấp token client credentials.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleIssueClientCredentialsTokenAsync(
+        IssueClientCredentialsTokenRequest? request,
+        IssueClientCredentialsTokenUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new IssueClientCredentialsTokenAppRequest(request.ClientId, request.ClientSecret);
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
     /// Tạo ngữ cảnh người gọi từ claims.
     /// </summary>
     /// <param name="user">Thông tin người dùng hiện tại.</param>
@@ -278,6 +301,7 @@ public static class IdentityAccessEndpointRouteBuilderExtensions
             IdentityAccessAppStatus.ValidationError => Results.ValidationProblem(result.ValidationErrors ?? new Dictionary<string, string[]>()),
             IdentityAccessAppStatus.NotFound => Results.NotFound(),
             IdentityAccessAppStatus.Conflict => Results.Conflict(),
+            IdentityAccessAppStatus.Unauthorized => Results.Unauthorized(),
             _ => Results.Problem("Unexpected application result status.")
         };
     }
@@ -321,3 +345,12 @@ public sealed record UpdateUserAccountRequest(
 public sealed record CreateIntegrationClientCredentialRequest(
     string? ClientId,
     DateTime? ExpiresAtUtc);
+
+/// <summary>
+/// Yêu cầu cấp token bằng client credentials.
+/// </summary>
+/// <param name="ClientId">ClientId.</param>
+/// <param name="ClientSecret">Client secret.</param>
+public sealed record IssueClientCredentialsTokenRequest(
+    string? ClientId,
+    string? ClientSecret);

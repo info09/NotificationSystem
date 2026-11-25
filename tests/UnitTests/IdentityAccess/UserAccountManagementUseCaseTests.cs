@@ -93,6 +93,7 @@ public sealed class UserAccountManagementUseCaseTests
         public FakeCredentialRepository(IntegrationClientCredential? credential = null) { _credential = credential; }
         public IntegrationClientCredential? AddedCredential { get; private set; }
         public Task<IntegrationClientCredential?> GetByIdAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(_credential?.Id == id ? _credential : null);
+        public Task<IntegrationClientCredential?> GetByClientIdAsync(string clientId, CancellationToken cancellationToken) => Task.FromResult(_credential?.ClientId == clientId ? _credential : null);
         public Task<IReadOnlyList<IntegrationClientCredential>> GetByUserAccountIdAsync(Guid userAccountId, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyList<IntegrationClientCredential>>(Array.Empty<IntegrationClientCredential>());
         public Task<bool> ExistsByClientIdAsync(string clientId, Guid? excludeId, CancellationToken cancellationToken) => Task.FromResult(false);
         public Task AddAsync(IntegrationClientCredential credential, CancellationToken cancellationToken) { AddedCredential = credential; return Task.CompletedTask; }

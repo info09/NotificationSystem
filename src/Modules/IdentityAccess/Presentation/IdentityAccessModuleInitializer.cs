@@ -1,6 +1,7 @@
 ﻿using BuildingBlocks.Observability;
 using BuildingBlocks.Observability.DataContext;
 using IdentityAccess.Application.Abstractions;
+using IdentityAccess.Domain.IntegrationClientCredentials;
 using IdentityAccess.Domain.UserAccounts;
 using IdentityAccess.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -39,28 +40,82 @@ public class IdentityAccessModuleInitializer : IModuleInitializer
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IdentityAccessDbContext>();
         var hasher = scope.ServiceProvider.GetRequiredService<ICredentialHasher>();
+        var now = DateTime.UtcNow;
+        var changed = false;
 
         var hasAdmin = dbContext.UserAccounts
             .AsNoTracking()
             .Any(x => x.Role == UserRole.SystemAdministrator && x.Status != UserAccountStatus.Deleted);
 
-        if (hasAdmin)
+        if (!hasAdmin)
         {
-            return;
+            dbContext.UserAccounts.Add(UserAccount.Create(
+                Guid.Parse("00000000-0000-0000-0000-000000000001"),
+                "admin",
+                "admin@local.dev",
+                "System Administrator",
+                UserRole.SystemAdministrator,
+                hasher.Hash("Admin@123"),
+                now));
+            changed = true;
         }
 
-        var now = DateTime.UtcNow;
-        var admin = UserAccount.Create(
-            Guid.Parse("00000000-0000-0000-0000-000000000001"),
-            "admin",
-            "admin@local.dev",
-            "System Administrator",
-            UserRole.SystemAdministrator,
-            hasher.Hash("Admin@123"),
-            now);
+        var hasOperator = dbContext.UserAccounts
+            .AsNoTracking()
+            .Any(x => x.UserName == "operator");
 
-        dbContext.UserAccounts.Add(admin);
-        dbContext.SaveChanges();
+        if (!hasOperator)
+        {
+            dbContext.UserAccounts.Add(UserAccount.Create(
+                Guid.Parse("00000000-0000-0000-0000-000000000002"),
+                "operator",
+                "operator@local.dev",
+                "Business Operator",
+                UserRole.BusinessOperator,
+                hasher.Hash("Operator@123"),
+                now));
+            changed = true;
+        }
+
+        var integrationClientId = Guid.Parse("00000000-0000-0000-0000-000000000003");
+        var hasIntegrationClient = dbContext.UserAccounts
+            .AsNoTracking()
+            .Any(x => x.Id == integrationClientId);
+
+        if (!hasIntegrationClient)
+        {
+            dbContext.UserAccounts.Add(UserAccount.Create(
+                integrationClientId,
+                "integration-client",
+                "integration-client@local.dev",
+                "Integration Client",
+                UserRole.IntegrationClient,
+                null,
+                now));
+            changed = true;
+        }
+
+        const string devClientId = "dev-client-id";
+        var hasCredential = dbContext.IntegrationClientCredentials
+            .AsNoTracking()
+            .Any(x => x.ClientId == devClientId);
+
+        if (!hasCredential)
+        {
+            dbContext.IntegrationClientCredentials.Add(IntegrationClientCredential.Create(
+                Guid.Parse("00000000-0000-0000-0000-000000000101"),
+                integrationClientId,
+                devClientId,
+                hasher.Hash("dev-client-secret"),
+                null,
+                now));
+            changed = true;
+        }
+
+        if (changed)
+        {
+            dbContext.SaveChanges();
+        }
     }
 
     /// <summary>

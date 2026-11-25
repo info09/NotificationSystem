@@ -28,7 +28,12 @@ public enum IdentityAccessAppStatus
     /// <summary>
     /// Xung đột dữ liệu.
     /// </summary>
-    Conflict
+    Conflict,
+
+    /// <summary>
+    /// Không được xác thực hoặc thông tin xác thực không hợp lệ.
+    /// </summary>
+    Unauthorized
 }
 
 /// <summary>
@@ -80,4 +85,11 @@ public sealed record IdentityAccessAppResult<T>(
     /// <returns>Kết quả xung đột dữ liệu.</returns>
     public static IdentityAccessAppResult<T> Conflict() =>
         new(IdentityAccessAppStatus.Conflict, default, null);
+
+    /// <summary>
+    /// Tạo kết quả không được xác thực.
+    /// </summary>
+    /// <returns>Kết quả không được xác thực.</returns>
+    public static IdentityAccessAppResult<T> Unauthorized() =>
+        new(IdentityAccessAppStatus.Unauthorized, default, null);
 }

@@ -27,6 +27,13 @@ public sealed class IntegrationClientCredentialRepository : IIntegrationClientCr
     }
 
     /// <inheritdoc />
+    public async Task<IntegrationClientCredential?> GetByClientIdAsync(string clientId, CancellationToken cancellationToken)
+    {
+        var normalized = clientId.Trim();
+        return await _dbContext.IntegrationClientCredentials.FirstOrDefaultAsync(x => x.ClientId == normalized, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<IntegrationClientCredential>> GetByUserAccountIdAsync(Guid userAccountId, CancellationToken cancellationToken)
     {
         return await _dbContext.IntegrationClientCredentials

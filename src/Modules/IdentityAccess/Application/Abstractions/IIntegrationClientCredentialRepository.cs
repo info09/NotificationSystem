@@ -16,6 +16,14 @@ public interface IIntegrationClientCredentialRepository
     Task<IntegrationClientCredential?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Lấy credential theo ClientId.
+    /// </summary>
+    /// <param name="clientId">ClientId.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Credential hoặc <c>null</c>.</returns>
+    Task<IntegrationClientCredential?> GetByClientIdAsync(string clientId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Lấy danh sách credential theo Tài khoản người dùng.
     /// </summary>
     /// <param name="userAccountId">Mã định danh tài khoản.</param>
