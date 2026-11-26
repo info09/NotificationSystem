@@ -45,6 +45,11 @@ public static class RbacAuthorizationExtensions
                 policy.Requirements.Add(new RbacRoleRequirement(
                     RbacRoles.SystemAdministrator,
                     RbacRoles.BusinessOperator)));
+
+            options.AddPolicy(RbacPolicies.AuditLogRead, policy =>
+                policy.Requirements.Add(new RbacRoleRequirement(
+                    RbacRoles.SystemAdministrator,
+                    RbacRoles.BusinessOperator)));
         });
 
         services.AddSingleton<IAuthorizationHandler, RbacRoleAuthorizationHandler>();

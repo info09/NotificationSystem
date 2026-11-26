@@ -1,4 +1,5 @@
 using Administration.Application;
+using Administration.Application.AuditLogs;
 using Administration.Application.Dashboard;
 using Administration.Application.DeadLetterQueue;
 using BuildingBlocks.SharedKernel.Api;
@@ -35,6 +36,10 @@ public static class AdministrationEndpointRouteBuilderExtensions
         endpoints.MapPost("/api/admin/dead-letter-queues/{queueName}/messages/{messageId}/resend", HandleResendDeadLetterMessageAsync)
             .WithTags("Administration")
             .RequireAuthorization(RbacPolicies.DeadLetterQueueResend);
+
+        endpoints.MapGet("/api/admin/audit-logs", HandleGetAuditLogsAsync)
+            .WithTags("Administration")
+            .RequireAuthorization(RbacPolicies.AuditLogRead);
 
         return endpoints;
     }
@@ -91,6 +96,42 @@ public static class AdministrationEndpointRouteBuilderExtensions
     {
         var caller = CreateCallerContext(user);
         var result = await useCase.HandleAsync(queueName, messageId, request, caller, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu truy vấn Nhật ký kiểm toán.
+    /// </summary>
+    /// <param name="action">Hành động lọc.</param>
+    /// <param name="targetType">Loại đối tượng lọc.</param>
+    /// <param name="actorUserId">Người thực hiện lọc.</param>
+    /// <param name="fromUtc">Thời điểm bắt đầu (UTC).</param>
+    /// <param name="toUtc">Thời điểm kết thúc (UTC).</param>
+    /// <param name="page">Số trang.</param>
+    /// <param name="pageSize">Kích thước trang.</param>
+    /// <param name="useCase">Use case truy vấn Nhật ký kiểm toán.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP của truy vấn.</returns>
+    private static async Task<IResult> HandleGetAuditLogsAsync(
+        string? action,
+        string? targetType,
+        string? actorUserId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int? page,
+        int? pageSize,
+        GetAuditLogsUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(
+            action,
+            targetType,
+            actorUserId,
+            fromUtc,
+            toUtc,
+            page ?? 1,
+            pageSize ?? 20,
+            cancellationToken);
         return ToHttpResult(result);
     }
 

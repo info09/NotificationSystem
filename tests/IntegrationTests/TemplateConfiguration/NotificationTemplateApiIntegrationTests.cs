@@ -55,6 +55,7 @@ public sealed class NotificationTemplateApiIntegrationTests : IAsyncLifetime
             await scope.ServiceProvider.GetRequiredService<DeliveryDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<IdentityAccessDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<Administration.Infrastructure.Persistence.AdministrationDbContext>().Database.MigrateAsync();
         }
 
         _client = _factory.CreateClient();

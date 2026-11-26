@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using BuildingBlocks.SharedKernel.Api;
+using BuildingBlocks.SharedKernel.Auditing;
 using BuildingBlocks.SharedKernel.Constants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -109,6 +111,8 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     private static async Task<IResult> HandleCreateNotificationTemplateAsync(
         CreateNotificationTemplateRequest? request,
         CreateNotificationTemplateUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var appRequest = request is null
@@ -123,6 +127,11 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
                 request.IsActive);
 
         var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created && result.Value is not null)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "CreateNotificationTemplate", "NotificationTemplate", result.Value.Id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result, value => $"/api/admin/notification-templates/{value.Id}");
     }
 
@@ -138,6 +147,8 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
         Guid id,
         UpdateNotificationTemplateRequest? request,
         UpdateNotificationTemplateUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var appRequest = request is null
@@ -151,6 +162,11 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
                 request.IsActive);
 
         var result = await useCase.HandleAsync(id, appRequest, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "UpdateNotificationTemplate", "NotificationTemplate", id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result);
     }
 
@@ -164,9 +180,16 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     private static async Task<IResult> HandleDeleteNotificationTemplateAsync(
         Guid id,
         DeleteNotificationTemplateUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var result = await useCase.HandleAsync(id, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "DeleteNotificationTemplate", "NotificationTemplate", id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result);
     }
 
@@ -220,6 +243,8 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     private static async Task<IResult> HandleCreateNotificationChannelConfigAsync(
         CreateNotificationChannelConfigRequest? request,
         CreateNotificationChannelConfigUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var appRequest = request is null
@@ -231,6 +256,11 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
                 request.IsEnabled);
 
         var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created && result.Value is not null)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "CreateNotificationChannelConfig", "NotificationChannelConfig", result.Value.Id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result, value => $"/api/admin/notification-channel-configs/{value.Id}");
     }
 
@@ -246,6 +276,8 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
         Guid id,
         UpdateNotificationChannelConfigRequest? request,
         UpdateNotificationChannelConfigUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var appRequest = request is null
@@ -256,6 +288,11 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
                 request.IsEnabled);
 
         var result = await useCase.HandleAsync(id, appRequest, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "UpdateNotificationChannelConfig", "NotificationChannelConfig", id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result);
     }
 
@@ -269,9 +306,16 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     private static async Task<IResult> HandleDeleteNotificationChannelConfigAsync(
         Guid id,
         DeleteNotificationChannelConfigUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var result = await useCase.HandleAsync(id, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "DeleteNotificationChannelConfig", "NotificationChannelConfig", id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result);
     }
 
@@ -327,6 +371,8 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     private static async Task<IResult> HandleCreateIntegrationEventRouteAsync(
         CreateIntegrationEventRouteRequest? request,
         CreateIntegrationEventRouteUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var appRequest = request is null
@@ -339,6 +385,11 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
                 request.IsActive);
 
         var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created && result.Value is not null)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "CreateIntegrationEventRoute", "IntegrationEventRoute", result.Value.Id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result, value => $"/api/admin/integration-event-routes/{value.Id}");
     }
 
@@ -354,6 +405,8 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
         Guid id,
         UpdateIntegrationEventRouteRequest? request,
         UpdateIntegrationEventRouteUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var appRequest = request is null
@@ -366,6 +419,11 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
                 request.IsActive);
 
         var result = await useCase.HandleAsync(id, appRequest, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "UpdateIntegrationEventRoute", "IntegrationEventRoute", id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result);
     }
 
@@ -379,10 +437,34 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     private static async Task<IResult> HandleDeleteIntegrationEventRouteAsync(
         Guid id,
         DeleteIntegrationEventRouteUseCase useCase,
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var result = await useCase.HandleAsync(id, cancellationToken);
+        if (result.Status is TemplateConfigurationAppStatus.Ok or TemplateConfigurationAppStatus.Created)
+        {
+            await RecordAuditAsync(auditLogRecorder, user, "DeleteIntegrationEventRoute", "IntegrationEventRoute", id.ToString(), "Success", cancellationToken);
+        }
+
         return ToHttpResult(result);
+    }
+
+    private static async Task RecordAuditAsync(
+        IAuditLogRecorder auditLogRecorder,
+        ClaimsPrincipal user,
+        string action,
+        string targetType,
+        string targetId,
+        string result,
+        CancellationToken cancellationToken)
+    {
+        var actorUserId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.FindFirstValue("sub") ?? "unknown";
+        var actorRole = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? string.Empty;
+
+        await auditLogRecorder.RecordAsync(
+            new AuditLogEntry(actorUserId, actorRole, action, targetType, targetId, result),
+            cancellationToken);
     }
 
     /// <summary>

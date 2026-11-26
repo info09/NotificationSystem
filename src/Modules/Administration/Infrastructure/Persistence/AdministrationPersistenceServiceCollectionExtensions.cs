@@ -1,8 +1,10 @@
 using Administration.Application.Abstractions;
+using Administration.Application.AuditLogs;
 using Administration.Application.Dashboard;
 using Administration.Application.DeadLetterQueue;
 using Administration.Infrastructure.Dashboard;
 using Administration.Infrastructure.DeadLetterQueue;
+using BuildingBlocks.SharedKernel.Auditing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,9 +45,12 @@ public static class AdministrationPersistenceServiceCollectionExtensions
         services.AddHttpClient(nameof(RabbitMqDeadLetterQueueGateway));
         services.AddScoped<IDeadLetterQueueGateway, RabbitMqDeadLetterQueueGateway>();
         services.AddScoped<IAdministrationAuditLogWriter, AdministrationAuditLogWriter>();
+        services.AddScoped<IAuditLogRecorder, AuditLogRecorder>();
+        services.AddScoped<IAuditLogRecordRepository, AuditLogRecordRepository>();
         services.AddScoped<IDeadLetterResendRequestRepository, DeadLetterResendRequestRepository>();
         services.AddScoped<GetDeadLetterMessagesUseCase>();
         services.AddScoped<ResendDeadLetterMessageUseCase>();
+        services.AddScoped<GetAuditLogsUseCase>();
         services.TryAddScoped<INotificationStatusSummaryReader, DefaultNotificationStatusSummaryReader>();
         services.TryAddScoped<IDashboardHealthSummaryReader, DefaultDashboardHealthSummaryReader>();
         services.AddScoped<GetDashboardSummaryUseCase>();

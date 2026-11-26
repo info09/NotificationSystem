@@ -34,4 +34,9 @@ public static class RbacPolicies
     /// Policy cho phép gửi lại Thông điệp từ Hàng đợi thư chết.
     /// </summary>
     public const string DeadLetterQueueResend = "DeadLetterQueueResend";
+
+    /// <summary>
+    /// Policy cho phép đọc Nhật ký kiểm toán.
+    /// </summary>
+    public const string AuditLogRead = "AuditLogRead";
 }

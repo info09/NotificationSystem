@@ -80,6 +80,7 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
             await scope.ServiceProvider.GetRequiredService<DeliveryDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<IdentityAccessDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<Administration.Infrastructure.Persistence.AdministrationDbContext>().Database.MigrateAsync();
 
             var templateConfigurationDbContext = scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>();
             templateConfigurationDbContext.IntegrationEventRoutes.Add(
