@@ -1,4 +1,6 @@
-﻿using Administration.Presentation;
+﻿using Administration.Application.Abstractions;
+using Administration.Presentation;
+using Api.Modules.Dashboard;
 using BuildingBlocks.Observability;
 using BuildingBlocks.SharedKernel.Repository;
 using Delivery.Presentation;
@@ -48,6 +50,9 @@ public static class ModuleServiceCollectionExtensions
             module.ConfigureServices(services, configuration);
             services.AddSingleton(module);
         }
+
+        services.AddScoped<INotificationStatusSummaryReader, NotificationStatusSummaryReaderAdapter>();
+        services.AddScoped<IDashboardHealthSummaryReader, DashboardHealthSummaryReaderAdapter>();
 
         return services;
     }

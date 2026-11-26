@@ -246,6 +246,12 @@ public sealed class DeadLetterQueueApiIntegrationTests : IAsyncLifetime
             => Task.FromResult(Messages);
 
         /// <summary>
+        /// Lấy số lượng Thông điệp giả lập.
+        /// </summary>
+        public Task<int> GetMessageCountAsync(string queueName, CancellationToken cancellationToken)
+            => Task.FromResult(Messages.Count);
+
+        /// <summary>
         /// Gửi lại Thông điệp giả lập.
         /// </summary>
         public Task<DeadLetterResendGatewayResult?> ResendAsync(string queueName, string messageId, CancellationToken cancellationToken)

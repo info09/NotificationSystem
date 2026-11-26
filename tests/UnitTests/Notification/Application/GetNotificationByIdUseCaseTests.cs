@@ -106,6 +106,9 @@ public sealed class GetNotificationByIdUseCaseTests
             return Task.FromResult(_notification is not null && _notification.Id == id ? _notification : null);
         }
 
+        public Task<IReadOnlyDictionary<NotificationStatus, int>> GetStatusCountsAsync(string? scopeRestriction, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyDictionary<NotificationStatus, int>>(new Dictionary<NotificationStatus, int>());
+
         public Task<DomainNotification> AddAsync(DomainNotification entity, CancellationToken cancellationToken = default)
             => Task.FromResult(entity);
 

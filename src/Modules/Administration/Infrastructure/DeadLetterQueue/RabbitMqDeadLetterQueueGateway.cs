@@ -88,6 +88,39 @@ public sealed class RabbitMqDeadLetterQueueGateway : IDeadLetterQueueGateway
     }
 
     /// <summary>
+    /// Lấy số lượng Thông điệp hiện có trong Hàng đợi thư chết.
+    /// </summary>
+    /// <param name="queueName">Tên Hàng đợi thư chết.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Số lượng Thông điệp.</returns>
+    public async Task<int> GetMessageCountAsync(string queueName, CancellationToken cancellationToken)
+    {
+        EnsureQueueAllowed(queueName);
+
+        var client = _httpClientFactory.CreateClient(nameof(RabbitMqDeadLetterQueueGateway));
+        var vhost = Uri.EscapeDataString(_options.VirtualHost);
+        var queue = Uri.EscapeDataString(queueName);
+        var url = $"http://{_options.Host}:{_options.ManagementPort}/api/queues/{vhost}/{queue}";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.UserName}:{_options.Password}"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+        if (document.RootElement.TryGetProperty("messages", out var messagesProperty) &&
+            messagesProperty.TryGetInt32(out var count))
+        {
+            return count;
+        }
+
+        return 0;
+    }
+
+    /// <summary>
     /// Gửi lại Thông điệp từ Hàng đợi thư chết.
     /// </summary>
     /// <param name="queueName">Tên Hàng đợi thư chết.</param>

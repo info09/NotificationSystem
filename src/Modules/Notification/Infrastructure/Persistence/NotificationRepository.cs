@@ -90,4 +90,24 @@ public sealed class NotificationRepository : RepositoryBase<DomainNotification>,
 
         return await query.FirstOrDefaultAsync(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<NotificationStatus, int>> GetStatusCountsAsync(
+        string? scopeRestriction,
+        CancellationToken cancellationToken)
+    {
+        IQueryable<DomainNotification> query = _dbContext.Notifications.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(scopeRestriction))
+        {
+            query = query.Where(n => n.IdempotencyScope == scopeRestriction);
+        }
+
+        var grouped = await query
+            .GroupBy(n => n.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return grouped.ToDictionary(x => x.Status, x => x.Count);
+    }
 }

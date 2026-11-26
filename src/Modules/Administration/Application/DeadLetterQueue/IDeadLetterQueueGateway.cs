@@ -15,6 +15,14 @@ public interface IDeadLetterQueueGateway
     Task<IReadOnlyList<DeadLetterQueueMessageDto>> GetMessagesAsync(string queueName, int limit, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Lấy số lượng Thông điệp hiện có trong Hàng đợi thư chết.
+    /// </summary>
+    /// <param name="queueName">Tên Hàng đợi thư chết.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Số lượng Thông điệp.</returns>
+    Task<int> GetMessageCountAsync(string queueName, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gửi lại Thông điệp từ Hàng đợi thư chết.
     /// </summary>
     /// <param name="queueName">Tên Hàng đợi thư chết.</param>

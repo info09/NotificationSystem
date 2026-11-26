@@ -1,4 +1,5 @@
 using Administration.Application;
+using Administration.Application.Dashboard;
 using Administration.Application.DeadLetterQueue;
 using BuildingBlocks.SharedKernel.Api;
 using BuildingBlocks.SharedKernel.Constants;
@@ -23,6 +24,10 @@ public static class AdministrationEndpointRouteBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(endpoints);
 
+        endpoints.MapGet("/api/admin/dashboard/summary", HandleGetDashboardSummaryAsync)
+            .WithTags("Administration")
+            .RequireAuthorization(RbacPolicies.NotificationRead);
+
         endpoints.MapGet("/api/admin/dead-letter-queues/{queueName}/messages", HandleGetDeadLetterMessagesAsync)
             .WithTags("Administration")
             .RequireAuthorization(RbacPolicies.DeadLetterQueueRead);
@@ -32,6 +37,20 @@ public static class AdministrationEndpointRouteBuilderExtensions
             .RequireAuthorization(RbacPolicies.DeadLetterQueueResend);
 
         return endpoints;
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu truy vấn tổng hợp dữ liệu Tổng quan.
+    /// </summary>
+    /// <param name="useCase">Use case tổng hợp dữ liệu Tổng quan.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP của truy vấn tổng hợp.</returns>
+    private static async Task<IResult> HandleGetDashboardSummaryAsync(
+        GetDashboardSummaryUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(cancellationToken);
+        return ToHttpResult(result);
     }
 
     /// <summary>

@@ -2,10 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, finalize, map } from 'rxjs/operators';
-import { DeadLetterQueueService } from '../../core/dead-letter-queue/dead-letter-queue.service';
-import { NotificationService } from '../../core/notifications/notification.service';
+import { catchError, finalize, of } from 'rxjs';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
 import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
@@ -23,6 +20,26 @@ interface DlqSummaryItem {
   queueName: string;
   label: string;
   count: number;
+  error?: string | null;
+}
+
+interface DashboardSummaryResponse {
+  notifications: {
+    pending: number;
+    processing: number;
+    sent: number;
+    failed: number;
+    error?: string | null;
+  };
+  deadLetterQueues: Array<{
+    queueName: string;
+    count: number;
+    error?: string | null;
+  }>;
+  health: {
+    status: string;
+    details?: string | null;
+  };
 }
 
 @Component({
@@ -50,7 +67,7 @@ interface DlqSummaryItem {
           </div>
 
           <app-loading-skeleton *ngIf="notificationsState === 'loading'" [rows]="4" variant="card"></app-loading-skeleton>
-          <app-error-state *ngIf="notificationsState === 'error'" [message]="notificationsError" (retry)="loadNotificationSummary()"></app-error-state>
+          <app-error-state *ngIf="notificationsState === 'error'" [message]="notificationsError" (retry)="refresh()"></app-error-state>
           <app-empty-state *ngIf="notificationsState === 'empty'" title="Chưa có dữ liệu" description="Chưa có Thông báo trong hệ thống."></app-empty-state>
 
           <div *ngIf="notificationsState === 'success'" class="summary-cards">
@@ -77,7 +94,7 @@ interface DlqSummaryItem {
           </div>
 
           <app-loading-skeleton *ngIf="dlqState === 'loading'" [rows]="2" variant="card"></app-loading-skeleton>
-          <app-error-state *ngIf="dlqState === 'error'" [message]="dlqError" (retry)="loadDlqSummary()"></app-error-state>
+          <app-error-state *ngIf="dlqState === 'error'" [message]="dlqError" (retry)="refresh()"></app-error-state>
           <app-empty-state *ngIf="dlqState === 'empty'" title="Chưa có dữ liệu" description="Không có dữ liệu Hàng đợi thư chết."></app-empty-state>
 
           <div *ngIf="dlqState === 'success'" class="summary-cards">
@@ -107,7 +124,7 @@ interface DlqSummaryItem {
           </div>
 
           <app-loading-skeleton *ngIf="healthState === 'loading'" [rows]="2" variant="line"></app-loading-skeleton>
-          <app-error-state *ngIf="healthState === 'error'" [message]="healthError" (retry)="loadHealth()"></app-error-state>
+          <app-error-state *ngIf="healthState === 'error'" [message]="healthError" (retry)="refresh()"></app-error-state>
           <app-empty-state *ngIf="healthState === 'empty'" title="Chưa có dữ liệu" description="Không nhận được dữ liệu Kiểm tra sức khỏe."></app-empty-state>
 
           <div *ngIf="healthState === 'success'" class="health-block">
@@ -158,8 +175,6 @@ interface DlqSummaryItem {
   `]
 })
 export class DashboardComponent implements OnInit {
-  private readonly notificationService = inject(NotificationService);
-  private readonly deadLetterQueueService = inject(DeadLetterQueueService);
   private readonly http = inject(HttpClient);
 
   notificationsState: BlockState = 'loading';
@@ -182,105 +197,33 @@ export class DashboardComponent implements OnInit {
   }
 
   refresh(): void {
-    this.loadNotificationSummary();
-    this.loadDlqSummary();
-    this.loadHealth();
-  }
-
-  loadNotificationSummary(): void {
     this.notificationsState = 'loading';
-    this.notificationsError = 'Không thể tải tóm tắt Thông báo.';
-
-    const statuses: Array<Pick<NotificationSummaryCard, 'status' | 'label' | 'tone'>> = [
-      { status: 'Pending', label: 'Pending (Chờ xử lý)', tone: 'warning' },
-      { status: 'Processing', label: 'Processing (Đang xử lý)', tone: 'info' },
-      { status: 'Sent', label: 'Sent (Đã gửi)', tone: 'success' },
-      { status: 'Failed', label: 'Failed (Thất bại)', tone: 'danger' }
-    ];
-
-    forkJoin(
-      statuses.map((item) =>
-        this.notificationService
-          .getNotifications({ status: item.status, page: 1, pageSize: 1 })
-          .pipe(
-            map((response) => ({ ...item, count: response.totalCount })),
-            catchError((error: unknown) => {
-              this.notificationsError = this.toErrorMessage(error, 'Không thể tải tóm tắt Thông báo.');
-              return of(null);
-            })
-          )
-      )
-    )
-      .pipe(finalize(() => {
-        if (this.notificationsState === 'loading') {
-          this.notificationsState = this.notificationCards.length > 0 ? 'success' : 'error';
-        }
-      }))
-      .subscribe((results) => {
-        if (results.some((result) => result === null)) {
-          this.notificationsState = 'error';
-          return;
-        }
-
-        this.notificationCards = results as NotificationSummaryCard[];
-        const hasData = this.notificationCards.some((card) => card.count > 0);
-        this.notificationsState = hasData ? 'success' : 'empty';
-      });
-  }
-
-  loadDlqSummary(): void {
     this.dlqState = 'loading';
-    this.dlqError = 'Không thể tải tóm tắt Hàng đợi thư chết.';
-
-    const queues: DlqSummaryItem[] = [
-      { queueName: 'notifications.email.dlq', label: 'Email - Hàng đợi thư chết', count: 0 },
-      { queueName: 'notifications.inapp.dlq', label: 'In-app - Hàng đợi thư chết', count: 0 }
-    ];
-
-    forkJoin(
-      queues.map((queue) =>
-        this.deadLetterQueueService.getMessages(queue.queueName, 1).pipe(
-          map((response) => ({ ...queue, count: response.count })),
-          catchError((error: unknown) => {
-            this.dlqError = this.toErrorMessage(error, 'Không thể tải tóm tắt Hàng đợi thư chết.');
-            return of(null);
-          })
-        )
-      )
-    )
-      .pipe(finalize(() => {
-        if (this.dlqState === 'loading') {
-          this.dlqState = this.dlqItems.length > 0 ? 'success' : 'error';
-        }
-      }))
-      .subscribe((results) => {
-        if (results.some((result) => result === null)) {
-          this.dlqState = 'error';
-          return;
-        }
-
-        this.dlqItems = results as DlqSummaryItem[];
-        this.dlqTotal = this.dlqItems.reduce((sum, item) => sum + item.count, 0);
-        this.dlqState = 'success';
-      });
-  }
-
-  loadHealth(): void {
     this.healthState = 'loading';
+    this.notificationsError = 'Không thể tải tóm tắt Thông báo.';
+    this.dlqError = 'Không thể tải tóm tắt Hàng đợi thư chết.';
     this.healthError = 'Không thể tải trạng thái Kiểm tra sức khỏe.';
 
     this.http
-      .get('/health/ready', { responseType: 'text' })
+      .get<DashboardSummaryResponse>('/api/admin/dashboard/summary')
       .pipe(
         catchError((error: unknown) => {
-          if (error instanceof HttpErrorResponse && typeof error.error === 'string' && error.error.trim()) {
-            return of(error.error);
-          }
-
-          this.healthError = this.toErrorMessage(error, 'Không thể tải trạng thái Kiểm tra sức khỏe.');
+          const message = this.toErrorMessage(error, 'Không thể tải dữ liệu Tổng quan.');
+          this.notificationsState = 'error';
+          this.dlqState = 'error';
+          this.healthState = 'error';
+          this.notificationsError = message;
+          this.dlqError = message;
+          this.healthError = message;
           return of(null);
         }),
         finalize(() => {
+          if (this.notificationsState === 'loading') {
+            this.notificationsState = 'error';
+          }
+          if (this.dlqState === 'loading') {
+            this.dlqState = 'error';
+          }
           if (this.healthState === 'loading') {
             this.healthState = 'error';
           }
@@ -288,33 +231,82 @@ export class DashboardComponent implements OnInit {
       )
       .subscribe((response) => {
         if (response === null) {
-          this.healthState = 'error';
           return;
         }
 
-        const normalized = (response || '').trim();
-        if (!normalized) {
-          this.healthState = 'empty';
-          return;
-        }
-
-        const status = normalized.toLowerCase();
-        if (status.includes('healthy') && !status.includes('unhealthy')) {
-          this.healthLabel = 'Healthy (Sẵn sàng)';
-          this.healthToneClass = 'health-ok';
-          this.healthDetail = 'API và các phụ thuộc readiness đang hoạt động bình thường.';
-        } else if (status.includes('degraded')) {
-          this.healthLabel = 'Degraded (Suy giảm)';
-          this.healthToneClass = 'health-warn';
-          this.healthDetail = 'Hệ thống đang chạy nhưng có phụ thuộc suy giảm. Cần kiểm tra thêm.';
-        } else {
-          this.healthLabel = 'Unhealthy (Không sẵn sàng)';
-          this.healthToneClass = 'health-bad';
-          this.healthDetail = 'Hệ thống hoặc phụ thuộc readiness chưa sẵn sàng.';
-        }
-
-        this.healthState = 'success';
+        this.applyNotificationSummary(response);
+        this.applyDlqSummary(response);
+        this.applyHealthSummary(response);
       });
+  }
+
+  private applyNotificationSummary(response: DashboardSummaryResponse): void {
+    if (response.notifications.error) {
+      this.notificationsState = 'error';
+      this.notificationsError = response.notifications.error;
+      return;
+    }
+
+    this.notificationCards = [
+      { status: 'Pending', label: 'Pending (Chờ xử lý)', count: response.notifications.pending, tone: 'warning' },
+      { status: 'Processing', label: 'Processing (Đang xử lý)', count: response.notifications.processing, tone: 'info' },
+      { status: 'Sent', label: 'Sent (Đã gửi)', count: response.notifications.sent, tone: 'success' },
+      { status: 'Failed', label: 'Failed (Thất bại)', count: response.notifications.failed, tone: 'danger' }
+    ];
+    this.notificationsState = this.notificationCards.some((card) => card.count > 0) ? 'success' : 'empty';
+  }
+
+  private applyDlqSummary(response: DashboardSummaryResponse): void {
+    if (response.deadLetterQueues.some((item) => item.error)) {
+      this.dlqState = 'error';
+      this.dlqError = response.deadLetterQueues.find((item) => item.error)?.error ?? 'Không thể tải tóm tắt Hàng đợi thư chết.';
+      return;
+    }
+
+    this.dlqItems = response.deadLetterQueues.map((item) => ({
+      queueName: item.queueName,
+      label: this.toDlqLabel(item.queueName),
+      count: item.count,
+      error: item.error
+    }));
+    this.dlqTotal = this.dlqItems.reduce((sum, item) => sum + item.count, 0);
+    this.dlqState = 'success';
+  }
+
+  private applyHealthSummary(response: DashboardSummaryResponse): void {
+    const status = (response.health.status || '').trim().toLowerCase();
+    if (!status) {
+      this.healthState = 'empty';
+      return;
+    }
+
+    if (status.includes('healthy') && !status.includes('unhealthy')) {
+      this.healthLabel = 'Healthy (Sẵn sàng)';
+      this.healthToneClass = 'health-ok';
+      this.healthDetail = response.health.details ?? 'API và các phụ thuộc readiness đang hoạt động bình thường.';
+    } else if (status.includes('degraded')) {
+      this.healthLabel = 'Degraded (Suy giảm)';
+      this.healthToneClass = 'health-warn';
+      this.healthDetail = response.health.details ?? 'Hệ thống đang chạy nhưng có phụ thuộc suy giảm. Cần kiểm tra thêm.';
+    } else {
+      this.healthLabel = 'Unhealthy (Không sẵn sàng)';
+      this.healthToneClass = 'health-bad';
+      this.healthDetail = response.health.details ?? 'Hệ thống hoặc phụ thuộc readiness chưa sẵn sàng.';
+    }
+
+    this.healthState = 'success';
+  }
+
+  private toDlqLabel(queueName: string): string {
+    if (queueName === 'notifications.email.dlq') {
+      return 'Email - Hàng đợi thư chết';
+    }
+
+    if (queueName === 'notifications.inapp.dlq') {
+      return 'In-app - Hàng đợi thư chết';
+    }
+
+    return queueName;
   }
 
   private toErrorMessage(error: unknown, fallback: string): string {

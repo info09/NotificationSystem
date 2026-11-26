@@ -182,6 +182,9 @@ public sealed class CreateNotificationUseCaseTests
         public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken)
             => throw new NotImplementedException();
 
+        public Task<IReadOnlyDictionary<NotificationStatus, int>> GetStatusCountsAsync(string? scopeRestriction, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyDictionary<NotificationStatus, int>>(new Dictionary<NotificationStatus, int>());
+
         public Task<DomainNotification> AddAsync(DomainNotification entity, CancellationToken cancellationToken = default)
         {
             AddedNotification = entity;

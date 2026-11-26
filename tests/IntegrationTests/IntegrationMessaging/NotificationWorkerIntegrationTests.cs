@@ -642,6 +642,7 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(NotificationStatus? status, NotificationChannel? channel, DateTime? createdFromUtc, DateTime? createdToUtc, int page, int pageSize, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<DomainNotification>)Array.Empty<DomainNotification>(), 0));
         public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<DomainNotification?>(null);
+        public Task<IReadOnlyDictionary<NotificationStatus, int>> GetStatusCountsAsync(string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyDictionary<NotificationStatus, int>>(new Dictionary<NotificationStatus, int>());
     }
 
     private sealed class NoOpNotificationRepository : INotificationRepository
@@ -655,6 +656,7 @@ public sealed class NotificationWorkerIntegrationTests : IAsyncLifetime
         public Task UpdateAsync(DomainNotification entity, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<(IReadOnlyList<DomainNotification> Items, int TotalCount)> GetPagedAsync(NotificationStatus? status, NotificationChannel? channel, DateTime? createdFromUtc, DateTime? createdToUtc, int page, int pageSize, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult(((IReadOnlyList<DomainNotification>)Array.Empty<DomainNotification>(), 0));
         public Task<DomainNotification?> GetByIdForScopeAsync(Guid id, string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<DomainNotification?>(null);
+        public Task<IReadOnlyDictionary<NotificationStatus, int>> GetStatusCountsAsync(string? scopeRestriction, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyDictionary<NotificationStatus, int>>(new Dictionary<NotificationStatus, int>());
     }
 
     private sealed class NoOpNotificationChannelDispatcher : INotificationChannelDispatcher

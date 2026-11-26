@@ -43,4 +43,14 @@ public interface INotificationRepository : IRepository<DomainNotification>
         Guid id,
         string? scopeRestriction,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Lấy tổng hợp số lượng Thông báo theo Trạng thái thông báo.
+    /// </summary>
+    /// <param name="scopeRestriction">Giới hạn phạm vi truy cập.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Bản đồ số lượng theo Trạng thái thông báo.</returns>
+    Task<IReadOnlyDictionary<NotificationStatus, int>> GetStatusCountsAsync(
+        string? scopeRestriction,
+        CancellationToken cancellationToken);
 }

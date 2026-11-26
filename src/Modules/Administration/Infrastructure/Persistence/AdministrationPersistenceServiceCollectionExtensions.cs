@@ -1,4 +1,5 @@
 using Administration.Application.Abstractions;
+using Administration.Application.Dashboard;
 using Administration.Application.DeadLetterQueue;
 using Administration.Infrastructure.DeadLetterQueue;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,7 @@ public static class AdministrationPersistenceServiceCollectionExtensions
         services.AddScoped<IDeadLetterResendRequestRepository, DeadLetterResendRequestRepository>();
         services.AddScoped<GetDeadLetterMessagesUseCase>();
         services.AddScoped<ResendDeadLetterMessageUseCase>();
+        services.AddScoped<GetDashboardSummaryUseCase>();
 
         return services;
     }

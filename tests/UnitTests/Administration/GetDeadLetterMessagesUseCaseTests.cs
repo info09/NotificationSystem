@@ -45,6 +45,9 @@ public sealed class GetDeadLetterMessagesUseCaseTests
         public Task<IReadOnlyList<DeadLetterQueueMessageDto>> GetMessagesAsync(string queueName, int limit, CancellationToken cancellationToken)
             => Task.FromResult(Messages);
 
+        public Task<int> GetMessageCountAsync(string queueName, CancellationToken cancellationToken)
+            => Task.FromResult(Messages.Count);
+
         public Task<DeadLetterResendGatewayResult?> ResendAsync(string queueName, string messageId, CancellationToken cancellationToken)
             => Task.FromResult<DeadLetterResendGatewayResult?>(null);
     }
