@@ -152,6 +152,26 @@ public sealed class NotificationTemplateApiIntegrationTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    /// <summary>
+    /// Kiểm tra tạo mẫu thiếu dữ liệu bắt buộc trả về BadRequest.
+    /// </summary>
+    [Fact]
+    public async Task CreateNotificationTemplate_WithInvalidRequest_ReturnsBadRequest()
+    {
+        using var request = CreateAuthorizedJsonRequest(HttpMethod.Post, "/api/admin/notification-templates", RbacRoles.SystemAdministrator, "admin-1", new
+        {
+            templateKey = "",
+            name = "",
+            channel = "SMS",
+            body = "",
+            isActive = true
+        });
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string url, string role, string subject)
     {
         var request = new HttpRequestMessage(method, url);

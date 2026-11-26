@@ -79,6 +79,23 @@ public sealed class NotificationTemplateUseCaseTests
         Assert.Empty(repository.Items);
     }
 
+    /// <summary>
+    /// Kiểm tra tạo mẫu thiếu dữ liệu bắt buộc trả về ValidationError.
+    /// </summary>
+    [Fact]
+    public async Task Create_WithInvalidRequest_ReturnsValidationError()
+    {
+        var repository = new FakeNotificationTemplateRepository();
+        var useCase = new CreateNotificationTemplateUseCase(repository);
+
+        var result = await useCase.HandleAsync(
+            new CreateNotificationTemplateAppRequest("", "", null, "SMS", null, "", true),
+            CancellationToken.None);
+
+        Assert.Equal(TemplateConfigurationAppStatus.ValidationError, result.Status);
+        Assert.NotNull(result.ValidationErrors);
+    }
+
     private sealed class FakeNotificationTemplateRepository : INotificationTemplateRepository
     {
         public FakeNotificationTemplateRepository(params NotificationTemplate[] templates)

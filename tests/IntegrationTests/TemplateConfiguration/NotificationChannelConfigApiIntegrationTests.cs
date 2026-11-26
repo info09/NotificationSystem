@@ -122,6 +122,40 @@ public sealed class NotificationChannelConfigApiIntegrationTests : IAsyncLifetim
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    /// <summary>
+    /// Kiểm tra tạo trùng kênh trả về Conflict.
+    /// </summary>
+    [Fact]
+    public async Task CreateNotificationChannelConfig_WithDuplicateChannel_ReturnsConflict()
+    {
+        var body = new { channel = "Email", displayName = "Email", description = (string?)null, isEnabled = true };
+
+        using var first = CreateAuthorizedJsonRequest(HttpMethod.Post, "/api/admin/notification-channel-configs", RbacRoles.SystemAdministrator, "admin-1", body);
+        var firstResponse = await _client.SendAsync(first);
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+
+        using var second = CreateAuthorizedJsonRequest(HttpMethod.Post, "/api/admin/notification-channel-configs", RbacRoles.SystemAdministrator, "admin-1", body);
+        var secondResponse = await _client.SendAsync(second);
+        Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+    }
+
+    /// <summary>
+    /// Kiểm tra tạo cấu hình không hợp lệ trả về BadRequest.
+    /// </summary>
+    [Fact]
+    public async Task CreateNotificationChannelConfig_WithInvalidRequest_ReturnsBadRequest()
+    {
+        using var request = CreateAuthorizedJsonRequest(HttpMethod.Post, "/api/admin/notification-channel-configs", RbacRoles.SystemAdministrator, "admin-1", new
+        {
+            channel = "SMS",
+            displayName = "",
+            isEnabled = true
+        });
+
+        var response = await _client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string url, string role, string subject)
     {
         var request = new HttpRequestMessage(method, url);

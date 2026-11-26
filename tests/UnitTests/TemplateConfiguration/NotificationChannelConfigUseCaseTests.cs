@@ -62,6 +62,23 @@ public sealed class NotificationChannelConfigUseCaseTests
         Assert.Equal(TemplateConfigurationAppStatus.NotFound, result.Status);
     }
 
+    /// <summary>
+    /// Kiểm tra tạo cấu hình với kênh không hợp lệ trả về ValidationError.
+    /// </summary>
+    [Fact]
+    public async Task Create_WithInvalidChannel_ReturnsValidationError()
+    {
+        var repository = new FakeNotificationChannelConfigRepository();
+        var useCase = new CreateNotificationChannelConfigUseCase(repository);
+
+        var result = await useCase.HandleAsync(
+            new CreateNotificationChannelConfigAppRequest("SMS", "SMS", null, true),
+            CancellationToken.None);
+
+        Assert.Equal(TemplateConfigurationAppStatus.ValidationError, result.Status);
+        Assert.NotNull(result.ValidationErrors);
+    }
+
     private sealed class FakeNotificationChannelConfigRepository : INotificationChannelConfigRepository
     {
         public FakeNotificationChannelConfigRepository(params NotificationChannelConfig[] configs)
