@@ -70,6 +70,14 @@ export const routes: Routes = [
             (m) => m.EndUserProfilesComponent
           )
       },
+      {
+        path: 'notification-templates',
+        canActivate: [systemAdminGuard],
+        loadComponent: () =>
+          import('./features/notification-templates/notification-templates.component').then(
+            (m) => m.NotificationTemplatesComponent
+          )
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },

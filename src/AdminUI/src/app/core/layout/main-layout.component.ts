@@ -206,7 +206,8 @@ export class MainLayoutComponent {
     { label: 'Thông báo', icon: 'notifications', route: '/notifications' },
     { label: 'Hàng đợi thư chết', icon: 'inbox', route: '/dead-letter-queues' },
     { label: 'Tài khoản người dùng', icon: 'manage_accounts', route: '/user-accounts', adminOnly: true },
-    { label: 'Hồ sơ người nhận EndUser', icon: 'groups', route: '/end-user-profiles', adminOnly: true }
+    { label: 'Hồ sơ người nhận EndUser', icon: 'groups', route: '/end-user-profiles', adminOnly: true },
+    { label: 'Mẫu thông báo', icon: 'description', route: '/notification-templates', adminOnly: true }
   ];
 
   onLogout(): void {
