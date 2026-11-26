@@ -10,24 +10,25 @@ namespace IntegrationMessaging.Application.IntegrationEvents;
 /// </summary>
 public sealed class ReceiveIntegrationEventUseCase
 {
+    /// <summary>
+    /// Loại sự kiện Outbox cho Sự kiện tích hợp đã tiếp nhận.
+    /// </summary>
+    public const string IntegrationEventReceivedEventType = "IntegrationEventReceived";
+
     private readonly IIntegrationEventRepository _repository;
     private readonly IIntegrationEventRouteResolver _routeResolver;
-    private readonly IIntegrationNotificationCreator _notificationCreator;
 
     /// <summary>
     /// Khởi tạo use case tiếp nhận Sự kiện tích hợp.
     /// </summary>
     /// <param name="repository">Repository Sự kiện tích hợp.</param>
     /// <param name="routeResolver">Bộ phân giải Định tuyến sự kiện tích hợp.</param>
-    /// <param name="notificationCreator">Bộ tạo Thông báo từ Sự kiện tích hợp.</param>
     public ReceiveIntegrationEventUseCase(
         IIntegrationEventRepository repository,
-        IIntegrationEventRouteResolver routeResolver,
-        IIntegrationNotificationCreator notificationCreator)
+        IIntegrationEventRouteResolver routeResolver)
     {
         _repository = repository;
         _routeResolver = routeResolver;
-        _notificationCreator = notificationCreator;
     }
 
     /// <summary>
@@ -149,16 +150,6 @@ public sealed class ReceiveIntegrationEventUseCase
             ? messageId.ToString("N")
             : request.IdempotencyKey.Trim();
 
-        var notificationResult = await _notificationCreator.CreateAsync(
-            new CreateIntegrationNotificationCommand(
-                recipient!,
-                channel!,
-                content,
-                route.NotificationTemplateId,
-                idempotencyScope,
-                idempotencyKey),
-            cancellationToken);
-
         var now = DateTime.UtcNow;
         var integrationEvent = IntegrationEvent.Create(
             Guid.NewGuid(),
@@ -172,7 +163,32 @@ public sealed class ReceiveIntegrationEventUseCase
             payloadJson!,
             now);
 
+        var outboxPayload = JsonSerializer.Serialize(new
+        {
+            eventType = IntegrationEventReceivedEventType,
+            integrationEventType = eventType,
+            messageId,
+            eventId = request.EventId!.Value,
+            source = request.Source!.Trim(),
+            recipient,
+            channel,
+            content,
+            notificationTemplateId = route.NotificationTemplateId,
+            idempotencyScope,
+            idempotencyKey,
+            occurredAtUtc = request.OccurredAt!.Value.ToUniversalTime(),
+            payload = payloadJson
+        });
+
+        var outboxMessage = OutboxMessage.CreatePending(
+            Guid.NewGuid(),
+            messageId,
+            IntegrationEventReceivedEventType,
+            outboxPayload,
+            now);
+
         await _repository.AddAsync(integrationEvent, cancellationToken);
+        await _repository.AddOutboxMessageAsync(outboxMessage, cancellationToken);
 
         try
         {
@@ -190,8 +206,7 @@ public sealed class ReceiveIntegrationEventUseCase
                         duplicated.EventId,
                         duplicated.EventType,
                         duplicated.ReceivedAtUtc,
-                        true,
-                        notificationResult.NotificationId));
+                        true));
             }
 
             throw;
@@ -204,8 +219,7 @@ public sealed class ReceiveIntegrationEventUseCase
                 integrationEvent.EventId,
                 integrationEvent.EventType,
                 integrationEvent.ReceivedAtUtc,
-                false,
-                notificationResult.NotificationId));
+                false));
     }
 
     private static string? GetPayloadJson(JsonElement? payload)

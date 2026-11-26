@@ -5,20 +5,32 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Delivery.Application.Abstractions;
 using Delivery.Infrastructure.Persistence;
 using IdentityAccess.Domain;
 using IdentityAccess.Infrastructure.Persistence;
+using IntegrationMessaging.Infrastructure.Messaging;
 using IntegrationMessaging.Infrastructure.Persistence;
 using IntegrationTests;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using Notification.Application.Notifications;
+using Notification.Infrastructure;
 using Notification.Infrastructure.Persistence;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using TemplateConfiguration.Domain.IntegrationEventRoutes;
 using TemplateConfiguration.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
+using Testcontainers.RabbitMq;
+using Worker;
+using Worker.Outbox;
+using DomainNotification = global::Notification.Domain.Notification;
 
 namespace E2ETests.IntegrationMessaging;
 
@@ -32,6 +44,11 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
     private const string SigningKey = "e2e-test-signing-key-min-32-chars-000001";
 
     private readonly PostgreSqlContainer _postgreSqlContainer = TestcontainersConfiguration.CreatePostgreSqlBuilder().Build();
+    private readonly RabbitMqContainer _rabbitMqContainer = new RabbitMqBuilder()
+        .WithImage("rabbitmq:3-management")
+        .WithUsername("guest")
+        .WithPassword("guest")
+        .Build();
     private WebApplicationFactory<Program> _factory = null!;
     private HttpClient _client = null!;
 
@@ -40,7 +57,7 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
     /// </summary>
     public async Task InitializeAsync()
     {
-        await _postgreSqlContainer.StartAsync();
+        await Task.WhenAll(_postgreSqlContainer.StartAsync(), _rabbitMqContainer.StartAsync());
 
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
@@ -49,6 +66,11 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
             builder.UseSetting("JWT_ISSUER", Issuer);
             builder.UseSetting("JWT_AUDIENCE", Audience);
             builder.UseSetting("JWT_SIGNING_KEY", SigningKey);
+            builder.UseSetting("RabbitMq:Host", _rabbitMqContainer.Hostname);
+            builder.UseSetting("RabbitMq:Port", _rabbitMqContainer.GetMappedPublicPort(5672).ToString());
+            builder.UseSetting("RabbitMq:UserName", "guest");
+            builder.UseSetting("RabbitMq:Password", "guest");
+            builder.UseSetting("RabbitMq:VirtualHost", "/");
         });
 
         using (var scope = _factory.Services.CreateScope())
@@ -75,15 +97,18 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
     {
         _client.Dispose();
         await _factory.DisposeAsync();
-        await _postgreSqlContainer.DisposeAsync();
+        await Task.WhenAll(_postgreSqlContainer.DisposeAsync().AsTask(), _rabbitMqContainer.DisposeAsync().AsTask());
     }
 
     /// <summary>
-    /// Kiểm tra tiếp nhận Sự kiện tích hợp và chống trùng theo MessageId.
+    /// Kiểm tra tiếp nhận Sự kiện tích hợp end-to-end qua Outbox/RabbitMQ/Worker và chống trùng.
     /// </summary>
     [Fact]
-    public async Task ReceiveIntegrationEvent_EndToEnd_PersistsTraceAndHandlesDuplicate()
+    public async Task ReceiveIntegrationEvent_EndToEnd_CreatesNotificationThroughOutboxAndWorker()
     {
+        var rabbitMqOptions = CreateRabbitMqOptions();
+        await new RabbitMqTopologyInitializer(rabbitMqOptions).InitializeAsync();
+
         var body = new
         {
             messageId = Guid.NewGuid(),
@@ -108,12 +133,82 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
         Assert.NotNull(duplicate);
         Assert.True(duplicate!.Duplicate);
 
+        var publisher = new OutboxPublisherBackgroundService(
+            new SingleServiceScopeFactory(_factory.Services),
+            new RabbitMqMessagePublisher(rabbitMqOptions),
+            NullLogger<OutboxPublisherBackgroundService>.Instance);
+
+        var published = await publisher.PublishPendingMessagesAsync(CancellationToken.None);
+        Assert.True(published >= 1);
+
+        var (connection, channel, ea) = await GetDeliveryEventArgsAsync(rabbitMqOptions.Value, RabbitMqTopologyNames.EmailQueue);
+        await using var _ = connection;
+        await using var __ = channel;
+
+        var worker = CreateWorker(rabbitMqOptions);
+        await worker.HandleMessageAsync(channel, ea, CancellationToken.None);
+
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
         Assert.Equal(1, await dbContext.IntegrationEvents.CountAsync(x => x.MessageId == body.messageId));
 
         var notificationDbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
-        Assert.Equal(1, await notificationDbContext.Notifications.CountAsync(x => x.Recipient.Value == "user@example.com"));
+        var notification = await notificationDbContext.Notifications.SingleAsync(x => x.Recipient.Value == "user@example.com");
+        Assert.Equal(global::Notification.Domain.NotificationStatus.Sent, notification.Status);
+    }
+
+    private IOptions<RabbitMqOptions> CreateRabbitMqOptions() =>
+        Options.Create(new RabbitMqOptions
+        {
+            Host = _rabbitMqContainer.Hostname,
+            Port = _rabbitMqContainer.GetMappedPublicPort(5672),
+            UserName = "guest",
+            Password = "guest",
+            VirtualHost = "/"
+        });
+
+    private NotificationWorker CreateWorker(IOptions<RabbitMqOptions> options)
+    {
+        var services = new ServiceCollection();
+        services.AddDbContext<IntegrationMessagingDbContext>(o => o.UseNpgsql(_postgreSqlContainer.GetConnectionString()));
+        services.AddDbContext<NotificationDbContext>(o => o.UseNpgsql(_postgreSqlContainer.GetConnectionString()));
+        services.AddDbContext<DeliveryDbContext>(o => o.UseNpgsql(_postgreSqlContainer.GetConnectionString()));
+        services.AddScoped<INotificationOutboxWriter, NotificationOutboxWriter>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<BuildingBlocks.SharedKernel.IntegrationEvents.IIntegrationNotificationCreator, IntegrationNotificationCreator>();
+        services.AddScoped<INotificationChannelDispatcher, NoOpDispatcher>();
+        services.AddScoped<IDeliveryLogRecorder, NoOpDeliveryLogRecorder>();
+        var provider = services.BuildServiceProvider();
+
+        return new NotificationWorker(
+            new SingleServiceScopeFactory(provider),
+            options,
+            NullLogger<NotificationWorker>.Instance);
+    }
+
+    private static async Task<(IConnection Connection, IChannel Channel, BasicDeliverEventArgs Ea)> GetDeliveryEventArgsAsync(RabbitMqOptions options, string queueName)
+    {
+        var factory = new ConnectionFactory
+        {
+            HostName = options.Host,
+            Port = options.Port,
+            UserName = options.UserName,
+            Password = options.Password,
+            VirtualHost = options.VirtualHost
+        };
+
+        var connection = await factory.CreateConnectionAsync();
+        var channel = await connection.CreateChannelAsync();
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        var tcs = new TaskCompletionSource<BasicDeliverEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
+        consumer.ReceivedAsync += (_, ea) =>
+        {
+            tcs.TrySetResult(ea);
+            return Task.CompletedTask;
+        };
+        await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+        var ea = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        return (connection, channel, ea);
     }
 
     private static HttpRequestMessage CreateAuthorizedJsonRequest(HttpMethod method, string url, string role, string subject, object body)
@@ -148,5 +243,28 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
         Guid EventId,
         string EventType,
         DateTime ReceivedAtUtc,
-        bool Duplicate);
+        bool Duplicate,
+        Guid? NotificationId);
+
+    private sealed class SingleServiceScopeFactory : IServiceScopeFactory
+    {
+        private readonly IServiceProvider _serviceProvider;
+
+        public SingleServiceScopeFactory(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public IServiceScope CreateScope() => _serviceProvider.CreateScope();
+    }
+
+    private sealed class NoOpDispatcher : INotificationChannelDispatcher
+    {
+        public Task DispatchAsync(NotificationChannelDispatchRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class NoOpDeliveryLogRecorder : IDeliveryLogRecorder
+    {
+        public Task RecordAttemptAsync(RecordDeliveryAttemptRequest request, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
 }

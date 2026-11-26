@@ -34,6 +34,12 @@ public sealed class IntegrationEventRepository : IIntegrationEventRepository
     }
 
     /// <inheritdoc />
+    public async Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken cancellationToken)
+    {
+        await _dbContext.OutboxMessages.AddAsync(outboxMessage, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task SaveChangesAsync(CancellationToken cancellationToken)
     {
         return _dbContext.SaveChangesAsync(cancellationToken);

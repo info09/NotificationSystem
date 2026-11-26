@@ -1,3 +1,4 @@
+using BuildingBlocks.SharedKernel.IntegrationEvents;
 using Delivery.Application.Abstractions;
 using IntegrationMessaging.Domain;
 using IntegrationMessaging.Infrastructure.Messaging;
@@ -165,11 +166,8 @@ public sealed class NotificationWorker : BackgroundService
             return false;
         }
 
-        var notificationId = ResolveNotificationId(ea);
         var notificationRepository = scope.ServiceProvider.GetRequiredService<Notification.Application.Notifications.INotificationRepository>();
-        var notification = notificationId == Guid.Empty
-            ? null
-            : await notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+        var notification = await ResolveOrCreateNotificationAsync(scope, notificationRepository, ea, cancellationToken);
 
         if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Pending)
         {
@@ -355,6 +353,23 @@ public sealed class NotificationWorker : BackgroundService
             return "Unknown";
         }
 
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("eventType", out var eventTypeElement))
+            {
+                var eventType = eventTypeElement.GetString();
+                if (!string.IsNullOrWhiteSpace(eventType))
+                {
+                    return eventType;
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            return "Unknown";
+        }
+
         return "NotificationCreated";
     }
 
@@ -366,18 +381,113 @@ public sealed class NotificationWorker : BackgroundService
     /// <param name="cancellationToken">Token hủy thao tác.</param>
     private async Task TryFinalizeProcessedNotificationAsync(IServiceScope scope, BasicDeliverEventArgs ea, CancellationToken cancellationToken)
     {
-        var notificationId = ResolveNotificationId(ea);
-        if (notificationId == Guid.Empty)
-        {
-            return;
-        }
-
         var notificationRepository = scope.ServiceProvider.GetRequiredService<Notification.Application.Notifications.INotificationRepository>();
-        var notification = await notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+        var notification = await ResolveOrCreateNotificationAsync(scope, notificationRepository, ea, cancellationToken);
         if (notification is not null && notification.Status == global::Notification.Domain.NotificationStatus.Processing)
         {
             notification.MarkSent();
             await notificationRepository.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Phân giải hoặc tạo Thông báo từ Thông điệp.
+    /// </summary>
+    /// <param name="scope">Scope dịch vụ hiện tại.</param>
+    /// <param name="notificationRepository">Repository Thông báo.</param>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Thông báo đã phân giải hoặc tạo; <c>null</c> nếu không xác định được.</returns>
+    private static async Task<global::Notification.Domain.Notification?> ResolveOrCreateNotificationAsync(
+        IServiceScope scope,
+        Notification.Application.Notifications.INotificationRepository notificationRepository,
+        BasicDeliverEventArgs ea,
+        CancellationToken cancellationToken)
+    {
+        var notificationId = ResolveNotificationId(ea);
+        if (notificationId != Guid.Empty)
+        {
+            return await notificationRepository.GetByIdAsync(notificationId, cancellationToken);
+        }
+
+        if (!string.Equals(ResolveEventType(ea), "IntegrationEventReceived", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var command = TryReadIntegrationEventCommand(ea);
+        if (command is null)
+        {
+            return null;
+        }
+
+        var creator = scope.ServiceProvider.GetRequiredService<IIntegrationNotificationCreator>();
+        var result = await creator.CreateAsync(command, cancellationToken);
+        return await notificationRepository.GetByIdAsync(result.NotificationId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Đọc lệnh tạo Thông báo từ payload Sự kiện tích hợp.
+    /// </summary>
+    /// <param name="ea">Thông tin Thông điệp nhận được.</param>
+    /// <returns>Lệnh tạo Thông báo hoặc <c>null</c> nếu payload không hợp lệ.</returns>
+    internal static CreateIntegrationNotificationCommand? TryReadIntegrationEventCommand(BasicDeliverEventArgs ea)
+    {
+        var body = Encoding.UTF8.GetString(ea.Body.ToArray());
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
+
+            var recipient = GetString(root, "recipient");
+            var channel = GetString(root, "channel");
+            var content = GetString(root, "content");
+            var idempotencyScope = GetString(root, "idempotencyScope");
+            var idempotencyKey = GetString(root, "idempotencyKey");
+
+            if (string.IsNullOrWhiteSpace(recipient) ||
+                string.IsNullOrWhiteSpace(channel) ||
+                string.IsNullOrWhiteSpace(idempotencyScope) ||
+                string.IsNullOrWhiteSpace(idempotencyKey))
+            {
+                return null;
+            }
+
+            Guid? templateId = null;
+            if (root.TryGetProperty("notificationTemplateId", out var templateElement) &&
+                templateElement.ValueKind == JsonValueKind.String &&
+                Guid.TryParse(templateElement.GetString(), out var parsedTemplateId))
+            {
+                templateId = parsedTemplateId;
+            }
+
+            return new CreateIntegrationNotificationCommand(
+                recipient,
+                channel,
+                content,
+                templateId,
+                idempotencyScope,
+                idempotencyKey);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string? GetString(JsonElement root, string propertyName)
+    {
+        if (root.TryGetProperty(propertyName, out var element) && element.ValueKind == JsonValueKind.String)
+        {
+            var value = element.GetString();
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        return null;
     }
 }

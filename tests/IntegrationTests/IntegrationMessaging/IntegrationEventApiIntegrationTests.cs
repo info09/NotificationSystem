@@ -78,10 +78,10 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Kiểm tra tiếp nhận Sự kiện tích hợp hợp lệ trả về Created, ghi nhận truy vết và tạo Thông báo.
+    /// Kiểm tra tiếp nhận Sự kiện tích hợp hợp lệ trả về Created, ghi nhận truy vết và tạo OutboxMessage.
     /// </summary>
     [Fact]
-    public async Task ReceiveIntegrationEvent_WithValidRequest_ReturnsCreatedPersistsTraceAndCreatesNotification()
+    public async Task ReceiveIntegrationEvent_WithValidRequest_ReturnsCreatedPersistsTraceAndCreatesOutbox()
     {
         var requestBody = CreateValidRequest(Guid.NewGuid());
 
@@ -93,7 +93,6 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
         Assert.NotNull(payload);
         Assert.False(payload!.Duplicate);
         Assert.Equal(requestBody.MessageId, payload.MessageId);
-        Assert.NotEqual(Guid.Empty, payload.NotificationId);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
@@ -101,9 +100,9 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
         Assert.Equal(requestBody.EventType, record.EventType);
         Assert.Equal(requestBody.Source, record.Source);
 
-        var notificationDbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
-        var notification = await notificationDbContext.Notifications.SingleAsync(x => x.Id == payload.NotificationId);
-        Assert.Equal("user@example.com", notification.Recipient.Value);
+        var outbox = await dbContext.OutboxMessages.SingleAsync(x => x.MessageId == requestBody.MessageId);
+        Assert.Equal("IntegrationEventReceived", outbox.EventType);
+        Assert.Contains("\"channel\":\"Email\"", outbox.Payload);
     }
 
     /// <summary>

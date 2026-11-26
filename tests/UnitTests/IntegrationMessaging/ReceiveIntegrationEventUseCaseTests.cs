@@ -13,25 +13,24 @@ namespace UnitTests.IntegrationMessaging;
 public sealed class ReceiveIntegrationEventUseCaseTests
 {
     /// <summary>
-    /// Kiểm tra tiếp nhận sự kiện hợp lệ tạo truy vết và ánh xạ Thông báo.
+    /// Kiểm tra tiếp nhận sự kiện hợp lệ tạo truy vết và OutboxMessage.
     /// </summary>
     [Fact]
-    public async Task HandleAsync_WithValidRequest_ReturnsCreatedAndCreatesNotification()
+    public async Task HandleAsync_WithValidRequest_ReturnsCreatedAndCreatesOutboxMessage()
     {
         var repository = new FakeIntegrationEventRepository();
         var routeResolver = new FakeRouteResolver(new IntegrationEventRouteResolution("OrderCreated", Guid.NewGuid(), "Email"));
-        var notificationCreator = new FakeNotificationCreator();
-        var useCase = new ReceiveIntegrationEventUseCase(repository, routeResolver, notificationCreator);
+        var useCase = new ReceiveIntegrationEventUseCase(repository, routeResolver);
 
         var result = await useCase.HandleAsync(CreateRequest(), CancellationToken.None);
 
         Assert.Equal(IntegrationMessagingAppStatus.Created, result.Status);
         Assert.NotNull(result.Value);
         Assert.False(result.Value!.Duplicate);
-        Assert.NotNull(result.Value.NotificationId);
         Assert.Single(repository.Items);
-        Assert.Single(notificationCreator.Commands);
-        Assert.Equal("user@example.com", notificationCreator.Commands[0].Recipient);
+        Assert.Single(repository.OutboxMessages);
+        Assert.Equal(ReceiveIntegrationEventUseCase.IntegrationEventReceivedEventType, repository.OutboxMessages[0].EventType);
+        Assert.Contains("\"channel\":\"Email\"", repository.OutboxMessages[0].Payload);
     }
 
     /// <summary>
@@ -43,13 +42,14 @@ public sealed class ReceiveIntegrationEventUseCaseTests
         var messageId = Guid.NewGuid();
         var existing = IntegrationEvent.Create(Guid.NewGuid(), messageId, Guid.NewGuid(), "OrderCreated", DateTime.UtcNow, "order-service", null, "1.0", "{}", DateTime.UtcNow);
         var repository = new FakeIntegrationEventRepository(existing);
-        var useCase = new ReceiveIntegrationEventUseCase(repository, new FakeRouteResolver(null), new FakeNotificationCreator());
+        var useCase = new ReceiveIntegrationEventUseCase(repository, new FakeRouteResolver(null));
 
         var result = await useCase.HandleAsync(CreateRequest(messageId: messageId), CancellationToken.None);
 
         Assert.Equal(IntegrationMessagingAppStatus.Ok, result.Status);
         Assert.True(result.Value!.Duplicate);
         Assert.Single(repository.Items);
+        Assert.Empty(repository.OutboxMessages);
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public sealed class ReceiveIntegrationEventUseCaseTests
     [Fact]
     public async Task HandleAsync_WithMissingRequiredFields_ReturnsValidationError()
     {
-        var useCase = new ReceiveIntegrationEventUseCase(new FakeIntegrationEventRepository(), new FakeRouteResolver(null), new FakeNotificationCreator());
+        var useCase = new ReceiveIntegrationEventUseCase(new FakeIntegrationEventRepository(), new FakeRouteResolver(null));
 
         var result = await useCase.HandleAsync(
             new ReceiveIntegrationEventAppRequest(null, null, "", null, "", null, "", null),
@@ -77,7 +77,7 @@ public sealed class ReceiveIntegrationEventUseCaseTests
     [Fact]
     public async Task HandleAsync_WithoutActiveRoute_ReturnsValidationError()
     {
-        var useCase = new ReceiveIntegrationEventUseCase(new FakeIntegrationEventRepository(), new FakeRouteResolver(null), new FakeNotificationCreator());
+        var useCase = new ReceiveIntegrationEventUseCase(new FakeIntegrationEventRepository(), new FakeRouteResolver(null));
 
         var result = await useCase.HandleAsync(CreateRequest(), CancellationToken.None);
 
@@ -93,7 +93,7 @@ public sealed class ReceiveIntegrationEventUseCaseTests
     public async Task HandleAsync_WithoutRecipientInPayload_ReturnsValidationError()
     {
         var routeResolver = new FakeRouteResolver(new IntegrationEventRouteResolution("OrderCreated", Guid.NewGuid(), "Email"));
-        var useCase = new ReceiveIntegrationEventUseCase(new FakeIntegrationEventRepository(), routeResolver, new FakeNotificationCreator());
+        var useCase = new ReceiveIntegrationEventUseCase(new FakeIntegrationEventRepository(), routeResolver);
         var request = new ReceiveIntegrationEventAppRequest(
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -133,12 +133,20 @@ public sealed class ReceiveIntegrationEventUseCaseTests
 
         public List<IntegrationEvent> Items { get; }
 
+        public List<OutboxMessage> OutboxMessages { get; } = [];
+
         public Task<IntegrationEvent?> GetByMessageIdAsync(Guid messageId, CancellationToken cancellationToken) =>
             Task.FromResult(Items.FirstOrDefault(x => x.MessageId == messageId));
 
         public Task AddAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken)
         {
             Items.Add(integrationEvent);
+            return Task.CompletedTask;
+        }
+
+        public Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken cancellationToken)
+        {
+            OutboxMessages.Add(outboxMessage);
             return Task.CompletedTask;
         }
 
@@ -156,18 +164,5 @@ public sealed class ReceiveIntegrationEventUseCaseTests
 
         public Task<IntegrationEventRouteResolution?> ResolveAsync(string eventType, CancellationToken cancellationToken) =>
             Task.FromResult(_resolution);
-    }
-
-    private sealed class FakeNotificationCreator : IIntegrationNotificationCreator
-    {
-        public List<CreateIntegrationNotificationCommand> Commands { get; } = [];
-
-        public Task<IntegrationNotificationCreationResult> CreateAsync(
-            CreateIntegrationNotificationCommand command,
-            CancellationToken cancellationToken)
-        {
-            Commands.Add(command);
-            return Task.FromResult(new IntegrationNotificationCreationResult(Guid.NewGuid(), "Pending", true));
-        }
     }
 }

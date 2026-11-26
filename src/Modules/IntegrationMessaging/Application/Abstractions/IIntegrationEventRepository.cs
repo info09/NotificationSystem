@@ -24,6 +24,14 @@ public interface IIntegrationEventRepository
     Task AddAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Thêm bản ghi Outbox cho Sự kiện tích hợp.
+    /// </summary>
+    /// <param name="outboxMessage">Bản ghi Outbox.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Tác vụ bất đồng bộ.</returns>
+    Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Lưu thay đổi dữ liệu.
     /// </summary>
     /// <param name="cancellationToken">Token hủy thao tác.</param>
