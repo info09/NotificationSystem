@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TemplateConfiguration.Domain.IntegrationEventRoutes;
 using TemplateConfiguration.Domain.NotificationChannelConfigs;
 using TemplateConfiguration.Domain.NotificationTemplates;
 
@@ -20,6 +21,11 @@ public sealed class TemplateConfigurationDbContext(
     /// Tập thực thể Cấu hình kênh thông báo.
     /// </summary>
     public DbSet<NotificationChannelConfig> NotificationChannelConfigs => Set<NotificationChannelConfig>();
+
+    /// <summary>
+    /// Tập thực thể Định tuyến sự kiện tích hợp.
+    /// </summary>
+    public DbSet<IntegrationEventRoute> IntegrationEventRoutes => Set<IntegrationEventRoute>();
 
     /// <summary>
     /// Cấu hình mô hình dữ liệu cho module TemplateConfiguration.

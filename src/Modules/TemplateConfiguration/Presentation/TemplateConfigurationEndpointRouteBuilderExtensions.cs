@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using TemplateConfiguration.Application;
+using TemplateConfiguration.Application.IntegrationEventRoutes;
 using TemplateConfiguration.Application.NotificationChannelConfigs;
 using TemplateConfiguration.Application.NotificationTemplates;
 
@@ -42,6 +43,16 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
         channelConfigGroup.MapPost("/", HandleCreateNotificationChannelConfigAsync);
         channelConfigGroup.MapPut("/{id:guid}", HandleUpdateNotificationChannelConfigAsync);
         channelConfigGroup.MapDelete("/{id:guid}", HandleDeleteNotificationChannelConfigAsync);
+
+        var integrationEventRouteGroup = endpoints.MapGroup("/api/admin/integration-event-routes")
+            .WithTags("TemplateConfiguration")
+            .RequireAuthorization(RbacPolicies.SystemAdministrator);
+
+        integrationEventRouteGroup.MapGet("/", HandleGetIntegrationEventRoutesAsync);
+        integrationEventRouteGroup.MapGet("/{id:guid}", HandleGetIntegrationEventRouteByIdAsync);
+        integrationEventRouteGroup.MapPost("/", HandleCreateIntegrationEventRouteAsync);
+        integrationEventRouteGroup.MapPut("/{id:guid}", HandleUpdateIntegrationEventRouteAsync);
+        integrationEventRouteGroup.MapDelete("/{id:guid}", HandleDeleteIntegrationEventRouteAsync);
 
         return endpoints;
     }
@@ -265,6 +276,116 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu truy vấn danh sách Định tuyến sự kiện tích hợp.
+    /// </summary>
+    /// <param name="useCase">Use case truy vấn danh sách.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <param name="eventType">Loại sự kiện lọc.</param>
+    /// <param name="channel">Kênh lọc.</param>
+    /// <param name="isActive">Trạng thái kích hoạt lọc.</param>
+    /// <param name="page">Số trang.</param>
+    /// <param name="pageSize">Kích thước trang.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetIntegrationEventRoutesAsync(
+        GetIntegrationEventRoutesUseCase useCase,
+        CancellationToken cancellationToken,
+        string? eventType = null,
+        string? channel = null,
+        bool? isActive = null,
+        int page = 1,
+        int pageSize = 20)
+    {
+        var result = await useCase.HandleAsync(
+            new GetIntegrationEventRoutesAppRequest(eventType, channel, isActive, page, pageSize),
+            cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu lấy chi tiết Định tuyến sự kiện tích hợp.
+    /// </summary>
+    /// <param name="id">Mã định danh định tuyến.</param>
+    /// <param name="useCase">Use case lấy chi tiết.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetIntegrationEventRouteByIdAsync(
+        Guid id,
+        GetIntegrationEventRouteByIdUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu tạo Định tuyến sự kiện tích hợp.
+    /// </summary>
+    /// <param name="request">Yêu cầu tạo định tuyến.</param>
+    /// <param name="useCase">Use case tạo định tuyến.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleCreateIntegrationEventRouteAsync(
+        CreateIntegrationEventRouteRequest? request,
+        CreateIntegrationEventRouteUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new CreateIntegrationEventRouteAppRequest(
+                request.EventType,
+                request.NotificationTemplateId,
+                request.Channel,
+                request.Description,
+                request.IsActive);
+
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result, value => $"/api/admin/integration-event-routes/{value.Id}");
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu cập nhật Định tuyến sự kiện tích hợp.
+    /// </summary>
+    /// <param name="id">Mã định danh định tuyến.</param>
+    /// <param name="request">Yêu cầu cập nhật.</param>
+    /// <param name="useCase">Use case cập nhật định tuyến.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleUpdateIntegrationEventRouteAsync(
+        Guid id,
+        UpdateIntegrationEventRouteRequest? request,
+        UpdateIntegrationEventRouteUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new UpdateIntegrationEventRouteAppRequest(
+                request.EventType,
+                request.NotificationTemplateId,
+                request.Channel,
+                request.Description,
+                request.IsActive);
+
+        var result = await useCase.HandleAsync(id, appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu xóa Định tuyến sự kiện tích hợp.
+    /// </summary>
+    /// <param name="id">Mã định danh định tuyến.</param>
+    /// <param name="useCase">Use case xóa định tuyến.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleDeleteIntegrationEventRouteAsync(
+        Guid id,
+        DeleteIntegrationEventRouteUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
     /// Chuyển kết quả tầng Application sang kết quả HTTP.
     /// </summary>
     /// <typeparam name="T">Kiểu dữ liệu trả về.</typeparam>
@@ -363,3 +484,33 @@ public sealed record UpdateNotificationChannelConfigRequest(
     string? DisplayName,
     string? Description,
     bool? IsEnabled);
+
+/// <summary>
+/// Yêu cầu tạo Định tuyến sự kiện tích hợp.
+/// </summary>
+/// <param name="EventType">Loại sự kiện tích hợp.</param>
+/// <param name="NotificationTemplateId">Mã định danh Mẫu thông báo.</param>
+/// <param name="Channel">Kênh thông báo.</param>
+/// <param name="Description">Mô tả.</param>
+/// <param name="IsActive">Trạng thái kích hoạt.</param>
+public sealed record CreateIntegrationEventRouteRequest(
+    string? EventType,
+    Guid? NotificationTemplateId,
+    string? Channel,
+    string? Description,
+    bool? IsActive);
+
+/// <summary>
+/// Yêu cầu cập nhật Định tuyến sự kiện tích hợp.
+/// </summary>
+/// <param name="EventType">Loại sự kiện tích hợp.</param>
+/// <param name="NotificationTemplateId">Mã định danh Mẫu thông báo.</param>
+/// <param name="Channel">Kênh thông báo.</param>
+/// <param name="Description">Mô tả.</param>
+/// <param name="IsActive">Trạng thái kích hoạt.</param>
+public sealed record UpdateIntegrationEventRouteRequest(
+    string? EventType,
+    Guid? NotificationTemplateId,
+    string? Channel,
+    string? Description,
+    bool? IsActive);

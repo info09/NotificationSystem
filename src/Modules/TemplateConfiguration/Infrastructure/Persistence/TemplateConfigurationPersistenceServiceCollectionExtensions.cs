@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TemplateConfiguration.Application.Abstractions;
+using TemplateConfiguration.Application.IntegrationEventRoutes;
 using TemplateConfiguration.Application.NotificationChannelConfigs;
 using TemplateConfiguration.Application.NotificationTemplates;
 using TemplateConfiguration.Infrastructure.Persistence.Repositories;
@@ -50,6 +51,13 @@ public static class TemplateConfigurationPersistenceServiceCollectionExtensions
         services.AddScoped<GetNotificationChannelConfigByIdUseCase>();
         services.AddScoped<GetNotificationChannelConfigsUseCase>();
         services.AddScoped<DeleteNotificationChannelConfigUseCase>();
+
+        services.AddScoped<IIntegrationEventRouteRepository, IntegrationEventRouteRepository>();
+        services.AddScoped<CreateIntegrationEventRouteUseCase>();
+        services.AddScoped<UpdateIntegrationEventRouteUseCase>();
+        services.AddScoped<GetIntegrationEventRouteByIdUseCase>();
+        services.AddScoped<GetIntegrationEventRoutesUseCase>();
+        services.AddScoped<DeleteIntegrationEventRouteUseCase>();
 
         return services;
     }
