@@ -79,6 +79,15 @@ public sealed class IntegrationEventRouteRepository : IIntegrationEventRouteRepo
     }
 
     /// <inheritdoc />
+    public async Task<IntegrationEventRoute?> GetActiveByEventTypeAsync(string eventType, CancellationToken cancellationToken)
+    {
+        var normalized = eventType.Trim();
+        return await _dbContext.IntegrationEventRoutes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.EventType == normalized && x.IsActive, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task AddAsync(IntegrationEventRoute route, CancellationToken cancellationToken)
     {
         await _dbContext.IntegrationEventRoutes.AddAsync(route, cancellationToken);

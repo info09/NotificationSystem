@@ -32,10 +32,12 @@ public sealed record ReceiveIntegrationEventAppRequest(
 /// <param name="EventType">Loại Sự kiện tích hợp.</param>
 /// <param name="ReceivedAtUtc">Thời điểm tiếp nhận.</param>
 /// <param name="Duplicate">Đánh dấu sự kiện đã được tiếp nhận trước đó.</param>
+/// <param name="NotificationId">Mã định danh Thông báo được tạo hoặc ánh xạ.</param>
 public sealed record ReceiveIntegrationEventResponseDto(
     Guid Id,
     Guid MessageId,
     Guid EventId,
     string EventType,
     DateTime ReceivedAtUtc,
-    bool Duplicate);
+    bool Duplicate,
+    Guid? NotificationId = null);

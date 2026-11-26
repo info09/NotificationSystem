@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BuildingBlocks.SharedKernel.IntegrationEvents;
 using IntegrationMessaging.Application.Abstractions;
 using IntegrationMessaging.Domain;
 
@@ -10,14 +11,23 @@ namespace IntegrationMessaging.Application.IntegrationEvents;
 public sealed class ReceiveIntegrationEventUseCase
 {
     private readonly IIntegrationEventRepository _repository;
+    private readonly IIntegrationEventRouteResolver _routeResolver;
+    private readonly IIntegrationNotificationCreator _notificationCreator;
 
     /// <summary>
     /// Khởi tạo use case tiếp nhận Sự kiện tích hợp.
     /// </summary>
     /// <param name="repository">Repository Sự kiện tích hợp.</param>
-    public ReceiveIntegrationEventUseCase(IIntegrationEventRepository repository)
+    /// <param name="routeResolver">Bộ phân giải Định tuyến sự kiện tích hợp.</param>
+    /// <param name="notificationCreator">Bộ tạo Thông báo từ Sự kiện tích hợp.</param>
+    public ReceiveIntegrationEventUseCase(
+        IIntegrationEventRepository repository,
+        IIntegrationEventRouteResolver routeResolver,
+        IIntegrationNotificationCreator notificationCreator)
     {
         _repository = repository;
+        _routeResolver = routeResolver;
+        _notificationCreator = notificationCreator;
     }
 
     /// <summary>
@@ -92,12 +102,69 @@ public sealed class ReceiveIntegrationEventUseCase
                     true));
         }
 
+        var eventType = request.EventType!.Trim();
+        var route = await _routeResolver.ResolveAsync(eventType, cancellationToken);
+        if (route is null)
+        {
+            return IntegrationMessagingAppResult<ReceiveIntegrationEventResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["eventType"] = [$"No active IntegrationEventRoute found for eventType '{eventType}'."]
+                });
+        }
+
+        var payload = request.Payload!.Value;
+        var recipient = GetPayloadString(payload, "recipient", "recipientId", "email", "to", "recipientUserId");
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            return IntegrationMessagingAppResult<ReceiveIntegrationEventResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["payload.recipient"] = ["Recipient is required in payload."]
+                });
+        }
+
+        var channel = route.Channel ?? GetPayloadString(payload, "channel");
+        if (string.IsNullOrWhiteSpace(channel))
+        {
+            return IntegrationMessagingAppResult<ReceiveIntegrationEventResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["channel"] = ["Channel is required from route or payload."]
+                });
+        }
+
+        var content = GetPayloadString(payload, "content", "body", "message");
+        if (string.IsNullOrWhiteSpace(content) && route.NotificationTemplateId is null)
+        {
+            return IntegrationMessagingAppResult<ReceiveIntegrationEventResponseDto>.Validation(
+                new Dictionary<string, string[]>
+                {
+                    ["payload.content"] = ["Content or notificationTemplateId is required."]
+                });
+        }
+
+        var idempotencyScope = $"integration-event:{request.Source!.Trim()}";
+        var idempotencyKey = string.IsNullOrWhiteSpace(request.IdempotencyKey)
+            ? messageId.ToString("N")
+            : request.IdempotencyKey.Trim();
+
+        var notificationResult = await _notificationCreator.CreateAsync(
+            new CreateIntegrationNotificationCommand(
+                recipient!,
+                channel!,
+                content,
+                route.NotificationTemplateId,
+                idempotencyScope,
+                idempotencyKey),
+            cancellationToken);
+
         var now = DateTime.UtcNow;
         var integrationEvent = IntegrationEvent.Create(
             Guid.NewGuid(),
             messageId,
             request.EventId!.Value,
-            request.EventType!.Trim(),
+            eventType,
             request.OccurredAt!.Value.ToUniversalTime(),
             request.Source!.Trim(),
             request.IdempotencyKey,
@@ -123,7 +190,8 @@ public sealed class ReceiveIntegrationEventUseCase
                         duplicated.EventId,
                         duplicated.EventType,
                         duplicated.ReceivedAtUtc,
-                        true));
+                        true,
+                        notificationResult.NotificationId));
             }
 
             throw;
@@ -136,7 +204,8 @@ public sealed class ReceiveIntegrationEventUseCase
                 integrationEvent.EventId,
                 integrationEvent.EventType,
                 integrationEvent.ReceivedAtUtc,
-                false));
+                false,
+                notificationResult.NotificationId));
     }
 
     private static string? GetPayloadJson(JsonElement? payload)
@@ -153,5 +222,28 @@ public sealed class ReceiveIntegrationEventUseCase
         }
 
         return value.GetRawText();
+    }
+
+    private static string? GetPayloadString(JsonElement payload, params string[] propertyNames)
+    {
+        if (payload.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        foreach (var propertyName in propertyNames)
+        {
+            if (payload.TryGetProperty(propertyName, out var property) &&
+                property.ValueKind == JsonValueKind.String)
+            {
+                var value = property.GetString();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+        }
+
+        return null;
     }
 }

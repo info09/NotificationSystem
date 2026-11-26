@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Notification.Infrastructure.Persistence;
+using TemplateConfiguration.Domain.IntegrationEventRoutes;
 using TemplateConfiguration.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
 
@@ -57,6 +58,11 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
             await scope.ServiceProvider.GetRequiredService<DeliveryDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<IdentityAccessDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>().Database.MigrateAsync();
+
+            var templateConfigurationDbContext = scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>();
+            templateConfigurationDbContext.IntegrationEventRoutes.Add(
+                IntegrationEventRoute.Create(Guid.NewGuid(), "OrderCreated", null, "Email", "Route test", true));
+            await templateConfigurationDbContext.SaveChangesAsync();
         }
 
         _client = _factory.CreateClient();
@@ -87,7 +93,7 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
             source = "order-service",
             idempotencyKey = "idem-e2e-1",
             version = "1.0",
-            payload = new { orderId = 123, customerName = "Nguyen Van A" }
+            payload = new { orderId = 123, customerName = "Nguyen Van A", recipient = "user@example.com", content = "Đơn hàng đã tạo" }
         };
 
         using var firstRequest = CreateAuthorizedJsonRequest(HttpMethod.Post, "/api/integration-events", RbacRoles.IntegrationClient, "integration-1", body);
@@ -105,6 +111,9 @@ public sealed class IntegrationEventReceiveE2ETests : IAsyncLifetime
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
         Assert.Equal(1, await dbContext.IntegrationEvents.CountAsync(x => x.MessageId == body.messageId));
+
+        var notificationDbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        Assert.Equal(1, await notificationDbContext.Notifications.CountAsync(x => x.Recipient.Value == "user@example.com"));
     }
 
     private static HttpRequestMessage CreateAuthorizedJsonRequest(HttpMethod method, string url, string role, string subject, object body)

@@ -43,6 +43,14 @@ public interface IIntegrationEventRouteRepository
     Task<bool> ExistsByEventTypeAsync(string eventType, Guid? excludeId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Lấy Định tuyến sự kiện tích hợp đang hoạt động theo loại sự kiện.
+    /// </summary>
+    /// <param name="eventType">Loại sự kiện tích hợp.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Định tuyến hoạt động hoặc <c>null</c>.</returns>
+    Task<IntegrationEventRoute?> GetActiveByEventTypeAsync(string eventType, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Thêm Định tuyến sự kiện tích hợp.
     /// </summary>
     /// <param name="route">Thực thể định tuyến.</param>

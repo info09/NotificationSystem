@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Notification.Infrastructure.Persistence;
+using TemplateConfiguration.Domain.IntegrationEventRoutes;
 using TemplateConfiguration.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
 
@@ -56,6 +57,11 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
             await scope.ServiceProvider.GetRequiredService<DeliveryDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<IdentityAccessDbContext>().Database.MigrateAsync();
             await scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>().Database.MigrateAsync();
+
+            var templateConfigurationDbContext = scope.ServiceProvider.GetRequiredService<TemplateConfigurationDbContext>();
+            templateConfigurationDbContext.IntegrationEventRoutes.Add(
+                IntegrationEventRoute.Create(Guid.NewGuid(), "OrderCreated", null, "Email", "Route test", true));
+            await templateConfigurationDbContext.SaveChangesAsync();
         }
 
         _client = _factory.CreateClient();
@@ -72,10 +78,10 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Kiểm tra tiếp nhận Sự kiện tích hợp hợp lệ trả về Created và ghi nhận truy vết.
+    /// Kiểm tra tiếp nhận Sự kiện tích hợp hợp lệ trả về Created, ghi nhận truy vết và tạo Thông báo.
     /// </summary>
     [Fact]
-    public async Task ReceiveIntegrationEvent_WithValidRequest_ReturnsCreatedAndPersistsTrace()
+    public async Task ReceiveIntegrationEvent_WithValidRequest_ReturnsCreatedPersistsTraceAndCreatesNotification()
     {
         var requestBody = CreateValidRequest(Guid.NewGuid());
 
@@ -87,12 +93,17 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
         Assert.NotNull(payload);
         Assert.False(payload!.Duplicate);
         Assert.Equal(requestBody.MessageId, payload.MessageId);
+        Assert.NotEqual(Guid.Empty, payload.NotificationId);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IntegrationMessagingDbContext>();
         var record = await dbContext.IntegrationEvents.SingleAsync(x => x.MessageId == requestBody.MessageId);
         Assert.Equal(requestBody.EventType, record.EventType);
         Assert.Equal(requestBody.Source, record.Source);
+
+        var notificationDbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        var notification = await notificationDbContext.Notifications.SingleAsync(x => x.Id == payload.NotificationId);
+        Assert.Equal("user@example.com", notification.Recipient.Value);
     }
 
     /// <summary>
@@ -160,7 +171,7 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
         "order-service",
         "idem-1",
         "1.0",
-        new { orderId = 123 });
+        new { orderId = 123, recipient = "user@example.com", content = "Đơn hàng đã tạo" });
 
     private static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string url, string role, string subject)
     {
@@ -210,5 +221,6 @@ public sealed class IntegrationEventApiIntegrationTests : IAsyncLifetime
         Guid EventId,
         string EventType,
         DateTime ReceivedAtUtc,
-        bool Duplicate);
+        bool Duplicate,
+        Guid? NotificationId);
 }

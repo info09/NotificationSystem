@@ -130,6 +130,9 @@ public sealed class IntegrationEventRouteUseCaseTests
         public Task<bool> ExistsByEventTypeAsync(string eventType, Guid? excludeId, CancellationToken cancellationToken) =>
             Task.FromResult(Items.Any(x => x.EventType == eventType && (!excludeId.HasValue || x.Id != excludeId.Value)));
 
+        public Task<IntegrationEventRoute?> GetActiveByEventTypeAsync(string eventType, CancellationToken cancellationToken) =>
+            Task.FromResult(Items.FirstOrDefault(x => x.EventType == eventType && x.IsActive));
+
         public Task AddAsync(IntegrationEventRoute route, CancellationToken cancellationToken)
         {
             Items.Add(route);
