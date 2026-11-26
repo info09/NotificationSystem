@@ -21,6 +21,11 @@ public sealed class IntegrationMessagingDbContext(
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
     /// <summary>
+    /// Tập thực thể Sự kiện tích hợp.
+    /// </summary>
+    public DbSet<IntegrationEvent> IntegrationEvents => Set<IntegrationEvent>();
+
+    /// <summary>
     /// Cấu hình mô hình dữ liệu cho module IntegrationMessaging.
     /// </summary>
     /// <param name="modelBuilder">Builder cấu hình mô hình EF Core.</param>

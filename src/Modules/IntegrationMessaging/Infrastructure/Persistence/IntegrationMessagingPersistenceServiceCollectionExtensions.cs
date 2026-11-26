@@ -1,3 +1,6 @@
+using IntegrationMessaging.Application.Abstractions;
+using IntegrationMessaging.Application.IntegrationEvents;
+using IntegrationMessaging.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +35,9 @@ public static class IntegrationMessagingPersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly(typeof(IntegrationMessagingDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "integration_messaging")));
+
+        services.AddScoped<IIntegrationEventRepository, IntegrationEventRepository>();
+        services.AddScoped<ReceiveIntegrationEventUseCase>();
 
         return services;
     }
