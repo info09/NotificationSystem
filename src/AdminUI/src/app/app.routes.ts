@@ -78,6 +78,14 @@ export const routes: Routes = [
             (m) => m.NotificationTemplatesComponent
           )
       },
+      {
+        path: 'notification-channel-configs',
+        canActivate: [systemAdminGuard],
+        loadComponent: () =>
+          import('./features/notification-channel-configs/notification-channel-configs.component').then(
+            (m) => m.NotificationChannelConfigsComponent
+          )
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },
