@@ -122,6 +122,16 @@ public sealed class NotificationTemplateApiIntegrationTests : IAsyncLifetime
         using var getAfterDeleteRequest = CreateAuthorizedRequest(HttpMethod.Get, $"/api/admin/notification-templates/{created.Id}", RbacRoles.SystemAdministrator, "admin-1");
         var getAfterDeleteResponse = await _client.SendAsync(getAfterDeleteRequest);
         Assert.Equal(HttpStatusCode.NotFound, getAfterDeleteResponse.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var administrationDbContext = scope.ServiceProvider.GetRequiredService<Administration.Infrastructure.Persistence.AdministrationDbContext>();
+        var auditActions = await administrationDbContext.AuditLogRecords
+            .Where(x => x.TargetType == "NotificationTemplate" && x.TargetId == created.Id.ToString())
+            .Select(x => x.Action)
+            .ToListAsync();
+        Assert.Contains("CreateNotificationTemplate", auditActions);
+        Assert.Contains("UpdateNotificationTemplate", auditActions);
+        Assert.Contains("DeleteNotificationTemplate", auditActions);
     }
 
     /// <summary>

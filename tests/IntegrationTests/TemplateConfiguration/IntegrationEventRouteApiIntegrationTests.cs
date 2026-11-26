@@ -108,6 +108,16 @@ public sealed class IntegrationEventRouteApiIntegrationTests : IAsyncLifetime
         using var deleteRequest = CreateAuthorizedRequest(HttpMethod.Delete, $"/api/admin/integration-event-routes/{created.Id}", RbacRoles.SystemAdministrator, "admin-1");
         var deleteResponse = await _client.SendAsync(deleteRequest);
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var administrationDbContext = scope.ServiceProvider.GetRequiredService<Administration.Infrastructure.Persistence.AdministrationDbContext>();
+        var auditActions = await administrationDbContext.AuditLogRecords
+            .Where(x => x.TargetType == "IntegrationEventRoute" && x.TargetId == created.Id.ToString())
+            .Select(x => x.Action)
+            .ToListAsync();
+        Assert.Contains("CreateIntegrationEventRoute", auditActions);
+        Assert.Contains("UpdateIntegrationEventRoute", auditActions);
+        Assert.Contains("DeleteIntegrationEventRoute", auditActions);
     }
 
     /// <summary>
