@@ -5,7 +5,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\Observability\BuildingBlocks.Observability.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\SharedKernel\BuildingBlocks.SharedKernel.csproj" />
     <ProjectReference Include="..\Application\TemplateConfiguration.Application.csproj" />
     <ProjectReference Include="..\Infrastructure\TemplateConfiguration.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TemplateConfiguration.Application.Abstractions;
+using TemplateConfiguration.Application.NotificationTemplates;
+using TemplateConfiguration.Infrastructure.Persistence.Repositories;
 
 namespace TemplateConfiguration.Infrastructure.Persistence;
 
@@ -32,6 +35,13 @@ public static class TemplateConfigurationPersistenceServiceCollectionExtensions
             options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsAssembly(typeof(TemplateConfigurationDbContext).Assembly.FullName)
                     .MigrationsHistoryTable("__EFMigrationsHistory", "template_configuration")));
+
+        services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+        services.AddScoped<CreateNotificationTemplateUseCase>();
+        services.AddScoped<UpdateNotificationTemplateUseCase>();
+        services.AddScoped<GetNotificationTemplateByIdUseCase>();
+        services.AddScoped<GetNotificationTemplatesUseCase>();
+        services.AddScoped<DeleteNotificationTemplateUseCase>();
 
         return services;
     }

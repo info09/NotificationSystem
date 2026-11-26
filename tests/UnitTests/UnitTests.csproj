@@ -35,6 +35,8 @@
     <ProjectReference Include="..\..\src\Modules\IdentityAccess\Presentation\IdentityAccess.Presentation.csproj" />
     <ProjectReference Include="..\..\src\Modules\IntegrationMessaging\Infrastructure\IntegrationMessaging.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Notification\Infrastructure\Notification.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\TemplateConfiguration\Application\TemplateConfiguration.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\TemplateConfiguration\Domain\TemplateConfiguration.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TemplateConfiguration.Domain.NotificationTemplates;
 
 namespace TemplateConfiguration.Infrastructure.Persistence;
 
@@ -9,6 +10,11 @@ namespace TemplateConfiguration.Infrastructure.Persistence;
 public sealed class TemplateConfigurationDbContext(
     DbContextOptions<TemplateConfigurationDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// Tập thực thể Mẫu thông báo.
+    /// </summary>
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+
     /// <summary>
     /// Cấu hình mô hình dữ liệu cho module TemplateConfiguration.
     /// </summary>

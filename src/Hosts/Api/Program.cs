@@ -10,6 +10,7 @@ using IdentityAccess.Presentation;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Notification.Infrastructure.Persistence;
 using Notification.Presentation;
+using TemplateConfiguration.Presentation;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -79,6 +80,7 @@ app.MapNotificationEndpoints();
 app.MapAdministrationEndpoints();
 app.MapDeliveryEndpoints();
 app.MapIdentityAccessEndpoints();
+app.MapTemplateConfigurationEndpoints();
 
 // Gọi Configure của mỗi module
 foreach (var module in app.Services.GetServices<IModuleInitializer>())
