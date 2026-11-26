@@ -46,7 +46,7 @@ public static class DeliveryEmailServiceCollectionExtensions
             });
 
         services.AddSingleton<IEmailProvider, SmtpEmailProvider>();
-        services.AddSingleton<IEmailTemplateRenderer, PassThroughEmailTemplateRenderer>();
+        services.AddScoped<IEmailTemplateRenderer, PassThroughEmailTemplateRenderer>();
         services.AddScoped<IEmailSender, EmailSender>();
         return services;
     }

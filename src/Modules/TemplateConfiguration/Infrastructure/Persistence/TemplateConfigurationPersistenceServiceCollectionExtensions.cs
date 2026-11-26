@@ -1,4 +1,5 @@
 using BuildingBlocks.SharedKernel.IntegrationEvents;
+using BuildingBlocks.SharedKernel.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@ public static class TemplateConfigurationPersistenceServiceCollectionExtensions
                     .MigrationsHistoryTable("__EFMigrationsHistory", "template_configuration")));
 
         services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+        services.AddScoped<INotificationTemplateResolver, NotificationTemplateResolver>();
         services.AddScoped<CreateNotificationTemplateUseCase>();
         services.AddScoped<UpdateNotificationTemplateUseCase>();
         services.AddScoped<GetNotificationTemplateByIdUseCase>();

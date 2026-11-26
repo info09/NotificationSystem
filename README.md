@@ -31,10 +31,13 @@ Biến môi trường: `.env` ở root repo (compose dùng `env_file: ../.env`).
 ```mermaid
 flowchart LR
     IC[IntegrationClient] -->|POST /api/notifications| API[API]
+    IC -->|POST /api/integration-events| API
     ADMIN[AdminUI / Admin API] -->|JWT + RBAC| API
 
-    API -->|Transaction| NDB[(notification.Notifications\nPending)]
-    API -->|Transaction| OUTBOX[(integration_messaging.OutboxMessages)]
+    API -->|Validate + Idempotency| NDB[(notification.Notifications\nPending)]
+    API -->|Transactional Outbox| OUTBOX[(integration_messaging.OutboxMessages)]
+    API -->|IntegrationEvent trace| IE[(integration_messaging.IntegrationEvents)]
+    API -->|Sensitive actions| AUDIT[(administration.AuditLogRecords)]
 
     OUTBOX --> PUB[OutboxPublisherBackgroundService]
     PUB --> EX[Exchange notifications.topic]
@@ -46,6 +49,7 @@ flowchart LR
     EQ --> W[NotificationWorker]
     IQ --> W
     W -->|Inbox MessageId + ConsumerName| INBOX[(InboxMessage)]
+    W -->|IntegrationEventReceived\nresolve route + create Notification| NDB
     W -->|Pending -> Processing| NDB
     W --> DISP{Dispatch}
 
@@ -64,6 +68,7 @@ flowchart LR
     API --> INAPP
 
     OPS[SystemAdministrator / BusinessOperator] -->|DLQ query/resend| API
+    OPS -->|GET /api/admin/audit-logs| API
     API --> EDLQ
     API --> IDLQ
 ```
@@ -79,20 +84,32 @@ flowchart LR
 ### 2. Tạo & xử lý Thông báo
 
 - `POST /api/notifications` (RBAC: `IntegrationClient`): validate, idempotency theo scope caller, tạo `Notification=Pending`, ghi Outbox cùng transaction.
-- Outbox Publisher publish `NotificationCreated` lên `notifications.topic` với routing key theo kênh.
+- Outbox Publisher publish message lên `notifications.topic` với routing key theo kênh.
 - Worker consume manual ack, kiểm tra `MessageId`, idempotency bằng `InboxMessage(MessageId, ConsumerName)`.
 - Dispatch:
   - **Email**: render template/fallback HTML/plain-text, gửi qua `IEmailProvider` (SMTP/Mailpit).
   - **InApp**: tạo `InAppNotification` (`Unread`), idempotent theo `NotificationId + RecipientUserId`.
 - Thành công: `Processing -> Sent`; lỗi tạm thời retry có backoff+jitter; lỗi không phục hồi/vượt ngưỡng -> DLQ.
 
-### 3. Retry / DLQ / Resend
+### 3. IntegrationEvent end-to-end (Phase 11, code đã triển khai)
+
+- `POST /api/integration-events` (RBAC: `IntegrationClient`): validate envelope `messageId,eventId,eventType,occurredAt,source,idempotencyKey,version,payload`.
+- Kiểm tra idempotency theo `MessageId`; trùng trả `200` + `Duplicate=true`.
+- Resolve `IntegrationEventRoute` active theo `eventType`; validate mapping/payload tối thiểu (`recipient`, `channel` hoặc route channel, `content` hoặc template).
+- Lưu `IntegrationEvent` + `OutboxMessage` (`IntegrationEventReceived`) trong cùng transaction DB của IntegrationMessaging.
+- Outbox Publisher publish sang RabbitMQ; Worker consume, tạo `Notification` idempotent, dispatch kênh, ack/inbox.
+- Trạng thái xác nhận test: xem `docs/status.md`.
+
+### 4. Retry / DLQ / Resend / AuditLog
 
 - Retry tối đa 3 lần, delay 10s/30s/90s + jitter, cap 2 phút.
 - Non-retryable hoặc hết retry: Nack `requeue=false` vào DLQ.
 - Administration API/AdminUI hỗ trợ xem DLQ và `Resend` theo RBAC, có idempotency + AuditLog.
+- `GET /api/admin/audit-logs` (RBAC: `AuditLogRead`): truy vấn AuditLog theo `action,targetType,actorUserId,fromUtc,toUtc,page,pageSize`.
+- AuditLog ghi cho thao tác nhạy cảm: `Resend` DLQ và CRUD cấu hình `NotificationTemplate`/`NotificationChannelConfig`/`IntegrationEventRoute`.
+- Trạng thái xác nhận test: xem `docs/status.md`.
 
-### 4. InApp pull/polling
+### 5. InApp pull/polling
 
 - `GET /api/in-app-notifications?unreadOnly=&page=&pageSize=`
 - `GET /api/in-app-notifications/unread-count`
@@ -100,14 +117,13 @@ flowchart LR
 - `PUT /api/in-app-notifications/{id}/read` (idempotent)
 - Lọc theo claim `sub`/`NameIdentifier`.
 
-### 5. Cấu hình quản trị (Phase 10, code đã triển khai)
+### 6. Cấu hình quản trị (Phase 10)
 
 - `NotificationTemplate`: CRUD `/api/admin/notification-templates`.
 - `NotificationChannelConfig`: CRUD `/api/admin/notification-channel-configs`, không lộ secret.
 - `IntegrationEventRoute`: CRUD `/api/admin/integration-event-routes`, mapping event -> template/kênh, validate thiếu mapping/trùng event type.
 - RBAC: `SystemAdministrator`.
 - AdminUI có màn hình quản lý tương ứng (danh sách/form CRUD, loading/empty/error/success, filter Áp dụng/Xóa bộ lọc).
-- Trạng thái xác nhận test: xem `docs/status.md`.
 
 ## Trạng thái chính
 
@@ -125,7 +141,7 @@ src/
     Administration/         # Dashboard, DLQ/Audit/Admin operations
     Delivery/               # Email/InApp dispatch, InApp storage/query
     IdentityAccess/         # JWT/RBAC, user/credential/reset password
-    IntegrationMessaging/   # Outbox/Inbox/RabbitMQ topology
+    IntegrationMessaging/   # IntegrationEvent, Outbox/Inbox/RabbitMQ topology
     Notification/           # Notification domain/application
     TemplateConfiguration/  # NotificationTemplate, NotificationChannelConfig, IntegrationEventRoute
   BuildingBlocks/           # SharedKernel, Observability
