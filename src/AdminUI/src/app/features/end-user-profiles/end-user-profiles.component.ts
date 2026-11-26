@@ -1,190 +1,129 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
 import { finalize } from 'rxjs';
 import { EndUserProfile } from '../../core/end-user-profiles/end-user-profile.models';
 import { EndUserProfileService } from '../../core/end-user-profiles/end-user-profile.service';
+import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog/confirm-dialog.component';
+import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
+import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
+import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
+import { EndUserProfileDialogComponent } from './end-user-profile-dialog.component';
 
 type ViewState = 'loading' | 'success' | 'empty' | 'error';
 
 @Component({
   selector: 'app-end-user-profiles',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatDialogModule, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, StatusBadgeComponent],
   template: `
-    <section class="page" aria-labelledby="end-user-profiles-title">
+    <section class="page-container" aria-labelledby="end-user-profiles-title">
       <header class="page-header">
         <div>
-          <h1 id="end-user-profiles-title">Hồ sơ người nhận EndUser</h1>
-          <p class="subtitle">Quản lý hồ sơ EndUser theo định danh hệ thống nguồn.</p>
+          <p class="eyebrow">Quản trị</p>
+          <h1 id="end-user-profiles-title" class="page-title">Hồ sơ người nhận EndUser</h1>
+          <p class="page-subtitle">Quản lý hồ sơ EndUser theo định danh hệ thống nguồn.</p>
         </div>
-        <button type="button" class="primary" (click)="startCreate()">Tạo hồ sơ</button>
+        <button mat-flat-button color="primary" type="button" (click)="openCreateDialog()">Tạo hồ sơ</button>
       </header>
 
-      <form class="filters" [formGroup]="filterForm" (ngSubmit)="onApplyFilters()" aria-label="Bộ lọc hồ sơ EndUser">
-        <div class="field">
-          <label for="statusFilter">Trạng thái</label>
-          <select id="statusFilter" formControlName="status">
-            <option value="">Tất cả</option>
-            <option value="Active">Active</option>
-            <option value="Locked">Locked</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="externalUserIdFilter">Định danh nguồn</label>
-          <input id="externalUserIdFilter" type="text" formControlName="externalUserId" />
-        </div>
-        <div class="filter-actions">
-          <button type="submit" class="primary">Áp dụng</button>
-          <button type="button" class="secondary" (click)="clearFilters()">Xóa bộ lọc</button>
-        </div>
-      </form>
-
-      <div *ngIf="feedbackMessage" class="status-box" [ngClass]="feedbackType === 'success' ? 'status-success' : 'status-error'" role="status">
-        <p>{{ feedbackMessage }}</p>
-      </div>
-
-      <div *ngIf="showForm" class="panel">
-        <h2>{{ editingId ? 'Cập nhật hồ sơ EndUser' : 'Tạo hồ sơ EndUser' }}</h2>
-        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-grid">
-          <div class="field">
-            <label for="externalUserId">Định danh nguồn</label>
-            <input id="externalUserId" type="text" formControlName="externalUserId" [readonly]="!!editingId" />
-          </div>
-          <div class="field">
-            <label for="displayName">Tên hiển thị</label>
-            <input id="displayName" type="text" formControlName="displayName" />
-          </div>
-          <div class="field">
-            <label for="email">Email</label>
-            <input id="email" type="email" formControlName="email" />
-          </div>
-          <div class="field">
-            <label for="phoneNumber">Số điện thoại</label>
-            <input id="phoneNumber" type="text" formControlName="phoneNumber" />
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="primary" [disabled]="saving">{{ saving ? 'Đang lưu...' : 'Lưu' }}</button>
-            <button type="button" class="secondary" (click)="cancelForm()" [disabled]="saving">Hủy</button>
+      <mat-card class="panel-card filter-card">
+        <form class="filters" [formGroup]="filterForm" (ngSubmit)="onApplyFilters()">
+          <mat-form-field appearance="outline">
+            <mat-label>Trạng thái</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="">Tất cả</mat-option>
+              <mat-option value="Active">Active</mat-option>
+              <mat-option value="Locked">Locked</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Định danh nguồn</mat-label>
+            <input matInput formControlName="externalUserId" />
+          </mat-form-field>
+          <div class="filter-actions">
+            <button mat-flat-button color="primary" type="submit">Áp dụng</button>
+            <button mat-stroked-button type="button" (click)="clearFilters()">Xóa bộ lọc</button>
           </div>
         </form>
-      </div>
+      </mat-card>
 
-      <div *ngIf="state === 'error'" class="status-box status-error" role="alert">
-        <p>{{ errorMessage }}</p>
-        <button type="button" class="primary" (click)="loadProfiles()">Thử lại</button>
-      </div>
+      <mat-card class="panel-card">
+        <mat-card-content>
+          <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="loadProfiles()"></app-error-state>
+          <app-loading-skeleton *ngIf="state === 'loading'" [rows]="5" variant="line"></app-loading-skeleton>
+          <app-empty-state *ngIf="state === 'empty'" title="Không có hồ sơ" description="Chưa có hồ sơ EndUser phù hợp với bộ lọc hiện tại."></app-empty-state>
 
-      <div *ngIf="state === 'loading'" class="table-wrap" aria-busy="true">
-        <div class="skeleton" *ngFor="let row of skeletonRows"></div>
-      </div>
+          <div *ngIf="state === 'success'" class="table-wrap">
+            <table mat-table [dataSource]="profiles" class="data-table">
+              <ng-container matColumnDef="externalUserId"><th mat-header-cell *matHeaderCellDef>Định danh nguồn</th><td mat-cell *matCellDef="let p" class="mono">{{ p.externalUserId }}</td></ng-container>
+              <ng-container matColumnDef="displayName"><th mat-header-cell *matHeaderCellDef>Tên hiển thị</th><td mat-cell *matCellDef="let p">{{ p.displayName }}</td></ng-container>
+              <ng-container matColumnDef="email"><th mat-header-cell *matHeaderCellDef>Email</th><td mat-cell *matCellDef="let p">{{ p.email || '—' }}</td></ng-container>
+              <ng-container matColumnDef="phoneNumber"><th mat-header-cell *matHeaderCellDef>Số điện thoại</th><td mat-cell *matCellDef="let p">{{ p.phoneNumber || '—' }}</td></ng-container>
+              <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Trạng thái</th><td mat-cell *matCellDef="let p"><app-status-badge [label]="p.status" [tone]="p.status === 'Active' ? 'success' : 'warning'"></app-status-badge></td></ng-container>
+              <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef>Thao tác</th><td mat-cell *matCellDef="let p">
+                <div class="actions">
+                  <button mat-stroked-button type="button" (click)="openEditDialog(p)">Sửa</button>
+                  <button mat-stroked-button type="button" (click)="toggleLock(p)" [disabled]="actionLoadingId === p.id">{{ p.status === 'Locked' ? 'Mở khóa' : 'Khóa' }}</button>
+                </div>
+              </td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
 
-      <div *ngIf="state === 'empty'" class="status-box status-empty">
-        <h2>Không có hồ sơ</h2>
-        <p>Chưa có hồ sơ EndUser phù hợp với bộ lọc hiện tại.</p>
-      </div>
-
-      <div *ngIf="state === 'success'" class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Định danh nguồn</th>
-              <th>Tên hiển thị</th>
-              <th>Email</th>
-              <th>Số điện thoại</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let profile of profiles; trackBy: trackById">
-              <td class="mono">{{ profile.externalUserId }}</td>
-              <td>{{ profile.displayName }}</td>
-              <td>{{ profile.email || '—' }}</td>
-              <td>{{ profile.phoneNumber || '—' }}</td>
-              <td><span class="badge" [ngClass]="statusClass(profile.status)">{{ profile.status }}</span></td>
-              <td class="actions">
-                <button type="button" class="secondary" (click)="startEdit(profile)">Sửa</button>
-                <button type="button" class="secondary" (click)="toggleLock(profile)" [disabled]="actionLoadingId === profile.id">
-                  {{ profile.status === 'Locked' ? 'Mở khóa' : 'Khóa' }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="pagination">
-          <div>Tổng: {{ totalCount }} · Trang {{ page }} / {{ totalPages || 1 }}</div>
-          <div class="pagination-actions">
-            <button type="button" class="secondary" (click)="prevPage()" [disabled]="page <= 1">Trước</button>
-            <button type="button" class="secondary" (click)="nextPage()" [disabled]="page >= totalPages">Sau</button>
+            <div class="pagination">
+              <div>Tổng: {{ totalCount }} · Trang {{ page }} / {{ totalPages || 1 }}</div>
+              <div class="pagination-actions">
+                <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page <= 1">Trước</button>
+                <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page >= totalPages">Sau</button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </mat-card-content>
+      </mat-card>
     </section>
   `,
   styles: [`
-    .page { padding: 24px; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; color: #0f172a; }
-    .page-header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin-bottom:16px; }
-    h1 { margin:0; font-size:24px; } h2 { margin:0 0 12px; font-size:18px; }
-    .subtitle { margin:4px 0 0; color:#475569; }
-    .filters, .panel { background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:16px; margin-bottom:16px; }
-    .filters { display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
-    .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
-    .field { display:flex; flex-direction:column; gap:6px; }
-    label { font-size:13px; color:#334155; font-weight:600; }
-    input, select { border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; font-size:14px; }
-    input[readonly] { background:#f8fafc; color:#475569; }
-    .filter-actions, .form-actions, .pagination-actions, .actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .form-actions { align-items:end; }
-    .primary, .secondary { border-radius:6px; padding:8px 12px; font-size:14px; cursor:pointer; border:1px solid #cbd5e1; }
-    .primary { background:#2563eb; color:#fff; border-color:#2563eb; }
-    .secondary { background:#fff; color:#0f172a; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    .status-box { padding:16px; border-radius:8px; margin-bottom:16px; border:1px solid #cbd5e1; background:#fff; }
-    .status-error { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
-    .status-empty { color:#475569; }
-    .status-success { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
-    .table-wrap { background:#fff; border:1px solid #cbd5e1; border-radius:8px; overflow:auto; }
-    .data-table { width:100%; border-collapse:collapse; }
-    .data-table th, .data-table td { padding:12px; border-bottom:1px solid #e2e8f0; text-align:left; font-size:14px; vertical-align:top; }
-    .data-table th { background:#f8fafc; color:#334155; }
-    .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
-    .badge-active { background:#dcfce7; color:#166534; } .badge-locked { background:#fef3c7; color:#92400e; }
-    .pagination { display:flex; justify-content:space-between; gap:12px; padding:12px; align-items:center; }
-    .skeleton { height:48px; border-bottom:1px solid #e2e8f0; background:linear-gradient(90deg,#f8fafc,#f1f5f9,#f8fafc); }
-    .mono { font-family: Consolas, "Courier New", monospace; font-size: 13px; }
+    .eyebrow { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--app-primary); }
+    .panel-card { border-radius: 16px !important; border: 1px solid var(--app-border); box-shadow: var(--shadow-card) !important; }
+    .filter-card { margin-bottom: 20px; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: start; }
+    .filter-actions, .actions, .pagination-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .filter-actions { padding-top: 8px; }
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+    .pagination { display:flex; justify-content:space-between; gap:12px; padding-top:16px; align-items:center; flex-wrap:wrap; color:var(--app-muted); font-size:14px; }
   `]
 })
 export class EndUserProfilesComponent implements OnInit {
   private readonly service = inject(EndUserProfileService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
+  private readonly toastService = inject(ToastService);
 
+  readonly displayedColumns = ['externalUserId', 'displayName', 'email', 'phoneNumber', 'status', 'actions'];
   state: ViewState = 'loading';
   profiles: EndUserProfile[] = [];
   totalCount = 0;
   page = 1;
   pageSize = 20;
   errorMessage = 'Không thể tải danh sách hồ sơ EndUser.';
-  feedbackMessage = '';
-  feedbackType: 'success' | 'error' = 'success';
   actionLoadingId: string | null = null;
-  showForm = false;
-  editingId: string | null = null;
-  saving = false;
-  readonly skeletonRows = Array.from({ length: 5 });
 
   readonly filterForm = this.fb.nonNullable.group({
     status: [''],
     externalUserId: ['']
-  });
-
-  readonly profileForm = this.fb.nonNullable.group({
-    externalUserId: ['', [Validators.required]],
-    displayName: ['', [Validators.required]],
-    email: [''],
-    phoneNumber: ['']
   });
 
   get totalPages(): number { return Math.ceil(this.totalCount / this.pageSize); }
@@ -217,86 +156,57 @@ export class EndUserProfilesComponent implements OnInit {
   onApplyFilters(): void { this.page = 1; this.loadProfiles(); }
   clearFilters(): void { this.filterForm.reset({ status: '', externalUserId: '' }); this.page = 1; this.loadProfiles(); }
 
-  startCreate(): void {
-    this.showForm = true;
-    this.editingId = null;
-    this.profileForm.reset({ externalUserId: '', displayName: '', email: '', phoneNumber: '' });
-    this.profileForm.controls.externalUserId.enable();
-  }
-
-  startEdit(profile: EndUserProfile): void {
-    this.showForm = true;
-    this.editingId = profile.id;
-    this.profileForm.reset({
-      externalUserId: profile.externalUserId,
-      displayName: profile.displayName,
-      email: profile.email ?? '',
-      phoneNumber: profile.phoneNumber ?? ''
+  openCreateDialog(): void {
+    const ref = this.dialog.open(EndUserProfileDialogComponent, { data: { profile: null }, width: '640px', maxWidth: '95vw' });
+    ref.afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.service.create(result).subscribe({
+        next: () => { this.toastService.success('Tạo hồ sơ EndUser thành công.'); this.loadProfiles(); },
+        error: (error) => this.toastService.error(this.getErrorMessage(error, 'Không thể lưu hồ sơ EndUser.'))
+      });
     });
-    this.profileForm.controls.externalUserId.disable();
   }
 
-  cancelForm(): void {
-    this.showForm = false;
-    this.editingId = null;
-    this.profileForm.reset({ externalUserId: '', displayName: '', email: '', phoneNumber: '' });
-    this.profileForm.controls.externalUserId.enable();
-  }
-
-  saveProfile(): void {
-    if (this.profileForm.invalid) { this.profileForm.markAllAsTouched(); return; }
-    const value = this.profileForm.getRawValue();
-    this.saving = true;
-    this.feedbackMessage = '';
-
-    const operation = this.editingId
-      ? this.service.update(this.editingId, {
-          displayName: value.displayName.trim(),
-          email: value.email?.trim() || null,
-          phoneNumber: value.phoneNumber?.trim() || null
-        })
-      : this.service.create({
-          externalUserId: value.externalUserId.trim(),
-          displayName: value.displayName.trim(),
-          email: value.email?.trim() || null,
-          phoneNumber: value.phoneNumber?.trim() || null
-        });
-
-    operation.pipe(finalize(() => (this.saving = false))).subscribe({
-      next: () => {
-        this.feedbackType = 'success';
-        this.feedbackMessage = this.editingId ? 'Cập nhật hồ sơ EndUser thành công.' : 'Tạo hồ sơ EndUser thành công.';
-        this.cancelForm();
-        this.loadProfiles();
-      },
-      error: (error: unknown) => {
-        this.feedbackType = 'error';
-        this.feedbackMessage = this.getErrorMessage(error, 'Không thể lưu hồ sơ EndUser.');
-      }
+  openEditDialog(profile: EndUserProfile): void {
+    const ref = this.dialog.open(EndUserProfileDialogComponent, { data: { profile }, width: '640px', maxWidth: '95vw' });
+    ref.afterClosed().subscribe((result) => {
+      if (!result) return;
+      this.service.update(profile.id, {
+        displayName: result.displayName,
+        email: result.email,
+        phoneNumber: result.phoneNumber
+      }).subscribe({
+        next: () => { this.toastService.success('Cập nhật hồ sơ EndUser thành công.'); this.loadProfiles(); },
+        error: (error) => this.toastService.error(this.getErrorMessage(error, 'Không thể lưu hồ sơ EndUser.'))
+      });
     });
   }
 
   toggleLock(profile: EndUserProfile): void {
-    this.actionLoadingId = profile.id;
-    this.feedbackMessage = '';
-    const operation = profile.status === 'Locked' ? this.service.unlock(profile.id) : this.service.lock(profile.id);
-    operation.pipe(finalize(() => (this.actionLoadingId = null))).subscribe({
-      next: () => {
-        this.feedbackType = 'success';
-        this.feedbackMessage = profile.status === 'Locked' ? 'Mở khóa hồ sơ EndUser thành công.' : 'Khóa hồ sơ EndUser thành công.';
-        this.loadProfiles();
-      },
-      error: (error: unknown) => {
-        this.feedbackType = 'error';
-        this.feedbackMessage = this.getErrorMessage(error, 'Không thể cập nhật trạng thái hồ sơ EndUser.');
+    const isLocked = profile.status === 'Locked';
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: isLocked ? 'Mở khóa hồ sơ EndUser' : 'Khóa hồ sơ EndUser',
+        message: isLocked ? `Mở khóa hồ sơ "${profile.displayName}"?` : `Khóa hồ sơ "${profile.displayName}"?`,
+        confirmLabel: isLocked ? 'Mở khóa' : 'Khóa'
       }
+    });
+    ref.afterClosed().subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.actionLoadingId = profile.id;
+      const operation = isLocked ? this.service.unlock(profile.id) : this.service.lock(profile.id);
+      operation.pipe(finalize(() => (this.actionLoadingId = null))).subscribe({
+        next: () => {
+          this.toastService.success(isLocked ? 'Mở khóa hồ sơ EndUser thành công.' : 'Khóa hồ sơ EndUser thành công.');
+          this.loadProfiles();
+        },
+        error: (error: unknown) => this.toastService.error(this.getErrorMessage(error, 'Không thể cập nhật trạng thái hồ sơ EndUser.'))
+      });
     });
   }
 
   prevPage(): void { if (this.page > 1) { this.page -= 1; this.loadProfiles(); } }
   nextPage(): void { if (this.page < this.totalPages) { this.page += 1; this.loadProfiles(); } }
-  trackById(_: number, profile: EndUserProfile): string { return profile.id; }
-  statusClass(status: string): string { return status.toLowerCase() === 'active' ? 'badge-active' : 'badge-locked'; }
 
   private getErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof HttpErrorResponse) {

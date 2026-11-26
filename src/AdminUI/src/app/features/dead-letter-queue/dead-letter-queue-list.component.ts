@@ -2,232 +2,156 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeadLetterQueueService } from '../../core/dead-letter-queue/dead-letter-queue.service';
 import { DeadLetterQueueMessage } from '../../core/dead-letter-queue/dead-letter-queue.models';
+import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../shared/ui/error-state/error-state.component';
 import { LoadingSkeletonComponent } from '../../shared/ui/loading-skeleton/loading-skeleton.component';
-import { UiModalComponent } from '../../shared/ui/modal/ui-modal.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { DeadLetterQueueDetailDialogComponent, DeadLetterQueueDetailDialogData } from './dead-letter-queue-detail-dialog.component';
 
 type ViewState = 'loading' | 'success' | 'empty' | 'error';
 
 @Component({
   selector: 'app-dead-letter-queue-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, UiModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatTableModule, MatDialogModule, MatDatepickerModule, MatNativeDateModule, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent],
   template: `
-    <section class="page" aria-labelledby="dlq-title">
+    <section class="page-container" aria-labelledby="dlq-title">
       <header class="page-header">
         <div>
-          <h1 id="dlq-title">Hàng đợi thư chết</h1>
-          <p class="subtitle">Tra cứu Thông điệp lỗi trong Hàng đợi thư chết và xem chi tiết tóm tắt.</p>
+          <p class="eyebrow">Vận hành</p>
+          <h1 id="dlq-title" class="page-title">Hàng đợi thư chết</h1>
+          <p class="page-subtitle">Tra cứu Thông điệp lỗi trong Hàng đợi thư chết và xem chi tiết tóm tắt.</p>
         </div>
       </header>
 
-      <form class="filters" [formGroup]="filterForm" (ngSubmit)="onApplyFilters()" aria-label="Bộ lọc Hàng đợi thư chết">
-        <div class="field">
-          <label for="queueName">Hàng đợi thư chết</label>
-          <select id="queueName" formControlName="queueName">
-            <option value="notifications.email.dlq">notifications.email.dlq</option>
-            <option value="notifications.inapp.dlq">notifications.inapp.dlq</option>
-          </select>
-        </div>
+      <mat-card class="panel-card filter-card">
+        <form class="filters" [formGroup]="filterForm" (ngSubmit)="onApplyFilters()" aria-label="Bộ lọc Hàng đợi thư chết">
+          <mat-form-field appearance="outline">
+            <mat-label>Hàng đợi thư chết</mat-label>
+            <mat-select formControlName="queueName">
+              <mat-option value="notifications.email.dlq">notifications.email.dlq</mat-option>
+              <mat-option value="notifications.inapp.dlq">notifications.inapp.dlq</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <div class="field">
-          <label for="limit">Số lượng</label>
-          <select id="limit" formControlName="limit">
-            <option [ngValue]="20">20</option>
-            <option [ngValue]="50">50</option>
-            <option [ngValue]="100">100</option>
-          </select>
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Số lượng</mat-label>
+            <mat-select formControlName="limit">
+              <mat-option [value]="20">20</mat-option>
+              <mat-option [value]="50">50</mat-option>
+              <mat-option [value]="100">100</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <div class="field">
-          <label for="reason">Lý do (lọc tạm)</label>
-          <input id="reason" type="text" formControlName="reason" placeholder="Nhập lý do..." />
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Lý do (lọc tạm)</mat-label>
+            <input matInput type="text" formControlName="reason" placeholder="Nhập lý do..." />
+          </mat-form-field>
 
-        <div class="field">
-          <label for="createdFrom">Từ thời gian</label>
-          <input id="createdFrom" type="datetime-local" formControlName="createdFrom" />
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Từ ngày</mat-label>
+            <input matInput [matDatepicker]="dlqFromPicker" formControlName="createdFrom" readonly (click)="dlqFromPicker.open()" (focus)="dlqFromPicker.open()" />
+            <mat-datepicker-toggle matIconSuffix [for]="dlqFromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #dlqFromPicker></mat-datepicker>
+          </mat-form-field>
 
-        <div class="field">
-          <label for="createdTo">Đến thời gian</label>
-          <input id="createdTo" type="datetime-local" formControlName="createdTo" />
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Đến ngày</mat-label>
+            <input matInput [matDatepicker]="dlqToPicker" formControlName="createdTo" readonly (click)="dlqToPicker.open()" (focus)="dlqToPicker.open()" />
+            <mat-datepicker-toggle matIconSuffix [for]="dlqToPicker"></mat-datepicker-toggle>
+            <mat-datepicker #dlqToPicker></mat-datepicker>
+            <mat-error *ngIf="filterForm.controls.createdTo.hasError('dateRange')">Đến ngày phải lớn hơn hoặc bằng Từ ngày.</mat-error>
+          </mat-form-field>
 
-        <div class="filter-actions">
-          <button type="submit" class="primary">Áp dụng bộ lọc</button>
-          <button type="button" class="secondary" (click)="onClearFilters()">Xóa bộ lọc</button>
-        </div>
-      </form>
-
-      <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="retry()"></app-error-state>
-
-      <div *ngIf="state === 'loading'" class="table-wrap">
-        <div style="padding: 12px;">
-          <app-loading-skeleton [rows]="6" variant="line"></app-loading-skeleton>
-        </div>
-      </div>
-
-      <app-empty-state
-        *ngIf="state === 'empty'"
-        title="Không có Thông điệp trong Hàng đợi thư chết"
-        description="Hiện không có mục lỗi theo bộ lọc hiện tại. Đây là trạng thái tốt."
-        actionLabel="Xóa bộ lọc"
-        (action)="onClearFilters()"
-      ></app-empty-state>
-
-      <div *ngIf="state === 'success'" class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>MessageId</th>
-              <th>NotificationId</th>
-              <th>Kênh</th>
-              <th>Lý do</th>
-              <th>Thời gian vào Hàng đợi thư chết</th>
-              <th>Số lần</th>
-              <th>Chi tiết</th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let item of filteredItems; trackBy: trackByMessageId">
-              <tr>
-                <td class="mono" [title]="item.messageId">{{ item.messageId || '—' }}</td>
-                <td class="mono" [title]="item.notificationId || ''">{{ item.notificationId || '—' }}</td>
-                <td>{{ displayChannel(item.channel) }}</td>
-                <td>{{ item.reason || '—' }}</td>
-                <td>{{ formatDate(item.deadLetteredAtUtc) }}</td>
-                <td>{{ item.deathCount ?? '—' }}</td>
-                <td>
-                  <button type="button" class="secondary" (click)="toggleDetail(item)">
-                    {{ selectedMessageId === item.messageId ? 'Ẩn' : 'Xem' }}
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="selectedMessageId === item.messageId" class="detail-row">
-                <td colspan="7">
-                  <div class="detail-panel">
-                    <h2>Chi tiết Hàng đợi thư chết</h2>
-                    <dl class="detail-grid">
-                      <dt>Hàng đợi thư chết</dt><dd>{{ item.queueName }}</dd>
-                      <dt>MessageId</dt><dd class="mono">{{ item.messageId || '—' }}</dd>
-                      <dt>NotificationId</dt><dd class="mono">{{ item.notificationId || '—' }}</dd>
-                      <dt>Kênh</dt><dd>{{ displayChannel(item.channel) }}</dd>
-                      <dt>Routing key</dt><dd>{{ item.routingKey || '—' }}</dd>
-                      <dt>Event type</dt><dd>{{ item.eventType || '—' }}</dd>
-                      <dt>Lý do</dt><dd>{{ item.reason || '—' }}</dd>
-                      <dt>Thời gian vào Hàng đợi thư chết</dt><dd>{{ formatDate(item.deadLetteredAtUtc) }}</dd>
-                      <dt>Số lần</dt><dd>{{ item.deathCount ?? '—' }}</dd>
-                    </dl>
-                    <div class="payload-block">
-                      <h3>Payload</h3>
-                      <pre>{{ item.payload || '—' }}</pre>
-                    </div>
-
-                    <div class="detail-actions">
-                      <button type="button" class="primary" (click)="openResendModal(item)">Gửi lại</button>
-                    </div>
-
-                    <div *ngIf="resendSuccessMessage && selectedMessageId === item.messageId" class="inline-success" role="status">
-                      {{ resendSuccessMessage }}
-                    </div>
-                    <div *ngIf="resendErrorMessage && selectedMessageId === item.messageId" class="inline-error" role="alert">
-                      <p>{{ resendErrorMessage }}</p>
-                      <button type="button" class="secondary" (click)="openResendModal(item)">Thử lại</button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-        </table>
-
-        <div class="pagination" aria-label="Thông tin danh sách">
-          <div class="pagination-info">
-            Hiển thị: {{ filteredItems.length }} / {{ items.length }} mục (limit {{ filterForm.controls.limit.value }})
+          <div class="filter-actions">
+            <button mat-flat-button color="primary" type="submit">Áp dụng</button>
+            <button mat-stroked-button type="button" (click)="onClearFilters()">Xóa bộ lọc</button>
           </div>
-        </div>
-      </div>
+        </form>
+      </mat-card>
 
-      <app-ui-modal
-        [open]="resendModalOpen"
-        title="Xác nhận Gửi lại"
-        description="Bạn có chắc muốn gửi lại Thông điệp này từ Hàng đợi thư chết?"
-        confirmLabel="Xác nhận"
-        cancelLabel="Hủy"
-        [processing]="resendProcessing"
-        (confirm)="confirmResend()"
-        (cancel)="closeResendModal()"
-      >
-        <dl class="detail-grid modal-grid" *ngIf="resendCandidate">
-          <dt>Hàng đợi thư chết</dt><dd>{{ resendCandidate.queueName }}</dd>
-          <dt>MessageId</dt><dd class="mono">{{ resendCandidate.messageId }}</dd>
-          <dt>NotificationId</dt><dd class="mono">{{ resendCandidate.notificationId || '—' }}</dd>
-        </dl>
-        <div *ngIf="resendProcessing" class="modal-status" aria-live="polite">Đang gửi lại...</div>
-        <div *ngIf="resendErrorMessage" class="inline-error" role="alert">
-          <p>{{ resendErrorMessage }}</p>
-        </div>
-      </app-ui-modal>
+      <mat-card class="panel-card">
+        <mat-card-content>
+          <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="retry()"></app-error-state>
+          <app-loading-skeleton *ngIf="state === 'loading'" [rows]="6" variant="line"></app-loading-skeleton>
+          <app-empty-state
+            *ngIf="state === 'empty'"
+            title="Không có Thông điệp trong Hàng đợi thư chết"
+            description="Hiện không có mục lỗi theo bộ lọc hiện tại. Đây là trạng thái tốt."
+            actionLabel="Xóa bộ lọc"
+            (action)="onClearFilters()"
+          ></app-empty-state>
+
+          <div *ngIf="state === 'success'" class="table-wrap">
+            <table mat-table [dataSource]="filteredItems" class="data-table">
+              <ng-container matColumnDef="messageId">
+                <th mat-header-cell *matHeaderCellDef>MessageId</th>
+                <td mat-cell *matCellDef="let item" class="mono">{{ item.messageId || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="notificationId">
+                <th mat-header-cell *matHeaderCellDef>NotificationId</th>
+                <td mat-cell *matCellDef="let item" class="mono">{{ item.notificationId || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="channel">
+                <th mat-header-cell *matHeaderCellDef>Kênh</th>
+                <td mat-cell *matCellDef="let item">{{ displayChannel(item.channel) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="reason">
+                <th mat-header-cell *matHeaderCellDef>Lý do</th>
+                <td mat-cell *matCellDef="let item">{{ item.reason || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="deadLetteredAtUtc">
+                <th mat-header-cell *matHeaderCellDef>Thời gian vào Hàng đợi thư chết</th>
+                <td mat-cell *matCellDef="let item">{{ formatDate(item.deadLetteredAtUtc) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="deathCount">
+                <th mat-header-cell *matHeaderCellDef>Số lần</th>
+                <td mat-cell *matCellDef="let item">{{ item.deathCount ?? '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="detail">
+                <th mat-header-cell *matHeaderCellDef>Chi tiết</th>
+                <td mat-cell *matCellDef="let item">
+                  <button mat-stroked-button type="button" (click)="openDetail(item)">Xem</button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div class="pagination-info">
+              Hiển thị: {{ filteredItems.length }} / {{ items.length }} mục (limit {{ filterForm.controls.limit.value }})
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </section>
   `,
   styles: [`
-    .page { padding: 24px; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; color: #0f172a; }
-    .page-header { margin-bottom: 16px; }
-    h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
-    .subtitle { margin: 0; color: #475569; font-size: 14px; }
-    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 14px; font-weight: 600; color: #0f172a; }
-    input, select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-family: inherit; }
-    input:focus, select:focus, button:focus { outline: 2px solid #2563eb; outline-offset: 1px; border-color: #2563eb; }
-    .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    button { border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; font-family: inherit; }
-    .primary { background: #2563eb; color: #fff; border: 1px solid #2563eb; }
-    .primary:hover { background: #1d4ed8; }
-    .secondary { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
-    .secondary:hover { background: #f1f5f9; }
-    .status-box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
-    .status-error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
-    .status-error p { margin: 0 0 12px; color: #991b1b; }
-    .status-empty h2 { margin: 0 0 8px; font-size: 16px; }
-    .status-empty p { margin: 0 0 12px; color: #475569; }
-    .table-wrap { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }
-    th { background: #f8fafc; font-weight: 600; color: #0f172a; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; word-break: break-all; }
-    .detail-row td { background: #f8fafc; }
-    .detail-panel h2 { margin: 0 0 12px; font-size: 16px; }
-    .detail-panel h3 { margin: 16px 0 8px; font-size: 14px; }
-    .detail-grid { display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; margin: 0; }
-    .detail-grid dt { font-weight: 600; color: #475569; }
-    .detail-grid dd { margin: 0; word-break: break-word; }
-    .payload-block pre { margin: 0; padding: 12px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; white-space: pre-wrap; word-break: break-word; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .detail-actions { margin-top: 16px; display: flex; gap: 8px; }
-    .inline-success { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 14px; }
-    .inline-error { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 14px; }
-    .inline-error p { margin: 0 0 8px; color: #991b1b; }
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
-    .modal { background: #fff; border-radius: 8px; border: 1px solid #cbd5e1; padding: 20px; width: min(560px, 100%); }
-    .modal h2 { margin: 0 0 8px; font-size: 20px; }
-    .modal p { margin: 0 0 12px; color: #475569; font-size: 14px; }
-    .modal-grid { margin-bottom: 12px; }
-    .modal-status { margin: 8px 0; color: #1d4ed8; font-size: 14px; font-weight: 600; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-top: 1px solid #e2e8f0; }
-    .pagination-info { color: #475569; font-size: 14px; }
-    .skeleton { height: 44px; margin: 12px; border-radius: 6px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    @media (max-width: 1023px) { .table-wrap { overflow-x: auto; } .data-table { min-width: 900px; } .detail-grid { grid-template-columns: 1fr; } }
+    .eyebrow { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--app-primary); }
+    .panel-card { border-radius: 16px !important; border: 1px solid var(--app-border); box-shadow: var(--shadow-card) !important; }
+    .filter-card { margin-bottom: 20px; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: start; }
+    .filter-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 8px; }
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+    .pagination-info { color: var(--app-muted); font-size: 14px; padding-top: 16px; }
   `]
 })
 export class DeadLetterQueueListComponent implements OnInit {
@@ -236,26 +160,22 @@ export class DeadLetterQueueListComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
 
-  readonly skeletonRows = Array.from({ length: 6 });
+  readonly displayedColumns = ['messageId', 'notificationId', 'channel', 'reason', 'deadLetteredAtUtc', 'deathCount', 'detail'];
 
   state: ViewState = 'loading';
   errorMessage = '';
   items: DeadLetterQueueMessage[] = [];
   filteredItems: DeadLetterQueueMessage[] = [];
-  selectedMessageId: string | null = null;
-  resendCandidate: DeadLetterQueueMessage | null = null;
-  resendModalOpen = false;
-  resendProcessing = false;
-  resendSuccessMessage = '';
-  resendErrorMessage = '';
+  private resendProcessing = false;
 
-  readonly filterForm = this.fb.nonNullable.group({
-    queueName: ['notifications.email.dlq'],
-    limit: [20],
-    reason: [''],
-    createdFrom: [''],
-    createdTo: ['']
+  readonly filterForm = this.fb.group({
+    queueName: this.fb.nonNullable.control('notifications.email.dlq'),
+    limit: this.fb.nonNullable.control(20),
+    reason: this.fb.nonNullable.control(''),
+    createdFrom: this.fb.control<Date | null>(null),
+    createdTo: this.fb.control<Date | null>(null)
   });
 
   private activeFilters = {
@@ -264,9 +184,6 @@ export class DeadLetterQueueListComponent implements OnInit {
     createdTo: ''
   };
 
-  /**
-   * Khởi tạo component và tải danh sách DLQ.
-   */
   ngOnInit(): void {
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -282,123 +199,108 @@ export class DeadLetterQueueListComponent implements OnInit {
       });
   }
 
-  /**
-   * Áp dụng bộ lọc và tải lại dữ liệu.
-   */
   onApplyFilters(): void {
     const value = this.filterForm.getRawValue();
+    const createdFrom = value.createdFrom;
+    const createdTo = value.createdTo;
+    if (createdFrom && createdTo && this.toStartOfDay(createdTo) < this.toStartOfDay(createdFrom)) {
+      this.filterForm.controls.createdTo.setErrors({ dateRange: true });
+      this.filterForm.controls.createdTo.markAsTouched();
+      return;
+    }
+
+    this.filterForm.controls.createdTo.setErrors(null);
     this.activeFilters = {
       reason: (value.reason ?? '').trim().toLowerCase(),
-      createdFrom: this.toIsoString(value.createdFrom),
-      createdTo: this.toIsoString(value.createdTo)
+      createdFrom: this.toIsoString(createdFrom),
+      createdTo: this.toIsoString(createdTo, true)
     };
     this.loadMessages();
   }
 
-  /**
-   * Xóa bộ lọc và tải lại dữ liệu.
-   */
   onClearFilters(): void {
     this.filterForm.reset({
       queueName: 'notifications.email.dlq',
       limit: 20,
       reason: '',
-      createdFrom: '',
-      createdTo: ''
+      createdFrom: null,
+      createdTo: null
     });
+    this.filterForm.controls.createdTo.setErrors(null);
     this.activeFilters = { reason: '', createdFrom: '', createdTo: '' };
-    this.selectedMessageId = null;
     this.loadMessages();
   }
 
-  /**
-   * Thử tải lại danh sách DLQ.
-   */
   retry(): void {
     this.loadMessages();
   }
 
-  /**
-   * Bật/tắt hiển thị chi tiết Thông điệp DLQ.
-   * @param item Thông điệp DLQ.
-   */
-  toggleDetail(item: DeadLetterQueueMessage): void {
-    const messageId = item.messageId || null;
-    this.selectedMessageId = this.selectedMessageId === messageId ? null : messageId;
-    this.resendSuccessMessage = '';
-    this.resendErrorMessage = '';
+  openDetail(item: DeadLetterQueueMessage): void {
+    const dialogRef = this.dialog.open(DeadLetterQueueDetailDialogComponent, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: {
+        item,
+        resendProcessing: false,
+        resendErrorMessage: '',
+        resendSuccessMessage: ''
+      } as DeadLetterQueueDetailDialogData
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'resend') {
+        this.confirmResend(item, dialogRef.componentInstance);
+      }
+    });
   }
 
-  /**
-   * Mở modal xác nhận Gửi lại.
-   * @param item Thông điệp DLQ.
-   */
-  openResendModal(item: DeadLetterQueueMessage): void {
-    this.resendCandidate = item;
-    this.resendModalOpen = true;
-    this.resendErrorMessage = '';
-    this.resendSuccessMessage = '';
+  private confirmResend(item: DeadLetterQueueMessage, detailDialog?: DeadLetterQueueDetailDialogComponent): void {
+    const confirmRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Xác nhận Gửi lại',
+        message: `Bạn có chắc muốn gửi lại Thông điệp ${item.messageId} từ Hàng đợi thư chết?`,
+        confirmLabel: 'Gửi lại',
+        cancelLabel: 'Hủy'
+      }
+    });
+
+    confirmRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.executeResend(item, detailDialog);
+      }
+    });
   }
 
-  /**
-   * Đóng modal xác nhận Gửi lại.
-   */
-  closeResendModal(): void {
-    if (this.resendProcessing) {
-      return;
-    }
-    this.resendModalOpen = false;
-    this.resendCandidate = null;
-  }
-
-  /**
-   * Xác nhận và thực hiện Gửi lại Thông điệp DLQ.
-   */
-  confirmResend(): void {
-    if (!this.resendCandidate || this.resendProcessing) {
-      return;
-    }
-
-    const candidate = this.resendCandidate;
+  private executeResend(item: DeadLetterQueueMessage, detailDialog?: DeadLetterQueueDetailDialogComponent): void {
+    if (this.resendProcessing) return;
     this.resendProcessing = true;
-    this.resendErrorMessage = '';
-    this.resendSuccessMessage = '';
+    if (detailDialog) {
+      detailDialog.data.resendProcessing = true;
+      detailDialog.data.resendErrorMessage = '';
+      detailDialog.data.resendSuccessMessage = '';
+    }
 
     this.deadLetterQueueService
-      .resendMessage(candidate.queueName, candidate.messageId, { idempotencyKey: this.createIdempotencyKey() })
+      .resendMessage(item.queueName, item.messageId, { idempotencyKey: this.createIdempotencyKey() })
       .pipe(finalize(() => {
         this.resendProcessing = false;
+        if (detailDialog) detailDialog.data.resendProcessing = false;
       }))
       .subscribe({
         next: (response) => {
           const message = `Gửi lại thành công. MessageId mới: ${response.resentMessageId}`;
-          this.resendSuccessMessage = message;
           this.toastService.success(message);
-          this.resendModalOpen = false;
-          this.resendCandidate = null;
+          if (detailDialog) detailDialog.data.resendSuccessMessage = message;
           this.loadMessages();
         },
         error: (error: unknown) => {
-          this.resendErrorMessage = this.resolveErrorMessage(error, true);
+          const message = this.resolveErrorMessage(error, true);
+          if (detailDialog) detailDialog.data.resendErrorMessage = message;
+          this.toastService.error(message);
         }
       });
   }
 
-  /**
-   * Tạo key theo MessageId cho danh sách.
-   * @param _ Index của item.
-   * @param item Thông điệp DLQ.
-   * @returns MessageId.
-   */
-  trackByMessageId(_: number, item: DeadLetterQueueMessage): string {
-    return item.messageId || `${item.queueName}-${_}`;
-  }
-
-  /**
-   * Hiển thị tên kênh dễ đọc.
-   * @param channel Kênh gửi.
-   * @returns Chuỗi hiển thị.
-   */
   displayChannel(channel: string | null): string {
     const normalized = (channel || '').toLowerCase();
     if (normalized === 'email') return 'Email';
@@ -406,11 +308,6 @@ export class DeadLetterQueueListComponent implements OnInit {
     return channel || '—';
   }
 
-  /**
-   * Định dạng thời gian hiển thị.
-   * @param value Giá trị thời gian.
-   * @returns Chuỗi thời gian định dạng.
-   */
   formatDate(value: string | null): string {
     if (!value) return '—';
     const date = new Date(value);
@@ -418,22 +315,14 @@ export class DeadLetterQueueListComponent implements OnInit {
     return date.toLocaleString('vi-VN', { hour12: false });
   }
 
-  /**
-   * Tải danh sách Thông điệp DLQ từ API.
-   */
   private loadMessages(): void {
     this.state = 'loading';
     this.errorMessage = '';
-    this.selectedMessageId = null;
-    this.resendSuccessMessage = '';
-    this.resendErrorMessage = '';
     const value = this.filterForm.getRawValue();
 
     this.deadLetterQueueService
       .getMessages(value.queueName, Number(value.limit))
-      .pipe(finalize(() => {
-        // state set in handlers
-      }))
+      .pipe(finalize(() => {}))
       .subscribe({
         next: (response) => {
           this.items = response.items ?? [];
@@ -447,61 +336,45 @@ export class DeadLetterQueueListComponent implements OnInit {
       });
   }
 
-  /**
-   * Áp dụng bộ lọc phía client trên dữ liệu đã tải.
-   */
   private applyClientFilters(): void {
     const reason = this.activeFilters.reason;
     const from = this.activeFilters.createdFrom ? new Date(this.activeFilters.createdFrom).getTime() : null;
     const to = this.activeFilters.createdTo ? new Date(this.activeFilters.createdTo).getTime() : null;
 
     this.filteredItems = this.items.filter((item) => {
-      if (reason && !(item.reason || '').toLowerCase().includes(reason)) {
-        return false;
-      }
-
+      if (reason && !(item.reason || '').toLowerCase().includes(reason)) return false;
       const time = item.deadLetteredAtUtc ? new Date(item.deadLetteredAtUtc).getTime() : null;
-      if (from !== null && (time === null || time < from)) {
-        return false;
-      }
-      if (to !== null && (time === null || time > to)) {
-        return false;
-      }
-
+      if (from !== null && (time === null || time < from)) return false;
+      if (to !== null && (time === null || time > to)) return false;
       return true;
     });
   }
 
-  /**
-   * Chuyển giá trị datetime-local sang ISO string.
-   * @param value Giá trị datetime-local.
-   * @returns Chuỗi ISO hoặc rỗng.
-   */
-  private toIsoString(value: string | null | undefined): string {
+  private toIsoString(value: Date | string | null | undefined, endOfDay = false): string {
     if (!value) return '';
-    const date = new Date(value);
+    const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
     if (Number.isNaN(date.getTime())) return '';
+    if (endOfDay) {
+      date.setHours(23, 59, 59, 999);
+    } else {
+      date.setHours(0, 0, 0, 0);
+    }
     return date.toISOString();
   }
 
-  /**
-   * Tạo khóa idempotency cho thao tác Gửi lại.
-   * @returns Khóa idempotency.
-   */
+  private toStartOfDay(value: Date): number {
+    const date = new Date(value.getTime());
+    date.setHours(0, 0, 0, 0);
+    return date.getTime();
+  }
+
   private createIdempotencyKey(): string {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
       return crypto.randomUUID();
     }
-
     return 'idem-' + Date.now() + '-' + Math.random().toString(16).slice(2);
   }
 
-  /**
-   * Chuyển lỗi HTTP thành thông báo thân thiện.
-   * @param error Lỗi cần xử lý.
-   * @param isResend Có phải lỗi từ thao tác Gửi lại hay không.
-   * @returns Thông báo lỗi.
-   */
   private resolveErrorMessage(error: unknown, isResend = false): string {
     const fallback = isResend
       ? 'Không gửi lại được Thông điệp. Vui lòng thử lại.'
@@ -513,18 +386,11 @@ export class DeadLetterQueueListComponent implements OnInit {
           ? 'Không có quyền Gửi lại Thông điệp. Vui lòng kiểm tra phiên đăng nhập và quyền RBAC.'
           : 'Không có quyền truy cập Hàng đợi thư chết. Vui lòng kiểm tra phiên đăng nhập và quyền RBAC.';
       }
-      if (error.status === 0) {
-        return 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
-      }
-
+      if (error.status === 0) return 'Không thể kết nối đến máy chủ. Vui lòng thử lại.';
       const payload = error.error as { detail?: string; title?: string; errors?: Record<string, string[]> } | null;
       if (payload?.errors) {
-        const messages = Object.values(payload.errors)
-          .flat()
-          .filter((m): m is string => typeof m === 'string');
-        if (messages.length > 0) {
-          return messages.join(' ');
-        }
+        const messages = Object.values(payload.errors).flat().filter((m): m is string => typeof m === 'string');
+        if (messages.length > 0) return messages.join(' ');
       }
       if (payload?.detail) return payload.detail;
       if (payload?.title) return payload.title;

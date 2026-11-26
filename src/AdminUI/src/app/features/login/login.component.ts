@@ -2,6 +2,12 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -11,83 +17,61 @@ type LoginViewState = 'idle' | 'submitting' | 'success' | 'error';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatProgressBarModule],
   template: `
-    <main class="login-page">
-      <section class="login-card" aria-labelledby="login-title">
-        <h1 id="login-title">Đăng nhập</h1>
-        <p class="subtitle">Truy cập AdminUI theo vai trò được phân quyền.</p>
-
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-          <div class="field">
-            <label for="userName">Tên đăng nhập <span aria-hidden="true">*</span></label>
-            <input
-              id="userName"
-              type="text"
-              formControlName="userName"
-              autocomplete="username"
-              [attr.aria-invalid]="showFieldError('userName')"
-              [attr.aria-describedby]="showFieldError('userName') ? 'userName-error' : null"
-            />
-            <p *ngIf="showFieldError('userName')" id="userName-error" class="field-error">
-              Vui lòng nhập tên đăng nhập.
-            </p>
+    <main class="auth-page">
+      <mat-card class="auth-card" aria-labelledby="login-title">
+        <div class="auth-brand">
+          <div class="brand-mark">NS</div>
+          <div>
+            <p class="brand-kicker">Notification System</p>
+            <h1 id="login-title">Đăng nhập AdminUI</h1>
           </div>
+        </div>
+        <p class="subtitle">Truy cập hệ thống quản trị theo vai trò được phân quyền.</p>
 
-          <div class="field">
-            <label for="password">Mật khẩu <span aria-hidden="true">*</span></label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              autocomplete="current-password"
-              [attr.aria-invalid]="showFieldError('password')"
-              [attr.aria-describedby]="showFieldError('password') ? 'password-error' : null"
-            />
-            <p *ngIf="showFieldError('password')" id="password-error" class="field-error">
-              Vui lòng nhập mật khẩu.
-            </p>
-          </div>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Tên đăng nhập</mat-label>
+            <input matInput type="text" formControlName="userName" autocomplete="username" />
+            <mat-error *ngIf="showFieldError('userName')">Vui lòng nhập tên đăng nhập.</mat-error>
+          </mat-form-field>
 
-          <div *ngIf="state === 'error' && errorMessage" class="status status-error" role="alert">
-            {{ errorMessage }}
-          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Mật khẩu</mat-label>
+            <input matInput type="password" formControlName="password" autocomplete="current-password" />
+            <mat-error *ngIf="showFieldError('password')">Vui lòng nhập mật khẩu.</mat-error>
+          </mat-form-field>
 
-          <div *ngIf="state === 'success'" class="status status-success" role="status">
-            Đăng nhập thành công. Đang chuyển đến Tổng quan...
-          </div>
+          <div *ngIf="state === 'error' && errorMessage" class="status status-error" role="alert">{{ errorMessage }}</div>
+          <div *ngIf="state === 'success'" class="status status-success" role="status">Đăng nhập thành công. Đang chuyển đến Tổng quan...</div>
+
+          <mat-progress-bar *ngIf="state === 'submitting'" mode="indeterminate"></mat-progress-bar>
 
           <div class="actions">
             <a routerLink="/forgot-password" class="link">Quên mật khẩu?</a>
-            <button type="submit" [disabled]="state === 'submitting'">
+            <button mat-flat-button color="primary" type="submit" [disabled]="state === 'submitting'">
               {{ state === 'submitting' ? 'Đang đăng nhập...' : 'Đăng nhập' }}
             </button>
           </div>
         </form>
-
-        <p *ngIf="state === 'idle' && form.pristine" class="hint">Nhập thông tin xác thực để tiếp tục.</p>
-      </section>
+      </mat-card>
     </main>
   `,
   styles: [`
-    .login-page { min-height: 100vh; display: grid; place-items: center; background: #f8fafc; padding: 24px; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; }
-    .login-card { width: 100%; max-width: 420px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 24px; box-sizing: border-box; }
-    h1 { margin: 0 0 8px; font-size: 24px; color: #0f172a; }
-    .subtitle { margin: 0 0 20px; color: #475569; font-size: 14px; }
-    .field { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; color: #0f172a; font-size: 14px; font-weight: 600; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-    input:focus { outline: 2px solid #2563eb; outline-offset: 1px; border-color: #2563eb; }
-    .field-error { margin: 6px 0 0; color: #dc2626; font-size: 12px; }
-    .status { margin: 8px 0 16px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
+    .auth-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%); }
+    .auth-card { width: 100%; max-width: 460px; padding: 32px; border-radius: 20px !important; border: 1px solid var(--app-border); box-shadow: 0 20px 40px rgba(15,23,42,0.08) !important; }
+    .auth-brand { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
+    .brand-mark { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg,#2563eb,#60a5fa); color:#fff; font-weight:700; }
+    .brand-kicker { margin:0; font-size:12px; color:var(--app-muted); text-transform:uppercase; letter-spacing:.08em; }
+    h1 { margin: 2px 0 0; font-size: 28px; line-height: 1.2; letter-spacing: -0.02em; }
+    .subtitle { margin: 0 0 24px; color: var(--app-muted); font-size: 14px; }
+    .auth-form { display: grid; gap: 8px; }
+    .status { padding: 12px 14px; border-radius: 10px; font-size: 14px; }
     .status-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
     .status-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    button { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    button:hover:not(:disabled) { background: #1d4ed8; }
-    button:disabled { opacity: 0.7; cursor: not-allowed; }
-    .link { color: #2563eb; text-decoration: none; font-size: 14px; }
-    .hint { margin: 16px 0 0; color: #475569; font-size: 12px; }
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; }
+    .link { color: var(--app-primary); text-decoration: none; font-size: 14px; font-weight: 500; }
   `]
 })
 export class LoginComponent {

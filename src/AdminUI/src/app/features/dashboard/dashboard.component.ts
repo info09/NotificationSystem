@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, of } from 'rxjs';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
@@ -14,6 +17,7 @@ interface NotificationSummaryCard {
   label: string;
   count: number;
   tone: 'warning' | 'info' | 'success' | 'danger';
+  icon: string;
 }
 
 interface DlqSummaryItem {
@@ -45,133 +49,139 @@ interface DashboardSummaryResponse {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent],
+  imports: [CommonModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent],
   template: `
-    <section class="page" aria-labelledby="dashboard-title">
+    <section class="page-container" aria-labelledby="dashboard-title">
       <header class="page-header">
         <div>
-          <h1 id="dashboard-title">Tổng quan</h1>
-          <p class="subtitle">Theo dõi nhanh tình trạng Thông báo, Hàng đợi thư chết và Kiểm tra sức khỏe.</p>
+          <p class="eyebrow">Trung tâm vận hành</p>
+          <h1 id="dashboard-title" class="page-title">Tổng quan</h1>
+          <p class="page-subtitle">Theo dõi nhanh tình trạng Thông báo, Hàng đợi thư chết và Kiểm tra sức khỏe.</p>
         </div>
-        <button type="button" class="primary" (click)="refresh()">Làm mới</button>
+        <button mat-flat-button color="primary" type="button" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          <span>Làm mới</span>
+        </button>
       </header>
 
-      <div class="grid">
-        <article class="panel" aria-labelledby="notification-summary-title">
-          <div class="panel-header">
+      <div class="dashboard-grid">
+        <mat-card class="panel-card" aria-labelledby="notification-summary-title">
+          <mat-card-header class="panel-header">
             <div>
-              <h2 id="notification-summary-title">Trạng thái thông báo</h2>
-              <p>Tóm tắt số lượng Thông báo theo trạng thái.</p>
+              <mat-card-title id="notification-summary-title">Trạng thái thông báo</mat-card-title>
+              <mat-card-subtitle>Tóm tắt số lượng Thông báo theo trạng thái.</mat-card-subtitle>
             </div>
-            <a routerLink="/notifications" class="link">Xem Thông báo</a>
-          </div>
+            <a mat-stroked-button routerLink="/notifications">Xem Thông báo</a>
+          </mat-card-header>
+          <mat-card-content>
+            <app-loading-skeleton *ngIf="notificationsState === 'loading'" [rows]="4" variant="card"></app-loading-skeleton>
+            <app-error-state *ngIf="notificationsState === 'error'" [message]="notificationsError" (retry)="refresh()"></app-error-state>
+            <app-empty-state *ngIf="notificationsState === 'empty'" title="Chưa có dữ liệu" description="Chưa có Thông báo trong hệ thống."></app-empty-state>
 
-          <app-loading-skeleton *ngIf="notificationsState === 'loading'" [rows]="4" variant="card"></app-loading-skeleton>
-          <app-error-state *ngIf="notificationsState === 'error'" [message]="notificationsError" (retry)="refresh()"></app-error-state>
-          <app-empty-state *ngIf="notificationsState === 'empty'" title="Chưa có dữ liệu" description="Chưa có Thông báo trong hệ thống."></app-empty-state>
+            <div *ngIf="notificationsState === 'success'" class="summary-cards">
+              <a
+                *ngFor="let card of notificationCards"
+                class="summary-card"
+                [ngClass]="'tone-' + card.tone"
+                [routerLink]="['/notifications']"
+                [queryParams]="{ status: card.status }"
+              >
+                <div class="card-top">
+                  <span class="card-label">{{ card.label }}</span>
+                  <mat-icon>{{ card.icon }}</mat-icon>
+                </div>
+                <strong class="card-count">{{ card.count }}</strong>
+              </a>
+            </div>
+          </mat-card-content>
+        </mat-card>
 
-          <div *ngIf="notificationsState === 'success'" class="summary-cards">
-            <a
-              *ngFor="let card of notificationCards"
-              class="summary-card"
-              [ngClass]="'tone-' + card.tone"
-              [routerLink]="['/notifications']"
-              [queryParams]="{ status: card.status }"
-            >
-              <span class="card-label">{{ card.label }}</span>
-              <strong class="card-count">{{ card.count }}</strong>
-            </a>
-          </div>
-        </article>
-
-        <article class="panel" aria-labelledby="dlq-summary-title">
-          <div class="panel-header">
+        <mat-card class="panel-card" aria-labelledby="dlq-summary-title">
+          <mat-card-header class="panel-header">
             <div>
-              <h2 id="dlq-summary-title">Hàng đợi thư chết</h2>
-              <p>Số Thông điệp cần chú ý trong Hàng đợi thư chết.</p>
+              <mat-card-title id="dlq-summary-title">Hàng đợi thư chết</mat-card-title>
+              <mat-card-subtitle>Số Thông điệp cần chú ý trong Hàng đợi thư chết.</mat-card-subtitle>
             </div>
-            <a routerLink="/dead-letter-queues" class="link">Xem Hàng đợi thư chết</a>
-          </div>
+            <a mat-stroked-button routerLink="/dead-letter-queues">Xem Hàng đợi thư chết</a>
+          </mat-card-header>
+          <mat-card-content>
+            <app-loading-skeleton *ngIf="dlqState === 'loading'" [rows]="2" variant="card"></app-loading-skeleton>
+            <app-error-state *ngIf="dlqState === 'error'" [message]="dlqError" (retry)="refresh()"></app-error-state>
+            <app-empty-state *ngIf="dlqState === 'empty'" title="Chưa có dữ liệu" description="Không có dữ liệu Hàng đợi thư chết."></app-empty-state>
 
-          <app-loading-skeleton *ngIf="dlqState === 'loading'" [rows]="2" variant="card"></app-loading-skeleton>
-          <app-error-state *ngIf="dlqState === 'error'" [message]="dlqError" (retry)="refresh()"></app-error-state>
-          <app-empty-state *ngIf="dlqState === 'empty'" title="Chưa có dữ liệu" description="Không có dữ liệu Hàng đợi thư chết."></app-empty-state>
-
-          <div *ngIf="dlqState === 'success'" class="summary-cards">
-            <a
-              *ngFor="let item of dlqItems"
-              class="summary-card"
-              [ngClass]="item.count > 0 ? 'tone-danger' : 'tone-success'"
-              [routerLink]="['/dead-letter-queues']"
-              [queryParams]="{ queueName: item.queueName }"
-            >
-              <span class="card-label">{{ item.label }}</span>
-              <strong class="card-count">{{ item.count }}</strong>
-            </a>
-            <div class="summary-card tone-info">
-              <span class="card-label">Tổng cần chú ý</span>
-              <strong class="card-count">{{ dlqTotal }}</strong>
+            <div *ngIf="dlqState === 'success'" class="summary-cards">
+              <a
+                *ngFor="let item of dlqItems"
+                class="summary-card"
+                [ngClass]="item.count > 0 ? 'tone-danger' : 'tone-success'"
+                [routerLink]="['/dead-letter-queues']"
+                [queryParams]="{ queueName: item.queueName }"
+              >
+                <div class="card-top">
+                  <span class="card-label">{{ item.label }}</span>
+                  <mat-icon>{{ item.count > 0 ? 'warning_amber' : 'check_circle' }}</mat-icon>
+                </div>
+                <strong class="card-count">{{ item.count }}</strong>
+              </a>
+              <div class="summary-card tone-info">
+                <div class="card-top">
+                  <span class="card-label">Tổng cần chú ý</span>
+                  <mat-icon>inventory_2</mat-icon>
+                </div>
+                <strong class="card-count">{{ dlqTotal }}</strong>
+              </div>
             </div>
-          </div>
-        </article>
+          </mat-card-content>
+        </mat-card>
 
-        <article class="panel" aria-labelledby="health-summary-title">
-          <div class="panel-header">
+        <mat-card class="panel-card" aria-labelledby="health-summary-title">
+          <mat-card-header class="panel-header">
             <div>
-              <h2 id="health-summary-title">Kiểm tra sức khỏe</h2>
-              <p>Tình trạng sẵn sàng của API và phụ thuộc.</p>
+              <mat-card-title id="health-summary-title">Kiểm tra sức khỏe</mat-card-title>
+              <mat-card-subtitle>Tình trạng sẵn sàng của API và phụ thuộc.</mat-card-subtitle>
             </div>
-          </div>
+          </mat-card-header>
+          <mat-card-content>
+            <app-loading-skeleton *ngIf="healthState === 'loading'" [rows]="2" variant="line"></app-loading-skeleton>
+            <app-error-state *ngIf="healthState === 'error'" [message]="healthError" (retry)="refresh()"></app-error-state>
+            <app-empty-state *ngIf="healthState === 'empty'" title="Chưa có dữ liệu" description="Không nhận được dữ liệu Kiểm tra sức khỏe."></app-empty-state>
 
-          <app-loading-skeleton *ngIf="healthState === 'loading'" [rows]="2" variant="line"></app-loading-skeleton>
-          <app-error-state *ngIf="healthState === 'error'" [message]="healthError" (retry)="refresh()"></app-error-state>
-          <app-empty-state *ngIf="healthState === 'empty'" title="Chưa có dữ liệu" description="Không nhận được dữ liệu Kiểm tra sức khỏe."></app-empty-state>
-
-          <div *ngIf="healthState === 'success'" class="health-block">
-            <div class="health-status" [ngClass]="healthToneClass">
-              <span class="health-dot" aria-hidden="true"></span>
-              <span>{{ healthLabel }}</span>
+            <div *ngIf="healthState === 'success'" class="health-block">
+              <div class="health-status" [ngClass]="healthToneClass">
+                <mat-icon class="health-icon">{{ healthIcon }}</mat-icon>
+                <span>{{ healthLabel }}</span>
+              </div>
+              <p class="health-detail">{{ healthDetail }}</p>
             </div>
-            <p class="health-detail">{{ healthDetail }}</p>
-          </div>
-        </article>
+          </mat-card-content>
+        </mat-card>
       </div>
     </section>
   `,
   styles: [`
-    .page { padding: 24px; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; color: #0f172a; }
-    .page-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
-    h1 { margin: 0 0 4px; font-size: 24px; }
-    .subtitle { margin: 0; color: #475569; font-size: 14px; }
-    .grid { display: grid; gap: 16px; }
-    .panel { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; }
-    .panel-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
-    .panel-header h2 { margin: 0 0 4px; font-size: 18px; }
-    .panel-header p { margin: 0; color: #475569; font-size: 14px; }
-    .link { color: #2563eb; text-decoration: none; font-size: 14px; white-space: nowrap; }
-    .link:hover { text-decoration: underline; }
-    .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-    .summary-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; text-decoration: none; color: inherit; }
-    a.summary-card:hover { border-color: #94a3b8; background: #f1f5f9; }
-    .card-label { font-size: 13px; color: #475569; }
-    .card-count { font-size: 28px; line-height: 1; color: #0f172a; }
-    .tone-warning { border-color: #fcd34d; background: #fffbeb; }
-    .tone-info { border-color: #93c5fd; background: #eff6ff; }
-    .tone-success { border-color: #86efac; background: #f0fdf4; }
-    .tone-danger { border-color: #fca5a5; background: #fef2f2; }
-    .primary { border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; border: 1px solid #2563eb; background: #2563eb; color: #ffffff; font-family: inherit; }
-    .primary:hover { background: #1d4ed8; }
-    .primary:focus, .link:focus, .summary-card:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
-    .health-block { display: grid; gap: 8px; }
-    .health-status { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; width: fit-content; padding: 8px 12px; border-radius: 999px; }
-    .health-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+    .eyebrow { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--app-primary); }
+    .dashboard-grid { display: grid; gap: 20px; }
+    .panel-card { border-radius: 16px !important; border: 1px solid var(--app-border); box-shadow: var(--shadow-card) !important; }
+    .panel-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; padding: 20px 20px 0; margin-bottom: 16px; }
+    :host ::ng-deep .mat-mdc-card-header-text { margin: 0; }
+    .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .summary-card { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 14px; border: 1px solid var(--app-border); background: #f8fafc; text-decoration: none; color: inherit; transition: transform .15s ease, box-shadow .15s ease; }
+    a.summary-card:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(15,23,42,0.06); }
+    .card-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .card-label { font-size: 13px; color: var(--app-muted); font-weight: 500; }
+    .card-count { font-size: 32px; line-height: 1; color: var(--app-text); letter-spacing: -0.03em; }
+    .tone-warning { border-color: #fde68a; background: #fffbeb; }
+    .tone-info { border-color: #bfdbfe; background: #eff6ff; }
+    .tone-success { border-color: #bbf7d0; background: #f0fdf4; }
+    .tone-danger { border-color: #fecaca; background: #fef2f2; }
+    .health-block { display: grid; gap: 12px; }
+    .health-status { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; width: fit-content; padding: 10px 14px; border-radius: 999px; }
+    .health-icon { font-size: 20px; width: 20px; height: 20px; }
     .health-ok { color: #166534; background: #dcfce7; }
     .health-warn { color: #92400e; background: #fef3c7; }
     .health-bad { color: #991b1b; background: #fee2e2; }
-    .health-detail { margin: 0; color: #475569; font-size: 14px; }
-    @media (max-width: 640px) {
-      .page-header, .panel-header { flex-direction: column; align-items: stretch; }
-    }
+    .health-detail { margin: 0; color: var(--app-muted); font-size: 14px; line-height: 1.6; }
+    @media (max-width: 768px) { .panel-header { flex-direction: column; align-items: stretch; padding: 16px 16px 0; } }
   `]
 })
 export class DashboardComponent implements OnInit {
@@ -191,6 +201,7 @@ export class DashboardComponent implements OnInit {
   healthLabel = '';
   healthDetail = '';
   healthToneClass = 'health-warn';
+  healthIcon = 'warning';
 
   ngOnInit(): void {
     this.refresh();
@@ -248,10 +259,10 @@ export class DashboardComponent implements OnInit {
     }
 
     this.notificationCards = [
-      { status: 'Pending', label: 'Pending (Chờ xử lý)', count: response.notifications.pending, tone: 'warning' },
-      { status: 'Processing', label: 'Processing (Đang xử lý)', count: response.notifications.processing, tone: 'info' },
-      { status: 'Sent', label: 'Sent (Đã gửi)', count: response.notifications.sent, tone: 'success' },
-      { status: 'Failed', label: 'Failed (Thất bại)', count: response.notifications.failed, tone: 'danger' }
+      { status: 'Pending', label: 'Pending (Chờ xử lý)', count: response.notifications.pending, tone: 'warning', icon: 'schedule' },
+      { status: 'Processing', label: 'Processing (Đang xử lý)', count: response.notifications.processing, tone: 'info', icon: 'sync' },
+      { status: 'Sent', label: 'Sent (Đã gửi)', count: response.notifications.sent, tone: 'success', icon: 'check_circle' },
+      { status: 'Failed', label: 'Failed (Thất bại)', count: response.notifications.failed, tone: 'danger', icon: 'error' }
     ];
     this.notificationsState = this.notificationCards.some((card) => card.count > 0) ? 'success' : 'empty';
   }
@@ -283,14 +294,17 @@ export class DashboardComponent implements OnInit {
     if (status.includes('healthy') && !status.includes('unhealthy')) {
       this.healthLabel = 'Healthy (Sẵn sàng)';
       this.healthToneClass = 'health-ok';
+      this.healthIcon = 'check_circle';
       this.healthDetail = response.health.details ?? 'API và các phụ thuộc readiness đang hoạt động bình thường.';
     } else if (status.includes('degraded')) {
       this.healthLabel = 'Degraded (Suy giảm)';
       this.healthToneClass = 'health-warn';
+      this.healthIcon = 'warning';
       this.healthDetail = response.health.details ?? 'Hệ thống đang chạy nhưng có phụ thuộc suy giảm. Cần kiểm tra thêm.';
     } else {
       this.healthLabel = 'Unhealthy (Không sẵn sàng)';
       this.healthToneClass = 'health-bad';
+      this.healthIcon = 'cancel';
       this.healthDetail = response.health.details ?? 'Hệ thống hoặc phụ thuộc readiness chưa sẵn sàng.';
     }
 

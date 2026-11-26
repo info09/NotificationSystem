@@ -2,6 +2,15 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../core/notifications/notification.service';
@@ -16,156 +25,136 @@ type ViewState = 'loading' | 'success' | 'empty' | 'error';
 @Component({
   selector: 'app-notifications-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, StatusBadgeComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatButtonModule, MatIconModule, MatTableModule, MatDatepickerModule, MatNativeDateModule, EmptyStateComponent, ErrorStateComponent, LoadingSkeletonComponent, StatusBadgeComponent],
   template: `
-    <section class="page" aria-labelledby="notifications-title">
+    <section class="page-container" aria-labelledby="notifications-title">
       <header class="page-header">
         <div>
-          <h1 id="notifications-title">Thông báo</h1>
-          <p class="subtitle">Tra cứu danh sách Thông báo theo trạng thái, kênh và thời gian.</p>
+          <p class="eyebrow">Vận hành</p>
+          <h1 id="notifications-title" class="page-title">Thông báo</h1>
+          <p class="page-subtitle">Tra cứu danh sách Thông báo theo trạng thái, kênh và thời gian.</p>
         </div>
       </header>
 
-      <form class="filters" [formGroup]="filterForm" (ngSubmit)="onApplyFilters()" aria-label="Bộ lọc Thông báo">
-        <div class="field">
-          <label for="status">Trạng thái thông báo</label>
-          <select id="status" formControlName="status">
-            <option value="">Tất cả</option>
-            <option value="Pending">Pending (Chờ xử lý)</option>
-            <option value="Processing">Processing (Đang xử lý)</option>
-            <option value="Sent">Sent (Đã gửi)</option>
-            <option value="Failed">Failed (Thất bại)</option>
-          </select>
-        </div>
+      <mat-card class="panel-card filter-card">
+        <form [formGroup]="filterForm" (ngSubmit)="onApplyFilters()" class="filters" aria-label="Bộ lọc Thông báo">
+          <mat-form-field appearance="outline">
+            <mat-label>Trạng thái thông báo</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="">Tất cả</mat-option>
+              <mat-option value="Pending">Pending (Chờ xử lý)</mat-option>
+              <mat-option value="Processing">Processing (Đang xử lý)</mat-option>
+              <mat-option value="Sent">Sent (Đã gửi)</mat-option>
+              <mat-option value="Failed">Failed (Thất bại)</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <div class="field">
-          <label for="channel">Kênh thông báo</label>
-          <select id="channel" formControlName="channel">
-            <option value="">Tất cả</option>
-            <option value="email">Email</option>
-            <option value="inapp">Thông báo trong ứng dụng</option>
-          </select>
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Kênh thông báo</mat-label>
+            <mat-select formControlName="channel">
+              <mat-option value="">Tất cả</mat-option>
+              <mat-option value="email">Email</mat-option>
+              <mat-option value="inapp">Thông báo trong ứng dụng</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <div class="field">
-          <label for="createdFrom">Từ thời gian</label>
-          <input id="createdFrom" type="datetime-local" formControlName="createdFrom" />
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Từ ngày</mat-label>
+            <input matInput [matDatepicker]="fromPicker" formControlName="createdFrom" readonly (click)="fromPicker.open()" (focus)="fromPicker.open()" />
+            <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+            <mat-datepicker #fromPicker></mat-datepicker>
+          </mat-form-field>
 
-        <div class="field">
-          <label for="createdTo">Đến thời gian</label>
-          <input id="createdTo" type="datetime-local" formControlName="createdTo" />
-        </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Đến ngày</mat-label>
+            <input matInput [matDatepicker]="toPicker" formControlName="createdTo" readonly (click)="toPicker.open()" (focus)="toPicker.open()" />
+            <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+            <mat-datepicker #toPicker></mat-datepicker>
+            <mat-error *ngIf="filterForm.controls.createdTo.hasError('dateRange')">Đến ngày phải lớn hơn hoặc bằng Từ ngày.</mat-error>
+          </mat-form-field>
 
-        <div class="filter-actions">
-          <button type="submit" class="primary">Áp dụng bộ lọc</button>
-          <button type="button" class="secondary" (click)="onClearFilters()">Xóa bộ lọc</button>
-        </div>
-      </form>
-
-      <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="retry()"></app-error-state>
-
-      <div *ngIf="state === 'loading'" class="table-wrap">
-        <div style="padding: 12px;">
-          <app-loading-skeleton [rows]="6" variant="line"></app-loading-skeleton>
-        </div>
-      </div>
-
-      <app-empty-state
-        *ngIf="state === 'empty'"
-        title="Không có kết quả phù hợp"
-        description="Chưa có Thông báo theo bộ lọc hiện tại. Vui lòng điều chỉnh hoặc xóa bộ lọc."
-        actionLabel="Xóa bộ lọc"
-        (action)="onClearFilters()"
-      ></app-empty-state>
-
-      <div *ngIf="state === 'success'" class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Mã Thông báo</th>
-              <th>Người nhận</th>
-              <th>Kênh thông báo</th>
-              <th>Trạng thái thông báo</th>
-              <th>Thời gian tạo</th>
-              <th>Nội dung</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of items; trackBy: trackById">
-              <td class="mono" title="{{ item.id }}">
-                <a [routerLink]="['/notifications', item.id]" class="row-link">{{ item.id }}</a>
-              </td>
-              <td>{{ item.recipient }}</td>
-              <td>{{ displayChannel(item.channel) }}</td>
-              <td>
-                <app-status-badge [label]="displayStatus(item.status)" [tone]="statusTone(item.status)"></app-status-badge>
-              </td>
-              <td>{{ formatDate(item.createdAt) }}</td>
-              <td class="content-cell" [title]="item.content || ''">{{ item.content || '—' }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="pagination" aria-label="Phân trang">
-          <div class="pagination-info">
-            Tổng: {{ totalCount }} · Trang {{ page }} / {{ totalPages || 1 }}
+          <div class="filter-actions">
+            <button mat-flat-button color="primary" type="submit">Áp dụng</button>
+            <button mat-stroked-button type="button" (click)="onClearFilters()">Xóa bộ lọc</button>
           </div>
-          <div class="pagination-actions">
-            <button type="button" class="secondary" (click)="prevPage()" [disabled]="page <= 1">Trước</button>
-            <button type="button" class="secondary" (click)="nextPage()" [disabled]="page >= totalPages">Sau</button>
+        </form>
+      </mat-card>
+
+      <mat-card class="panel-card">
+        <mat-card-content>
+          <app-error-state *ngIf="state === 'error'" [message]="errorMessage" (retry)="retry()"></app-error-state>
+          <app-loading-skeleton *ngIf="state === 'loading'" [rows]="6" variant="line"></app-loading-skeleton>
+          <app-empty-state
+            *ngIf="state === 'empty'"
+            title="Không có kết quả phù hợp"
+            description="Chưa có Thông báo theo bộ lọc hiện tại. Vui lòng điều chỉnh hoặc xóa bộ lọc."
+            actionLabel="Xóa bộ lọc"
+            (action)="onClearFilters()"
+          ></app-empty-state>
+
+          <div *ngIf="state === 'success'" class="table-wrap">
+            <table mat-table [dataSource]="items" class="data-table">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>Mã Thông báo</th>
+                <td mat-cell *matCellDef="let item" class="mono"><a [routerLink]="['/notifications', item.id]" class="row-link">{{ item.id }}</a></td>
+              </ng-container>
+
+              <ng-container matColumnDef="recipient">
+                <th mat-header-cell *matHeaderCellDef>Người nhận</th>
+                <td mat-cell *matCellDef="let item">{{ item.recipient }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="channel">
+                <th mat-header-cell *matHeaderCellDef>Kênh thông báo</th>
+                <td mat-cell *matCellDef="let item">{{ displayChannel(item.channel) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Trạng thái thông báo</th>
+                <td mat-cell *matCellDef="let item"><app-status-badge [label]="displayStatus(item.status)" [tone]="statusTone(item.status)"></app-status-badge></td>
+              </ng-container>
+
+              <ng-container matColumnDef="createdAt">
+                <th mat-header-cell *matHeaderCellDef>Thời gian tạo</th>
+                <td mat-cell *matCellDef="let item">{{ formatDate(item.createdAt) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="content">
+                <th mat-header-cell *matHeaderCellDef>Nội dung</th>
+                <td mat-cell *matCellDef="let item" class="content-cell" [title]="item.content || ''">{{ item.content || '—' }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+
+            <div class="pagination">
+              <div class="pagination-info">Tổng: {{ totalCount }} · Trang {{ page }} / {{ totalPages || 1 }}</div>
+              <div class="pagination-actions">
+                <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page <= 1">Trước</button>
+                <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page >= totalPages">Sau</button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </mat-card-content>
+      </mat-card>
     </section>
   `,
   styles: [`
-    .page { padding: 24px; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; color: #0f172a; }
-    .page-header { margin-bottom: 16px; }
-    h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
-    .subtitle { margin: 0; color: #475569; font-size: 14px; }
-    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 14px; font-weight: 600; color: #0f172a; }
-    input, select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; font-family: inherit; }
-    input:focus, select:focus { outline: 2px solid #2563eb; outline-offset: 1px; border-color: #2563eb; }
-    .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    button { border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; font-family: inherit; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .primary { background: #2563eb; color: #fff; border: 1px solid #2563eb; }
-    .primary:hover:not(:disabled) { background: #1d4ed8; }
-    .secondary { background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
-    .secondary:hover:not(:disabled) { background: #f1f5f9; }
-    .status-box { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 20px; }
-    .status-error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
-    .status-error p { margin: 0 0 12px; color: #991b1b; }
-    .status-empty h2 { margin: 0 0 8px; font-size: 16px; }
-    .status-empty p { margin: 0 0 12px; color: #475569; }
-    .table-wrap { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }
-    th { background: #f8fafc; font-weight: 600; color: #0f172a; }
-    tbody tr:last-child td { border-bottom: none; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; word-break: break-all; }
-    .row-link { color: #2563eb; text-decoration: none; }
+    .eyebrow { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--app-primary); }
+    .panel-card { border-radius: 16px !important; border: 1px solid var(--app-border); box-shadow: var(--shadow-card) !important; }
+    .filter-card { margin-bottom: 20px; }
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: start; }
+    .filter-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 8px; }
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+    .row-link { color: var(--app-primary); text-decoration: none; }
     .row-link:hover { text-decoration: underline; }
-    .row-link:focus { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 4px; }
     .content-cell { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
-    .badge-pending { background: #fffbeb; color: #92400e; border-color: #fde68a; }
-    .badge-processing { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
-    .badge-sent { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-    .badge-failed { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-    .badge-default { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
-    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-top: 1px solid #e2e8f0; flex-wrap: wrap; }
-    .pagination-info { color: #475569; font-size: 14px; }
+    .pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; flex-wrap: wrap; }
+    .pagination-info { color: var(--app-muted); font-size: 14px; }
     .pagination-actions { display: flex; gap: 8px; }
-    .skeleton { height: 44px; margin: 12px; border-radius: 6px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-    @media (max-width: 1023px) {
-      .table-wrap { overflow-x: auto; }
-      .data-table { min-width: 760px; }
-    }
   `]
 })
 export class NotificationsListComponent implements OnInit {
@@ -174,7 +163,7 @@ export class NotificationsListComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   readonly pageSize = 20;
-  readonly skeletonRows = Array.from({ length: 6 });
+  readonly displayedColumns = ['id', 'recipient', 'channel', 'status', 'createdAt', 'content'];
 
   state: ViewState = 'loading';
   errorMessage = '';
@@ -182,11 +171,11 @@ export class NotificationsListComponent implements OnInit {
   totalCount = 0;
   page = 1;
 
-  readonly filterForm = this.fb.nonNullable.group({
-    status: [''],
-    channel: [''],
-    createdFrom: [''],
-    createdTo: ['']
+  readonly filterForm = this.fb.group({
+    status: this.fb.nonNullable.control(''),
+    channel: this.fb.nonNullable.control(''),
+    createdFrom: this.fb.control<Date | null>(null),
+    createdTo: this.fb.control<Date | null>(null)
   });
 
   private activeQuery = {
@@ -216,18 +205,28 @@ export class NotificationsListComponent implements OnInit {
 
   onApplyFilters(): void {
     const value = this.filterForm.getRawValue();
+    const createdFrom = value.createdFrom;
+    const createdTo = value.createdTo;
+    if (createdFrom && createdTo && this.toStartOfDay(createdTo) < this.toStartOfDay(createdFrom)) {
+      this.filterForm.controls.createdTo.setErrors({ dateRange: true });
+      this.filterForm.controls.createdTo.markAsTouched();
+      return;
+    }
+
+    this.filterForm.controls.createdTo.setErrors(null);
     this.activeQuery = {
       status: value.status ?? '',
       channel: value.channel ?? '',
-      createdFrom: this.toIsoString(value.createdFrom),
-      createdTo: this.toIsoString(value.createdTo)
+      createdFrom: this.toIsoString(createdFrom),
+      createdTo: this.toIsoString(createdTo, true)
     };
     this.page = 1;
     this.loadNotifications();
   }
 
   onClearFilters(): void {
-    this.filterForm.reset({ status: '', channel: '', createdFrom: '', createdTo: '' });
+    this.filterForm.reset({ status: '', channel: '', createdFrom: null, createdTo: null });
+    this.filterForm.controls.createdTo.setErrors(null);
     this.activeQuery = { status: '', channel: '', createdFrom: '', createdTo: '' };
     this.page = 1;
     this.loadNotifications();
@@ -278,21 +277,6 @@ export class NotificationsListComponent implements OnInit {
         return 'Failed (Thất bại)';
       default:
         return status || '—';
-    }
-  }
-
-  statusClass(status: string): string {
-    switch (status) {
-      case 'Pending':
-        return 'badge-pending';
-      case 'Processing':
-        return 'badge-processing';
-      case 'Sent':
-        return 'badge-sent';
-      case 'Failed':
-        return 'badge-failed';
-      default:
-        return 'badge-default';
     }
   }
 
@@ -352,15 +336,26 @@ export class NotificationsListComponent implements OnInit {
       });
   }
 
-  private toIsoString(value: string | null | undefined): string {
+  private toIsoString(value: Date | string | null | undefined, endOfDay = false): string {
     if (!value) {
       return '';
     }
-    const date = new Date(value);
+    const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
     if (Number.isNaN(date.getTime())) {
       return '';
     }
+    if (endOfDay) {
+      date.setHours(23, 59, 59, 999);
+    } else {
+      date.setHours(0, 0, 0, 0);
+    }
     return date.toISOString();
+  }
+
+  private toStartOfDay(value: Date): number {
+    const date = new Date(value.getTime());
+    date.setHours(0, 0, 0, 0);
+    return date.getTime();
   }
 
   private resolveErrorMessage(error: unknown): string {

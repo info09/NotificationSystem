@@ -21,7 +21,7 @@ import { Component, Input } from '@angular/core';
   `,
   styles: [`
     .skeleton-wrap { display: grid; gap: 12px; }
-    .skeleton { border-radius: 6px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+    .skeleton { border-radius: 10px; background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
     .skeleton.line { height: 44px; }
     .skeleton.card { height: 84px; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }

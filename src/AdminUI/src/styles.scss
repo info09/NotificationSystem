@@ -1,0 +1,164 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$adminui-primary: mat.define-palette(mat.$blue-palette, 700, 500, 900);
+$adminui-accent: mat.define-palette(mat.$blue-grey-palette, 700, 500, 900);
+$adminui-warn: mat.define-palette(mat.$red-palette, 700);
+
+$adminui-theme: mat.define-light-theme((
+  color: (
+    primary: $adminui-primary,
+    accent: $adminui-accent,
+    warn: $adminui-warn,
+  ),
+  typography: mat.define-typography-config(
+    $font-family: 'Inter, "Segoe UI", Roboto, Arial, sans-serif'
+  ),
+  density: 0
+));
+
+@include mat.all-component-themes($adminui-theme);
+
+:root {
+  --app-bg: #f4f7fb;
+  --app-surface: #ffffff;
+  --app-surface-alt: #f8fafc;
+  --app-text: #0f172a;
+  --app-muted: #475569;
+  --app-border: #dbe3ee;
+  --app-primary: #1d4ed8;
+  --app-primary-soft: #dbeafe;
+  --app-success: #166534;
+  --app-success-bg: #dcfce7;
+  --app-warning: #92400e;
+  --app-warning-bg: #fef3c7;
+  --app-danger: #991b1b;
+  --app-danger-bg: #fee2e2;
+  --app-info: #1e40af;
+  --app-info-bg: #dbeafe;
+  --sidebar-bg: #0f172a;
+  --sidebar-bg-hover: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-active: #ffffff;
+  --sidebar-accent: #60a5fa;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+a {
+  color: var(--app-primary);
+}
+
+.page-container {
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  margin: 6px 0 0;
+  color: var(--app-muted);
+  font-size: 14px;
+}
+
+.app-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.status-pending { color: var(--app-warning); background: var(--app-warning-bg); border-color: #fde68a; }
+.status-processing { color: var(--app-info); background: var(--app-info-bg); border-color: #bfdbfe; }
+.status-sent, .status-healthy { color: var(--app-success); background: var(--app-success-bg); border-color: #bbf7d0; }
+.status-failed, .status-unhealthy { color: var(--app-danger); background: var(--app-danger-bg); border-color: #fecaca; }
+.status-degraded { color: var(--app-warning); background: var(--app-warning-bg); border-color: #fde68a; }
+
+.app-snackbar .mdc-snackbar__surface {
+  border-radius: 10px !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.filters {
+  align-items: center !important;
+}
+
+.filters .mat-mdc-form-field {
+  width: 100%;
+}
+
+.filters .filter-actions {
+  padding-top: 0 !important;
+  padding-bottom: 20px;
+  align-self: center;
+  flex-wrap: nowrap !important;
+}
+
+.filters .filter-actions button {
+  white-space: nowrap;
+}
+
+input[matInput][readonly][formcontrolname="createdFrom"],
+input[matInput][readonly][formcontrolname="createdTo"] {
+  cursor: pointer;
+}
+
+.app-snackbar-success .mdc-snackbar__surface {
+  background: #166534 !important;
+  color: #fff !important;
+}
+
+.app-snackbar-error .mdc-snackbar__surface {
+  background: #991b1b !important;
+  color: #fff !important;
+}
+
+.app-snackbar-warning .mdc-snackbar__surface {
+  background: #92400e !important;
+  color: #fff !important;
+}
+
+.app-snackbar-info .mdc-snackbar__surface {
+  background: #1e40af !important;
+  color: #fff !important;
+}
+
+@media (max-width: 768px) {
+  .page-container { padding: 16px; }
+  .page-header { flex-direction: column; align-items: stretch; }
+}

@@ -2,6 +2,11 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
@@ -11,39 +16,47 @@ type ViewState = 'idle' | 'submitting' | 'success' | 'error' | 'missing-token';
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressBarModule],
   template: `
-    <main class="login-page">
-      <section class="login-card" aria-labelledby="reset-title">
-        <h1 id="reset-title">Đặt lại mật khẩu</h1>
+    <main class="auth-page">
+      <mat-card class="auth-card" aria-labelledby="reset-title">
+        <div class="auth-brand">
+          <div class="brand-mark">NS</div>
+          <div>
+            <p class="brand-kicker">Notification System</p>
+            <h1 id="reset-title">Đặt lại mật khẩu</h1>
+          </div>
+        </div>
         <p class="subtitle">Nhập mật khẩu mới cho tài khoản của bạn.</p>
 
         <div *ngIf="state === 'missing-token'" class="status status-error" role="alert">
           Liên kết đặt lại mật khẩu không hợp lệ hoặc thiếu token.
         </div>
 
-        <form *ngIf="state !== 'missing-token'" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-          <div class="field">
-            <label for="newPassword">Mật khẩu mới <span aria-hidden="true">*</span></label>
-            <input id="newPassword" type="password" formControlName="newPassword" autocomplete="new-password" />
-            <p *ngIf="showFieldError('newPassword')" class="field-error">Mật khẩu mới phải có ít nhất 8 ký tự.</p>
-          </div>
+        <form *ngIf="state !== 'missing-token'" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="auth-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Mật khẩu mới</mat-label>
+            <input matInput type="password" formControlName="newPassword" autocomplete="new-password" />
+            <mat-error *ngIf="showFieldError('newPassword')">Mật khẩu mới phải có ít nhất 8 ký tự.</mat-error>
+          </mat-form-field>
 
-          <div class="field">
-            <label for="confirmPassword">Xác nhận mật khẩu <span aria-hidden="true">*</span></label>
-            <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" />
-            <p *ngIf="showFieldError('confirmPassword')" class="field-error">Vui lòng xác nhận mật khẩu.</p>
-            <p *ngIf="passwordMismatch" class="field-error">Mật khẩu xác nhận không khớp.</p>
-          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Xác nhận mật khẩu</mat-label>
+            <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" />
+            <mat-error *ngIf="showFieldError('confirmPassword')">Vui lòng xác nhận mật khẩu.</mat-error>
+          </mat-form-field>
 
+          <p *ngIf="passwordMismatch" class="field-error">Mật khẩu xác nhận không khớp.</p>
           <div *ngIf="state === 'error'" class="status status-error" role="alert">{{ errorMessage }}</div>
           <div *ngIf="state === 'success'" class="status status-success" role="status">
             Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.
           </div>
 
+          <mat-progress-bar *ngIf="state === 'submitting'" mode="indeterminate"></mat-progress-bar>
+
           <div class="actions">
             <a routerLink="/login" class="link">Quay lại đăng nhập</a>
-            <button type="submit" [disabled]="state === 'submitting' || state === 'success'">
+            <button mat-flat-button color="primary" type="submit" [disabled]="state === 'submitting' || state === 'success'">
               {{ state === 'submitting' ? 'Đang xử lý...' : 'Đặt lại mật khẩu' }}
             </button>
           </div>
@@ -53,27 +66,24 @@ type ViewState = 'idle' | 'submitting' | 'success' | 'error' | 'missing-token';
           <a routerLink="/forgot-password" class="link">Yêu cầu liên kết mới</a>
           <a routerLink="/login" class="link">Đăng nhập</a>
         </div>
-      </section>
+      </mat-card>
     </main>
   `,
   styles: [`
-    .login-page { min-height: 100vh; display: grid; place-items: center; background: #f8fafc; padding: 24px; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; }
-    .login-card { width: 100%; max-width: 460px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 24px; box-sizing: border-box; }
-    h1 { margin: 0 0 8px; font-size: 24px; color: #0f172a; }
-    .subtitle { margin: 0 0 20px; color: #475569; font-size: 14px; }
-    .field { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; color: #0f172a; font-size: 14px; font-weight: 600; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-    input:focus { outline: 2px solid #2563eb; outline-offset: 1px; border-color: #2563eb; }
-    .field-error { margin: 6px 0 0; color: #dc2626; font-size: 12px; }
-    .status { margin: 8px 0 16px; padding: 10px 12px; border-radius: 6px; font-size: 14px; }
+    .auth-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%); }
+    .auth-card { width: 100%; max-width: 460px; padding: 32px; border-radius: 20px !important; border: 1px solid var(--app-border); box-shadow: 0 20px 40px rgba(15,23,42,0.08) !important; }
+    .auth-brand { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
+    .brand-mark { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg,#2563eb,#60a5fa); color:#fff; font-weight:700; }
+    .brand-kicker { margin:0; font-size:12px; color:var(--app-muted); text-transform:uppercase; letter-spacing:.08em; }
+    h1 { margin: 2px 0 0; font-size: 28px; line-height: 1.2; letter-spacing: -0.02em; }
+    .subtitle { margin: 0 0 24px; color: var(--app-muted); font-size: 14px; }
+    .auth-form { display: grid; gap: 8px; }
+    .field-error { margin: -4px 0 8px; color: #dc2626; font-size: 12px; }
+    .status { padding: 12px 14px; border-radius: 10px; font-size: 14px; }
     .status-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
     .status-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .actions { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-    button { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    button:hover:not(:disabled) { background: #1d4ed8; }
-    button:disabled { opacity: 0.7; cursor: not-allowed; }
-    .link { color: #2563eb; text-decoration: none; font-size: 14px; }
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; }
+    .link { color: var(--app-primary); text-decoration: none; font-size: 14px; font-weight: 500; }
   `]
 })
 export class ResetPasswordComponent implements OnInit {

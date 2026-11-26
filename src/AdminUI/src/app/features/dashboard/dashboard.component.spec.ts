@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { DashboardComponent } from './dashboard.component';
 
@@ -10,7 +11,7 @@ describe('DashboardComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DashboardComponent, HttpClientTestingModule],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideNoopAnimations()]
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
