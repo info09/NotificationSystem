@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ForgotPasswordComponent } from './forgot-password.component';
@@ -11,7 +12,7 @@ describe('ForgotPasswordComponent', () => {
   beforeEach(async () => {
     authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['requestPasswordReset']);
     await TestBed.configureTestingModule({
-      imports: [ForgotPasswordComponent],
+      imports: [ForgotPasswordComponent, NoopAnimationsModule],
       providers: [provideRouter([]), { provide: AuthService, useValue: authServiceSpy }]
     }).compileComponents();
   });

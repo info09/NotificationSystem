@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +14,7 @@ describe('NotificationsListComponent', () => {
     notificationServiceSpy = jasmine.createSpyObj<NotificationService>('NotificationService', ['getNotifications']);
 
     await TestBed.configureTestingModule({
-      imports: [NotificationsListComponent],
+      imports: [NotificationsListComponent, NoopAnimationsModule],
       providers: [
         provideRouter([]),
         { provide: NotificationService, useValue: notificationServiceSpy }

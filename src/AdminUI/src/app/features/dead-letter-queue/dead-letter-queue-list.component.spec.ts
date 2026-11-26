@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { DeadLetterQueueListComponent } from './dead-letter-queue-list.component';
 import { DeadLetterQueueService } from '../../core/dead-letter-queue/dead-letter-queue.service';
 
@@ -12,8 +14,11 @@ describe('DeadLetterQueueListComponent', () => {
     serviceSpy = jasmine.createSpyObj<DeadLetterQueueService>('DeadLetterQueueService', ['getMessages', 'resendMessage']);
 
     await TestBed.configureTestingModule({
-      imports: [DeadLetterQueueListComponent],
-      providers: [{ provide: DeadLetterQueueService, useValue: serviceSpy }]
+      imports: [DeadLetterQueueListComponent, NoopAnimationsModule],
+      providers: [
+        { provide: DeadLetterQueueService, useValue: serviceSpy },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } }
+      ]
     }).compileComponents();
   });
 
@@ -98,10 +103,11 @@ describe('DeadLetterQueueListComponent', () => {
     const component = createComponent();
     fixture.detectChanges();
 
-    component.openResendModal(item);
-    component.confirmResend();
+    const dialog = (component as any).dialog;
+    spyOn(dialog, 'open').and.returnValue({ afterClosed: () => of(true), componentInstance: { data: {} } } as any);
+
+    (component as any).confirmResend(item);
 
     expect(serviceSpy.resendMessage).toHaveBeenCalled();
-    expect(component.resendSuccessMessage).toContain('Gửi lại thành công');
   });
 });

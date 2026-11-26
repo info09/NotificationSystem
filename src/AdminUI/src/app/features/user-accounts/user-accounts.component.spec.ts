@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserAccountsComponent } from './user-accounts.component';
@@ -24,7 +25,7 @@ describe('UserAccountsComponent', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      imports: [UserAccountsComponent],
+      imports: [UserAccountsComponent, NoopAnimationsModule],
       providers: [{ provide: UserAccountService, useValue: userAccountServiceSpy }]
     }).compileComponents();
   });

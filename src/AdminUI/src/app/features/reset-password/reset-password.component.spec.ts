@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ResetPasswordComponent } from './reset-password.component';
@@ -10,7 +11,7 @@ describe('ResetPasswordComponent', () => {
   async function setup(token: string | null) {
     authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['confirmPasswordReset']);
     await TestBed.configureTestingModule({
-      imports: [ResetPasswordComponent],
+      imports: [ResetPasswordComponent, NoopAnimationsModule],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authServiceSpy },
@@ -31,8 +32,8 @@ describe('ResetPasswordComponent', () => {
   });
 
   it('should submit reset and show success state', async () => {
-    authServiceSpy.confirmPasswordReset.and.returnValue(of({ reset: true }));
     const fixture = await setup('token-1');
+    authServiceSpy.confirmPasswordReset.and.returnValue(of({ reset: true }));
     const component = fixture.componentInstance;
 
     component.form.setValue({ newPassword: 'NewPassword123!', confirmPassword: 'NewPassword123!' });

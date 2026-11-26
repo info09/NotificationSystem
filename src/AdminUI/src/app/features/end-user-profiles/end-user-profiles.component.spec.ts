@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EndUserProfilesComponent } from './end-user-profiles.component';
@@ -14,7 +15,7 @@ describe('EndUserProfilesComponent', () => {
     ]);
 
     await TestBed.configureTestingModule({
-      imports: [EndUserProfilesComponent],
+      imports: [EndUserProfilesComponent, NoopAnimationsModule],
       providers: [{ provide: EndUserProfileService, useValue: serviceSpy }]
     }).compileComponents();
   });

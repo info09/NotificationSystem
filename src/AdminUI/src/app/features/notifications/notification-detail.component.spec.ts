@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,7 +18,7 @@ describe('NotificationDetailComponent', () => {
     }));
 
     await TestBed.configureTestingModule({
-      imports: [NotificationDetailComponent],
+      imports: [NotificationDetailComponent, NoopAnimationsModule],
       providers: [
         provideRouter([]),
         { provide: NotificationService, useValue: notificationServiceSpy },
