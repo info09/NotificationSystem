@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using TemplateConfiguration.Application;
+using TemplateConfiguration.Application.NotificationChannelConfigs;
 using TemplateConfiguration.Application.NotificationTemplates;
 
 namespace TemplateConfiguration.Presentation;
@@ -31,6 +32,16 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
         group.MapPost("/", HandleCreateNotificationTemplateAsync);
         group.MapPut("/{id:guid}", HandleUpdateNotificationTemplateAsync);
         group.MapDelete("/{id:guid}", HandleDeleteNotificationTemplateAsync);
+
+        var channelConfigGroup = endpoints.MapGroup("/api/admin/notification-channel-configs")
+            .WithTags("TemplateConfiguration")
+            .RequireAuthorization(RbacPolicies.SystemAdministrator);
+
+        channelConfigGroup.MapGet("/", HandleGetNotificationChannelConfigsAsync);
+        channelConfigGroup.MapGet("/{id:guid}", HandleGetNotificationChannelConfigByIdAsync);
+        channelConfigGroup.MapPost("/", HandleCreateNotificationChannelConfigAsync);
+        channelConfigGroup.MapPut("/{id:guid}", HandleUpdateNotificationChannelConfigAsync);
+        channelConfigGroup.MapDelete("/{id:guid}", HandleDeleteNotificationChannelConfigAsync);
 
         return endpoints;
     }
@@ -149,6 +160,111 @@ public static class TemplateConfigurationEndpointRouteBuilderExtensions
     }
 
     /// <summary>
+    /// Xử lý yêu cầu truy vấn danh sách Cấu hình kênh thông báo.
+    /// </summary>
+    /// <param name="useCase">Use case truy vấn danh sách.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <param name="channel">Kênh lọc.</param>
+    /// <param name="isEnabled">Trạng thái bật/tắt lọc.</param>
+    /// <param name="page">Số trang.</param>
+    /// <param name="pageSize">Kích thước trang.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetNotificationChannelConfigsAsync(
+        GetNotificationChannelConfigsUseCase useCase,
+        CancellationToken cancellationToken,
+        string? channel = null,
+        bool? isEnabled = null,
+        int page = 1,
+        int pageSize = 20)
+    {
+        var result = await useCase.HandleAsync(
+            new GetNotificationChannelConfigsAppRequest(channel, isEnabled, page, pageSize),
+            cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu lấy chi tiết Cấu hình kênh thông báo.
+    /// </summary>
+    /// <param name="id">Mã định danh cấu hình.</param>
+    /// <param name="useCase">Use case lấy chi tiết.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleGetNotificationChannelConfigByIdAsync(
+        Guid id,
+        GetNotificationChannelConfigByIdUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu tạo Cấu hình kênh thông báo.
+    /// </summary>
+    /// <param name="request">Yêu cầu tạo cấu hình.</param>
+    /// <param name="useCase">Use case tạo cấu hình.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleCreateNotificationChannelConfigAsync(
+        CreateNotificationChannelConfigRequest? request,
+        CreateNotificationChannelConfigUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new CreateNotificationChannelConfigAppRequest(
+                request.Channel,
+                request.DisplayName,
+                request.Description,
+                request.IsEnabled);
+
+        var result = await useCase.HandleAsync(appRequest, cancellationToken);
+        return ToHttpResult(result, value => $"/api/admin/notification-channel-configs/{value.Id}");
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu cập nhật Cấu hình kênh thông báo.
+    /// </summary>
+    /// <param name="id">Mã định danh cấu hình.</param>
+    /// <param name="request">Yêu cầu cập nhật.</param>
+    /// <param name="useCase">Use case cập nhật cấu hình.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleUpdateNotificationChannelConfigAsync(
+        Guid id,
+        UpdateNotificationChannelConfigRequest? request,
+        UpdateNotificationChannelConfigUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var appRequest = request is null
+            ? null
+            : new UpdateNotificationChannelConfigAppRequest(
+                request.DisplayName,
+                request.Description,
+                request.IsEnabled);
+
+        var result = await useCase.HandleAsync(id, appRequest, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu xóa Cấu hình kênh thông báo.
+    /// </summary>
+    /// <param name="id">Mã định danh cấu hình.</param>
+    /// <param name="useCase">Use case xóa cấu hình.</param>
+    /// <param name="cancellationToken">Token hủy thao tác.</param>
+    /// <returns>Kết quả HTTP.</returns>
+    private static async Task<IResult> HandleDeleteNotificationChannelConfigAsync(
+        Guid id,
+        DeleteNotificationChannelConfigUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        var result = await useCase.HandleAsync(id, cancellationToken);
+        return ToHttpResult(result);
+    }
+
+    /// <summary>
     /// Chuyển kết quả tầng Application sang kết quả HTTP.
     /// </summary>
     /// <typeparam name="T">Kiểu dữ liệu trả về.</typeparam>
@@ -223,3 +339,27 @@ public sealed record UpdateNotificationTemplateRequest(
     string? Subject,
     string? Body,
     bool? IsActive);
+
+/// <summary>
+/// Yêu cầu tạo Cấu hình kênh thông báo.
+/// </summary>
+/// <param name="Channel">Kênh thông báo.</param>
+/// <param name="DisplayName">Tên hiển thị.</param>
+/// <param name="Description">Mô tả.</param>
+/// <param name="IsEnabled">Trạng thái bật/tắt.</param>
+public sealed record CreateNotificationChannelConfigRequest(
+    string? Channel,
+    string? DisplayName,
+    string? Description,
+    bool? IsEnabled);
+
+/// <summary>
+/// Yêu cầu cập nhật Cấu hình kênh thông báo.
+/// </summary>
+/// <param name="DisplayName">Tên hiển thị.</param>
+/// <param name="Description">Mô tả.</param>
+/// <param name="IsEnabled">Trạng thái bật/tắt.</param>
+public sealed record UpdateNotificationChannelConfigRequest(
+    string? DisplayName,
+    string? Description,
+    bool? IsEnabled);

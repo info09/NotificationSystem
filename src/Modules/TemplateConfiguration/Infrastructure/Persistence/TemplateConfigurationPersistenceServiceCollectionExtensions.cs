@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TemplateConfiguration.Application.Abstractions;
+using TemplateConfiguration.Application.NotificationChannelConfigs;
 using TemplateConfiguration.Application.NotificationTemplates;
 using TemplateConfiguration.Infrastructure.Persistence.Repositories;
 
@@ -42,6 +43,13 @@ public static class TemplateConfigurationPersistenceServiceCollectionExtensions
         services.AddScoped<GetNotificationTemplateByIdUseCase>();
         services.AddScoped<GetNotificationTemplatesUseCase>();
         services.AddScoped<DeleteNotificationTemplateUseCase>();
+
+        services.AddScoped<INotificationChannelConfigRepository, NotificationChannelConfigRepository>();
+        services.AddScoped<CreateNotificationChannelConfigUseCase>();
+        services.AddScoped<UpdateNotificationChannelConfigUseCase>();
+        services.AddScoped<GetNotificationChannelConfigByIdUseCase>();
+        services.AddScoped<GetNotificationChannelConfigsUseCase>();
+        services.AddScoped<DeleteNotificationChannelConfigUseCase>();
 
         return services;
     }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TemplateConfiguration.Domain.NotificationChannelConfigs;
 using TemplateConfiguration.Domain.NotificationTemplates;
 
 namespace TemplateConfiguration.Infrastructure.Persistence;
@@ -14,6 +15,11 @@ public sealed class TemplateConfigurationDbContext(
     /// Tập thực thể Mẫu thông báo.
     /// </summary>
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+
+    /// <summary>
+    /// Tập thực thể Cấu hình kênh thông báo.
+    /// </summary>
+    public DbSet<NotificationChannelConfig> NotificationChannelConfigs => Set<NotificationChannelConfig>();
 
     /// <summary>
     /// Cấu hình mô hình dữ liệu cho module TemplateConfiguration.
