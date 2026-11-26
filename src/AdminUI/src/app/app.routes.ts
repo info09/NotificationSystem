@@ -86,6 +86,14 @@ export const routes: Routes = [
             (m) => m.NotificationChannelConfigsComponent
           )
       },
+      {
+        path: 'integration-event-routes',
+        canActivate: [systemAdminGuard],
+        loadComponent: () =>
+          import('./features/integration-event-routes/integration-event-routes.component').then(
+            (m) => m.IntegrationEventRoutesComponent
+          )
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },

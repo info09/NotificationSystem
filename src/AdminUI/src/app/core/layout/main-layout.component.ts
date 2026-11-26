@@ -208,7 +208,8 @@ export class MainLayoutComponent {
     { label: 'Tài khoản người dùng', icon: 'manage_accounts', route: '/user-accounts', adminOnly: true },
     { label: 'Hồ sơ người nhận EndUser', icon: 'groups', route: '/end-user-profiles', adminOnly: true },
     { label: 'Mẫu thông báo', icon: 'description', route: '/notification-templates', adminOnly: true },
-    { label: 'Cấu hình kênh thông báo', icon: 'tune', route: '/notification-channel-configs', adminOnly: true }
+    { label: 'Cấu hình kênh thông báo', icon: 'tune', route: '/notification-channel-configs', adminOnly: true },
+    { label: 'Định tuyến sự kiện tích hợp', icon: 'alt_route', route: '/integration-event-routes', adminOnly: true }
   ];
 
   onLogout(): void {
