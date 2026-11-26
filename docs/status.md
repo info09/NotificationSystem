@@ -158,11 +158,11 @@
 - **Mục tiêu:** Tiếp nhận `IntegrationEvent`, ánh xạ qua `IntegrationEventRoute` tạo `Notification`, và ghi `AuditLog` cho thao tác nhạy cảm.
 - **FR/NFR liên quan:** FR-02, FR-03, FR-10, FR-16, NFR-05, NFR-07.
 - **Stories:**
-  - [ ] **ST-P11-01** — Triển khai tiếp nhận/validate `IntegrationEvent` theo envelope chuẩn (`messageId`, `eventId`, `eventType`, `occurredAt`, `source`, `idempotencyKey`, `version`, `payload`) và ghi nhận truy vết.
-  - [ ] **ST-P11-02** — Triển khai luồng map `IntegrationEvent` → `Notification` theo `IntegrationEventRoute` (event mẫu MVP).
-  - [ ] **ST-P11-03** — Kết nối luồng `IntegrationEvent` end-to-end qua `TransactionalOutbox`/`RabbitMQ`/`NotificationWorker` với `Idempotency` đảm bảo.
-  - [ ] **ST-P11-04** — Triển khai `AuditLog` cho thao tác quản trị/vận hành nhạy cảm (cấu hình, `Gửi lại`) và API truy vấn theo quyền.
-  - [ ] **ST-P11-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `IntegrationEvent` end-to-end và `AuditLog`.
+  - [x] **ST-P11-01** — Triển khai tiếp nhận/validate `IntegrationEvent` theo envelope chuẩn (`messageId`, `eventId`, `eventType`, `occurredAt`, `source`, `idempotencyKey`, `version`, `payload`) và ghi nhận truy vết.
+  - [x] **ST-P11-02** — Triển khai luồng map `IntegrationEvent` → `Notification` theo `IntegrationEventRoute` (event mẫu MVP).
+  - [x] **ST-P11-03** — Kết nối luồng `IntegrationEvent` end-to-end qua `TransactionalOutbox`/`RabbitMQ`/`NotificationWorker` với `Idempotency` đảm bảo.
+  - [x] **ST-P11-04** — Triển khai `AuditLog` cho thao tác quản trị/vận hành nhạy cảm (cấu hình, `Gửi lại`) và API truy vấn theo quyền.
+  - [x] **ST-P11-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `IntegrationEvent` end-to-end và `AuditLog`.
 
 ### Phase 12 — Hardening, kiểm thử hiệu năng/tải & quy trình deploy staging/production
 - **Mục tiêu:** Xác minh độ tin cậy/hiệu năng/khả năng vận hành đạt mục tiêu MVP và sẵn sàng deploy theo `docs/deploy.md`.
@@ -194,12 +194,12 @@
   - [x] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 11 — `IntegrationEvent` end-to-end & `AuditLog`.
+- **Phase đang làm:** Phase 12 — Hardening, kiểm thử hiệu năng/tải & quy trình deploy staging/production.
 - **Story đang làm:** (chưa bắt đầu).
-- **Story tiếp theo đề xuất:** **ST-P11-01** — Triển khai tiếp nhận/validate `IntegrationEvent` theo envelope chuẩn (`messageId`, `eventId`, `eventType`, `occurredAt`, `source`, `idempotencyKey`, `version`, `payload`) và ghi nhận truy vết.
+- **Story tiếp theo đề xuất:** **ST-P12-01** — Hoàn thiện và chuẩn hóa bộ integration tests luồng chính (outbox/inbox/retry/DLQ/idempotency, `Email`/`InAppNotification`) theo `docs/conventions.md`.
 - **Chờ xác nhận test pass:** **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
 - **Tạm hoãn song song:** Không có.
-- **Cập nhật lần cuối:** 2026-11-26 — Đại ca xác nhận pass unit/integration/e2e và AdminUI test liên quan ST-P10-01..07. Đã tick Done Phase 10.
+- **Cập nhật lần cuối:** 2026-11-26 — Đại ca xác nhận pass unit/integration/e2e liên quan ST-P11-01..05. Đã tick Done Phase 11.
 
 ## 4. Deferred Work
 
