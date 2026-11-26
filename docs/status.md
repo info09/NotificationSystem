@@ -146,13 +146,13 @@
 - **FR/NFR liên quan:** FR-16, FR-11, FR-12, FR-02, NFR-05.
 - **UI (theo `docs/ux.md`):** `Mẫu thông báo` / `NotificationTemplate`, `Cấu hình kênh thông báo` / `NotificationChannelConfig`, `Định tuyến sự kiện tích hợp` / `IntegrationEventRoute`.
 - **Stories:**
-  - [ ] **ST-P10-01** — Triển khai CRUD API & persistence cho `Mẫu thông báo` / `NotificationTemplate` theo `RBAC`.
-  - [ ] **ST-P10-02** — Triển khai CRUD/quản lý `Cấu hình kênh thông báo` / `NotificationChannelConfig` (không lộ secret) theo `RBAC`.
-  - [ ] **ST-P10-03** — Triển khai CRUD/quản lý `Định tuyến sự kiện tích hợp` / `IntegrationEventRoute` (mapping event → template/kênh) theo `RBAC`.
-  - [ ] **ST-P10-04** — Dựng `AdminUI` màn hình quản lý `Mẫu thông báo` (danh sách/form CRUD, loading/empty/error/success).
-  - [ ] **ST-P10-05** — Dựng `AdminUI` màn hình quản lý `Cấu hình kênh thông báo` (loading/empty/error/success).
-  - [ ] **ST-P10-06** — Dựng `AdminUI` màn hình quản lý `Định tuyến sự kiện tích hợp` (loading/empty/error/success).
-  - [ ] **ST-P10-07** — Hoàn thiện kiểm thử unit/integration/e2e liên quan cấu hình quản trị và UI tương ứng.
+  - [x] **ST-P10-01** — Triển khai CRUD API & persistence cho `Mẫu thông báo` / `NotificationTemplate` theo `RBAC`.
+  - [x] **ST-P10-02** — Triển khai CRUD/quản lý `Cấu hình kênh thông báo` / `NotificationChannelConfig` (không lộ secret) theo `RBAC`.
+  - [x] **ST-P10-03** — Triển khai CRUD/quản lý `Định tuyến sự kiện tích hợp` / `IntegrationEventRoute` (mapping event → template/kênh) theo `RBAC`.
+  - [x] **ST-P10-04** — Dựng `AdminUI` màn hình quản lý `Mẫu thông báo` (danh sách/form CRUD, loading/empty/error/success).
+  - [x] **ST-P10-05** — Dựng `AdminUI` màn hình quản lý `Cấu hình kênh thông báo` (loading/empty/error/success).
+  - [x] **ST-P10-06** — Dựng `AdminUI` màn hình quản lý `Định tuyến sự kiện tích hợp` (loading/empty/error/success).
+  - [x] **ST-P10-07** — Hoàn thiện kiểm thử unit/integration/e2e liên quan cấu hình quản trị và UI tương ứng.
 
 ### Phase 11 — `IntegrationEvent` end-to-end & `AuditLog`
 - **Mục tiêu:** Tiếp nhận `IntegrationEvent`, ánh xạ qua `IntegrationEventRoute` tạo `Notification`, và ghi `AuditLog` cho thao tác nhạy cảm.
@@ -194,12 +194,12 @@
   - [x] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 10 — Docker/Compose + script vận hành.
+- **Phase đang làm:** Phase 11 — `IntegrationEvent` end-to-end & `AuditLog`.
 - **Story đang làm:** (chưa bắt đầu).
-- **Story tiếp theo đề xuất:** **ST-P10-01** — Cấu hình Compose đầy đủ cho local/prod-like: Postgres, RabbitMQ, API, Worker, AdminUI.
+- **Story tiếp theo đề xuất:** **ST-P11-01** — Triển khai tiếp nhận/validate `IntegrationEvent` theo envelope chuẩn (`messageId`, `eventId`, `eventType`, `occurredAt`, `source`, `idempotencyKey`, `version`, `payload`) và ghi nhận truy vết.
 - **Chờ xác nhận test pass:** **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
 - **Tạm hoãn song song:** Không có.
-- **Cập nhật lần cuối:** 2026-11-26 — Đại ca xác nhận đã chạy và pass các test liên quan ST-P9-01..05. Đã tick Done Phase 9.
+- **Cập nhật lần cuối:** 2026-11-26 — Đại ca xác nhận pass unit/integration/e2e và AdminUI test liên quan ST-P10-01..07. Đã tick Done Phase 10.
 
 ## 4. Deferred Work
 
