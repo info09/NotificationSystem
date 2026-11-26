@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeadLetterQueueService } from '../../core/dead-letter-queue/dead-letter-queue.service';
 import { DeadLetterQueueMessage } from '../../core/dead-letter-queue/dead-letter-queue.models';
 import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
@@ -232,6 +234,8 @@ export class DeadLetterQueueListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly deadLetterQueueService = inject(DeadLetterQueueService);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly skeletonRows = Array.from({ length: 6 });
 
@@ -264,7 +268,18 @@ export class DeadLetterQueueListComponent implements OnInit {
    * Khởi tạo component và tải danh sách DLQ.
    */
   ngOnInit(): void {
-    this.loadMessages();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const queueName = params.get('queueName');
+        if (queueName === 'notifications.email.dlq' || queueName === 'notifications.inapp.dlq') {
+          if (this.filterForm.controls.queueName.value !== queueName) {
+            this.filterForm.controls.queueName.setValue(queueName);
+          }
+        }
+
+        this.loadMessages();
+      });
   }
 
   /**

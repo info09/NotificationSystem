@@ -135,11 +135,11 @@
 - **FR/NFR liên quan:** FR-15, FR-16, NFR-05, NFR-06.
 - **UI (theo `docs/ux.md`):** `Tổng quan` / `Dashboard`, pattern UI vận hành nhất quán.
 - **Stories:**
-  - [ ] **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`). (đã implement, chờ Đại ca xác nhận test pass)
-  - [ ] **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success). (đã implement, chờ Đại ca xác nhận test pass)
-  - [ ] **ST-P9-03** — Chuẩn hóa component/pattern UI (table, filter, modal, toast, empty state, skeleton, badge trạng thái) theo `docs/ux.md`. (đã implement, chờ Đại ca xác nhận test pass)
-  - [ ] **ST-P9-04** — Chuẩn hóa thuật ngữ hiển thị theo `docs/domain-glossary.md` và responsive tối thiểu trên các màn hình `AdminUI` MVP. (đã implement, chờ Đại ca xác nhận test pass)
-  - [ ] **ST-P9-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `Tổng quan` và trải nghiệm vận hành. (đã bổ sung unit test Dashboard/AdminUI, unit/integration test API Tổng quan; chờ Đại ca xác nhận test pass và e2e liên quan)
+  - [x] **ST-P9-01** — Triển khai API/tổng hợp dữ liệu `Tổng quan` (tóm tắt `Trạng thái thông báo`, DLQ cần chú ý, trạng thái `Kiểm tra sức khỏe`).
+  - [x] **ST-P9-02** — Dựng `AdminUI` màn hình `Tổng quan` / `Dashboard` (thẻ tổng hợp, lối tắt, loading/empty/error/success).
+  - [x] **ST-P9-03** — Chuẩn hóa component/pattern UI (table, filter, modal, toast, empty state, skeleton, badge trạng thái) theo `docs/ux.md`.
+  - [x] **ST-P9-04** — Chuẩn hóa thuật ngữ hiển thị theo `docs/domain-glossary.md` và responsive tối thiểu trên các màn hình `AdminUI` MVP.
+  - [x] **ST-P9-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `Tổng quan` và trải nghiệm vận hành.
 
 ### Phase 10 — Cấu hình quản trị: `Mẫu thông báo`, `Cấu hình kênh thông báo`, `Định tuyến sự kiện tích hợp`
 - **Mục tiêu:** Quản trị viên cấu hình template/kênh/định tuyến sự kiện qua API và `AdminUI`.
@@ -194,12 +194,12 @@
   - [x] **ST-P13-09** — Hoàn thiện kiểm thử unit/integration/e2e liên quan quản lý user, phát `JWT` (login & client credentials), reset mật khẩu, hồ sơ `EndUser` và UI tương ứng.
 
 ## 3. Trạng thái hiện tại
-- **Phase đang làm:** Phase 9 — `AdminUI` `Tổng quan` (`Dashboard`) & hoàn thiện vận hành.
-- **Story đang làm:** **ST-P9-05** — Hoàn thiện kiểm thử unit/integration/e2e liên quan `Tổng quan` và trải nghiệm vận hành (đã bổ sung unit/integration test; chờ Đại ca xác nhận test pass và e2e liên quan).
+- **Phase đang làm:** Phase 10 — Docker/Compose + script vận hành.
+- **Story đang làm:** (chưa bắt đầu).
 - **Story tiếp theo đề xuất:** **ST-P10-01** — Cấu hình Compose đầy đủ cho local/prod-like: Postgres, RabbitMQ, API, Worker, AdminUI.
-- **Chờ xác nhận test pass:** **ST-P9-01**, **ST-P9-02**, **ST-P9-03**, **ST-P9-04**, **ST-P9-05**, **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
+- **Chờ xác nhận test pass:** **ST-P12-08** (ProblemDetails/mã lỗi nghiệp vụ), **ST-P12-09** (Idempotency/unique constraint).
 - **Tạm hoãn song song:** Không có.
-- **Cập nhật lần cuối:** 2026-11-25 — Đã implement ST-P9-01 (endpoint `GET /api/admin/dashboard/summary`, use case tổng hợp, reader adapter, cập nhật Dashboard AdminUI dùng API tổng hợp, thêm unit/integration test). Chưa tick Done do môi trường không chạy được test; chờ Đại ca xác nhận unit/integration/e2e liên quan pass.
+- **Cập nhật lần cuối:** 2026-11-26 — Đại ca xác nhận đã chạy và pass các test liên quan ST-P9-01..05. Đã tick Done Phase 9.
 
 ## 4. Deferred Work
 

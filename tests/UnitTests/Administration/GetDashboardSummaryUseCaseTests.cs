@@ -2,7 +2,6 @@ using Administration.Application;
 using Administration.Application.Abstractions;
 using Administration.Application.Dashboard;
 using Administration.Application.DeadLetterQueue;
-using BuildingBlocks.SharedKernel.Abstractions;
 
 namespace UnitTests.Administration;
 

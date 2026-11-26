@@ -1,10 +1,12 @@
 using Administration.Application.Abstractions;
 using Administration.Application.Dashboard;
 using Administration.Application.DeadLetterQueue;
+using Administration.Infrastructure.Dashboard;
 using Administration.Infrastructure.DeadLetterQueue;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Administration.Infrastructure.Persistence;
 
@@ -44,6 +46,8 @@ public static class AdministrationPersistenceServiceCollectionExtensions
         services.AddScoped<IDeadLetterResendRequestRepository, DeadLetterResendRequestRepository>();
         services.AddScoped<GetDeadLetterMessagesUseCase>();
         services.AddScoped<ResendDeadLetterMessageUseCase>();
+        services.TryAddScoped<INotificationStatusSummaryReader, DefaultNotificationStatusSummaryReader>();
+        services.TryAddScoped<IDashboardHealthSummaryReader, DefaultDashboardHealthSummaryReader>();
         services.AddScoped<GetDashboardSummaryUseCase>();
 
         return services;
